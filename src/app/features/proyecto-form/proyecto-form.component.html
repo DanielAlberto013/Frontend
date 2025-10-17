@@ -1,0 +1,279 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" routerLink="/proyectos">
+        <i class="fas fa-arrow-left me-2"></i>
+        Volver a Proyectos
+      </a>
+      <div class="d-flex align-items-center">
+        <span class="text-light me-3">📝 Crear Nuevo Proyecto</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <!-- Card Principal -->
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">🚀 Crear Nuevo Proyecto de Investigación</h4>
+            <p class="text-muted mb-0">Completa la información básica y asigna el presupuesto por partidas</p>
+          </div>
+
+          <div class="card-body">
+            <form [formGroup]="proyectoForm">
+              <!-- Información General -->
+              <div class="form-section mb-5">
+                <h5 class="section-title">📋 Información General del Proyecto</h5>
+                
+                <div class="row g-3">
+                  <!-- Nombre del Proyecto -->
+                  <div class="col-md-12">
+                    <label class="form-label">Nombre del Proyecto *</label>
+                    <input 
+                      type="text" 
+                      formControlName="nombre"
+                      class="form-control"
+                      placeholder="Ej: Desarrollo de Material Biodegradable"
+                      [class.is-invalid]="proyectoForm.get('nombre')?.invalid && proyectoForm.get('nombre')?.touched"
+                    >
+                    <div class="invalid-feedback" *ngIf="proyectoForm.get('nombre')?.errors?.['required'] && proyectoForm.get('nombre')?.touched">
+                      El nombre del proyecto es requerido
+                    </div>
+                    <div class="invalid-feedback" *ngIf="proyectoForm.get('nombre')?.errors?.['minlength'] && proyectoForm.get('nombre')?.touched">
+                      El nombre debe tener al menos 5 caracteres
+                    </div>
+                  </div>
+
+                  <!-- Descripción -->
+                  <div class="col-md-12">
+                    <label class="form-label">Descripción del Proyecto *</label>
+                    <textarea 
+                      formControlName="descripcion"
+                      class="form-control"
+                      rows="3"
+                      placeholder="Describe los objetivos, metodología y expected results del proyecto..."
+                      [class.is-invalid]="proyectoForm.get('descripcion')?.invalid && proyectoForm.get('descripcion')?.touched"
+                    ></textarea>
+                    <div class="invalid-feedback" *ngIf="proyectoForm.get('descripcion')?.errors?.['required'] && proyectoForm.get('descripcion')?.touched">
+                      La descripción es requerida
+                    </div>
+                    <div class="invalid-feedback" *ngIf="proyectoForm.get('descripcion')?.errors?.['minlength'] && proyectoForm.get('descripcion')?.touched">
+                      La descripción debe tener al menos 10 caracteres
+                    </div>
+                  </div>
+
+                  <!-- Edición y Presupuesto -->
+                  <div class="col-md-4">
+                    <label class="form-label">Edición *</label>
+                    <select formControlName="edicion" class="form-select">
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Presupuesto Total *</label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input 
+                        type="number" 
+                        formControlName="presupuestoTotal"
+                        class="form-control"
+                        (change)="onPresupuestoTotalChange()"
+                        [class.is-invalid]="proyectoForm.get('presupuestoTotal')?.invalid && proyectoForm.get('presupuestoTotal')?.touched"
+                      >
+                    </div>
+                    <div class="invalid-feedback" *ngIf="proyectoForm.get('presupuestoTotal')?.errors?.['required'] && proyectoForm.get('presupuestoTotal')?.touched">
+                      El presupuesto total es requerido
+                    </div>
+                    <div class="invalid-feedback" *ngIf="proyectoForm.get('presupuestoTotal')?.errors?.['min'] && proyectoForm.get('presupuestoTotal')?.touched">
+                      El presupuesto mínimo es $1,000
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Distribución Automática</label>
+                    <div class="budget-distribution p-3 bg-light rounded">
+                      <div class="d-flex justify-content-between small">
+                        <span>Federal (50%):</span>
+                        <strong>${{ proyectoForm.get('presupuestoFederal')?.value | number:'1.2-2' }}</strong>
+                      </div>
+                      <div class="d-flex justify-content-between small">
+                        <span>Estatal (50%):</span>
+                        <strong>${{ proyectoForm.get('presupuestoEstatal')?.value | number:'1.2-2' }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gestión de Partidas -->
+              <div class="form-section mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="section-title mb-0">💰 Asignación de Partidas Presupuestales</h5>
+                  <button type="button" class="btn btn-success btn-sm" (click)="agregarPartida()">
+                    ➕ Agregar Partida
+                  </button>
+                </div>
+
+                <p class="text-muted mb-3">
+                  Asigna el presupuesto total entre las diferentes partidas según el clasificador oficial
+                </p>
+
+                <!-- Resumen de Presupuesto -->
+                <div class="budget-summary mb-4 p-3 bg-light rounded">
+                  <div class="row text-center">
+                    <div class="col-md-4">
+                      <strong>Presupuesto Total</strong><br>
+                      <span class="h5 text-primary">${{ proyectoForm.get('presupuestoTotal')?.value | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Total Asignado</strong><br>
+                      <span class="h5" [class]="getDiferenciaPresupuesto() >= 0 ? 'text-success' : 'text-danger'">
+                        ${{ getTotalPartidas() | number:'1.2-2' }}
+                      </span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Diferencia</strong><br>
+                      <span class="h5" [class]="getDiferenciaPresupuesto() >= 0 ? 'text-success' : 'text-danger'">
+                        ${{ getDiferenciaPresupuesto() | number:'1.2-2' }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="progress mt-2" *ngIf="proyectoForm.get('presupuestoTotal')?.value > 0">
+                    <div 
+                      class="progress-bar" 
+                      [class]="getPresupuestoUtilizado() <= 100 ? 'bg-success' : 'bg-danger'"
+                      [style.width]="(getPresupuestoUtilizado() <= 100 ? getPresupuestoUtilizado() : 100) + '%'"
+                    >
+                      {{ getPresupuestoUtilizado().toFixed(1) }}%
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Lista de Partidas -->
+                <div formArrayName="partidas">
+                  <div 
+                    *ngFor="let partida of partidasFormArray.controls; let i = index" 
+                    [formGroupName]="i"
+                    class="partida-item card mb-3"
+                  >
+                    <div class="card-body">
+                      <div class="row g-3">
+                        <!-- Código de Partida -->
+                        <div class="col-md-3">
+                          <label class="form-label">Código de Partida *</label>
+                          <select 
+                            formControlName="codigo"
+                            (change)="onPartidaSeleccionada($event, i)"
+                            class="form-select"
+                            [class.is-invalid]="partida.get('codigo')?.invalid && partida.get('codigo')?.touched"
+                          >
+                            <option value="">Selecciona una partida</option>
+                            <option *ngFor="let partida of partidasPredefinidas" [value]="partida.codigo">
+                              {{ partida.codigo }} - {{ partida.nombre }}
+                            </option>
+                          </select>
+                          <div class="invalid-feedback" *ngIf="partida.get('codigo')?.errors?.['required'] && partida.get('codigo')?.touched">
+                            Selecciona un código de partida
+                          </div>
+                        </div>
+
+                        <!-- Nombre y Descripción (automáticos) -->
+                        <div class="col-md-4">
+                          <label class="form-label">Nombre de Partida</label>
+                          <input 
+                            type="text" 
+                            formControlName="nombre"
+                            class="form-control"
+                            readonly
+                            [class.is-invalid]="partida.get('nombre')?.invalid && partida.get('nombre')?.touched"
+                          >
+                        </div>
+
+                        <div class="col-md-3">
+                          <label class="form-label">Importe Asignado *</label>
+                          <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input 
+                              type="number" 
+                              formControlName="importeAsignado"
+                              class="form-control"
+                              [class.is-invalid]="partida.get('importeAsignado')?.invalid && partida.get('importeAsignado')?.touched"
+                            >
+                          </div>
+                          <div class="invalid-feedback" *ngIf="partida.get('importeAsignado')?.errors?.['required'] && partida.get('importeAsignado')?.touched">
+                            El importe es requerido
+                          </div>
+                          <div class="invalid-feedback" *ngIf="partida.get('importeAsignado')?.errors?.['min'] && partida.get('importeAsignado')?.touched">
+                            El importe mínimo es $1
+                          </div>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="col-md-2 d-flex align-items-end">
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-danger w-100"
+                            (click)="eliminarPartida(i)"
+                            [disabled]="partidasFormArray.length <= 1"
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="col-12">
+                          <label class="form-label">Descripción</label>
+                          <textarea 
+                            formControlName="descripcion"
+                            class="form-control"
+                            rows="2"
+                            readonly
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mensaje de ayuda -->
+                <div class="alert alert-info">
+                  <small>
+                    💡 <strong>Consejo:</strong> Asegúrate de que la suma de todas las partidas sea exactamente igual al presupuesto total. 
+                    Las partidas deben coincidir con el clasificador por objeto de gasto oficial.
+                  </small>
+                </div>
+              </div>
+
+              <!-- Mensajes de Error -->
+              <div *ngIf="error" class="alert alert-danger">
+                ❌ {{ error }}
+              </div>
+
+              <!-- Botones de Acción -->
+              <div class="d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-secondary" (click)="cancelar()">
+                  ❌ Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  class="btn btn-primary"
+                  (click)="onSubmit()"
+                  [disabled]="loading"
+                >
+                  <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                  {{ loading ? 'Creando Proyecto...' : '✅ Crear Proyecto' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

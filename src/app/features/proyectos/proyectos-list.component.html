@@ -1,0 +1,160 @@
+<div class="container-fluid">
+     <!-- Header -->
+     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+       <div class="container">
+         <a class="navbar-brand" routerLink="/dashboard">
+           <i class="fas fa-arrow-left me-2"></i>
+           Volver al Dashboard
+         </a>
+         <div class="d-flex align-items-center">
+           <span class="text-light me-3">
+             {{ authService.isDocente() ? 'Mis Proyectos' : 'Todos los Proyectos' }}
+           </span>
+         </div>
+       </div>
+     </nav>
+   
+     <div class="container">
+       <!-- Header Section -->
+       <div class="row mb-4">
+         <div class="col-md-8">
+           <h1>📁 Gestión de Proyectos</h1>
+           <p class="text-muted">
+             {{ authService.isDocente() ? 
+                'Gestiona tus proyectos de investigación y su presupuesto' : 
+                'Revisa y administra todos los proyectos del sistema' }}
+           </p>
+         </div>
+         <div class="col-md-4 text-end">
+          <button 
+          *ngIf="authService.isDocente()"
+          routerLink="/proyectos/nuevo"
+          class="btn btn-success btn-lg"
+        >
+          ➕ Nuevo Proyecto
+        </button>
+   
+       <!-- Loading -->
+       <div *ngIf="loading" class="text-center py-5">
+         <div class="spinner-border text-primary" role="status">
+           <span class="visually-hidden">Cargando...</span>
+         </div>
+         <p class="mt-2">🔄 Cargando proyectos...</p>
+       </div>
+   
+       <!-- Error -->
+       <div *ngIf="error && !loading" class="alert alert-danger text-center">
+         <p>❌ {{ error }}</p>
+         <button (click)="cargarProyectos()" class="btn btn-outline-danger">Reintentar</button>
+       </div>
+   
+       <!-- Lista de Proyectos -->
+       <div *ngIf="!loading && !error">
+         <!-- Empty State -->
+         <div *ngIf="proyectos.length === 0" class="text-center py-5">
+           <div class="empty-state">
+             <h3>📭 No hay proyectos</h3>
+             <p class="text-muted">
+               {{ authService.isDocente() ? 
+                  'Aún no has creado ningún proyecto. ¡Comienza ahora!' : 
+                  'No hay proyectos registrados en el sistema.' }}
+             </p>
+             <button 
+               *ngIf="authService.isDocente()"
+               (click)="crearNuevoProyecto()"
+               class="btn btn-primary btn-lg"
+             >
+               🚀 Crear Mi Primer Proyecto
+             </button>
+           </div>
+         </div>
+   
+         <!-- Grid de Proyectos -->
+         <div *ngIf="proyectos.length > 0" class="row">
+           <div *ngFor="let proyecto of proyectos" class="col-md-6 col-lg-4 mb-4">
+             <div class="card h-100 proyecto-card">
+               <div class="card-header d-flex justify-content-between align-items-center">
+                 <h5 class="card-title mb-0">{{ proyecto.nombre }}</h5>
+                 <span [class]="'badge ' + getEstadoBadgeClass(proyecto.estado)">
+                   {{ getEstadoText(proyecto.estado) }}
+                 </span>
+               </div>
+               
+               <div class="card-body">
+                 <p class="card-text">{{ proyecto.descripcion }}</p>
+                 
+                 <div class="proyecto-info">
+                   <div class="info-item">
+                     <strong>👤 Responsable:</strong> 
+                     <span>{{ proyecto.docente ? proyecto.docente.nombre : 'Docente' }}</span>
+                   </div>
+                   <div class="info-item">
+                     <strong>📅 Edición:</strong> 
+                     <span>{{ proyecto.edicion }}</span>
+                   </div>
+                   <div class="info-item">
+                     <strong>💰 Presupuesto Total:</strong> 
+                     <span>${{ proyecto.presupuestoTotal | number:'1.2-2' }}</span>
+                   </div>
+                   <div class="info-item">
+                     <strong>🏛️ Federal:</strong> 
+                     <span>${{ proyecto.presupuestoFederal | number:'1.2-2' }}</span>
+                   </div>
+                   <div class="info-item">
+                     <strong>🏠 Estatal:</strong> 
+                     <span>${{ proyecto.presupuestoEstatal | number:'1.2-2' }}</span>
+                   </div>
+                 </div>
+               </div>
+   
+               <div class="card-footer">
+                 <div class="d-flex gap-2 flex-wrap">
+                   <!-- Acciones para Docentes -->
+                   <button 
+                     *ngIf="authService.isDocente()"
+                     (click)="verDetalle(proyecto)"
+                     class="btn btn-outline-primary btn-sm"
+                   >
+                     👁️ Ver
+                   </button>
+                   
+                   <button 
+                     *ngIf="authService.isDocente() && proyecto.estado === 'BORRADOR'"
+                     (click)="editarProyecto(proyecto)"
+                     class="btn btn-outline-secondary btn-sm"
+                   >
+                     ✏️ Editar
+                   </button>
+   
+                   <!-- Acciones para Revisores/Admin -->
+                   <button 
+                     *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
+                     (click)="cambiarEstado(proyecto, 'APROBADO')"
+                     class="btn btn-outline-success btn-sm"
+                   >
+                     ✅ Aprobar
+                   </button>
+   
+                   <button 
+                     *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
+                     (click)="cambiarEstado(proyecto, 'RECHAZADO')"
+                     class="btn btn-outline-danger btn-sm"
+                   >
+                     ❌ Rechazar
+                   </button>
+   
+                   <button 
+                     *ngIf="authService.isRevisor() || authService.isAdmin()"
+                     (click)="verDetalle(proyecto)"
+                     class="btn btn-outline-info btn-sm"
+                   >
+                     📊 Revisar
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+   </div>

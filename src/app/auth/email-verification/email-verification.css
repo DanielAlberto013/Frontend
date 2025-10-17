@@ -1,0 +1,35 @@
+.card {
+     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+     border: none;
+     border-radius: 0.5rem;
+   }
+   
+   .card-header {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     color: white;
+     border-radius: 0.5rem 0.5rem 0 0 !important;
+   }
+   
+   .btn-primary {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     border: none;
+   }
+   
+   .btn-primary:hover {
+     background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+     transform: translateY(-1px);
+   }
+   
+   .list-unstyled li {
+     padding: 0.25rem 0;
+     position: relative;
+     padding-left: 1.5rem;
+   }
+   
+   .list-unstyled li:before {
+     content: "•";
+     color: #667eea;
+     font-weight: bold;
+     position: absolute;
+     left: 0;
+   }

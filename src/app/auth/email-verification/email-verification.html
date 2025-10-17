@@ -1,0 +1,74 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header text-center">
+          <h3>Verificación de Correo Electrónico</h3>
+        </div>
+        <div class="card-body text-center">
+          <!-- Spinner mientras verifica -->
+          <div *ngIf="isLoading" class="my-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Verificando...</span>
+            </div>
+            <p class="mt-3">Verificando tu correo electrónico...</p>
+          </div>
+
+          <!-- Mensaje de éxito -->
+          <div *ngIf="!isLoading && isSuccess" class="my-4">
+            <div class="text-success mb-3">
+              <div style="font-size: 3rem;">✓</div>
+            </div>
+            <p class="lead">{{ message }}</p>
+            
+            <div class="mt-4">
+              <button class="btn btn-primary me-2" (click)="resendVerificationEmail()" [disabled]="isResending">
+                <span *ngIf="isResending" class="spinner-border spinner-border-sm me-2"></span>
+                Reenviar Correo de Verificación
+              </button>
+              <button class="btn btn-outline-secondary" (click)="goToLogin()">
+                Volver al Login
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje de error -->
+          <div *ngIf="!isLoading && !isSuccess" class="my-4">
+            <div class="text-danger mb-3">
+              <div style="font-size: 3rem;">⚠️</div>
+            </div>
+            <p class="lead">{{ message }}</p>
+            
+            <div class="mt-4">
+              <button class="btn btn-primary me-2" (click)="resendVerificationEmail()" [disabled]="isResending">
+                <span *ngIf="isResending" class="spinner-border spinner-border-sm me-2"></span>
+                Reenviar Correo de Verificación
+              </button>
+              <button class="btn btn-outline-secondary" (click)="goToLogin()">
+                Volver al Login
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje de reenvío -->
+          <div *ngIf="resendMessage" class="alert alert-info mt-3">
+            {{ resendMessage }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Información adicional -->
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5 class="card-title">¿No recibiste el correo?</h5>
+          <ul class="list-unstyled">
+            <li>✅ Revisa tu carpeta de spam o correo no deseado</li>
+            <li>✅ Asegúrate de usar tu correo institucional</li>
+            <li>✅ Verifica que la dirección de correo sea correcta</li>
+            <li>✅ Si el problema persiste, contacta al administrador del sistema</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

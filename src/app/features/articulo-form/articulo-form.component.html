@@ -1,0 +1,197 @@
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-header" [class.bg-primary]="!isEditMode" [class.bg-warning]="isEditMode">
+          <h4 class="mb-0 text-white">
+            {{ isEditMode ? '✏️ Editar Artículo' : '➕ Nuevo Artículo' }}
+          </h4>
+        </div>
+        
+        <div class="card-body">
+          <!-- Loading -->
+          <div *ngIf="loading && isEditMode" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando artículo...</p>
+          </div>
+
+          <!-- Formulario -->
+          <form *ngIf="(!loading || !isEditMode) && tienePermisos()" (ngSubmit)="onSubmit()" #articuloForm="ngForm">
+            
+            <!-- Alerta de artículos existentes -->
+            <div *ngIf="articulosExistentes.length > 0 && !isEditMode" class="alert alert-warning">
+              <h6>⚠️ Artículos Similares Encontrados</h6>
+              <p class="mb-2">Se encontraron estos artículos con nombres similares:</p>
+              <div *ngFor="let art of articulosExistentes" class="mb-2 p-2 border rounded bg-light">
+                <p class="mb-1"><strong>Nombre:</strong> {{art.nombre}}</p>
+                <p class="mb-1"><strong>Partida:</strong> {{art.partidaCodigo}}</p>
+                <p class="mb-0"><strong>Precio:</strong> ${{art.precioReferencia | number:'1.2-2'}}</p>
+                <small class="text-muted">Estado: {{art.activo ? '✅ Activo' : '❌ Inactivo'}}</small>
+              </div>
+              <small class="text-danger">Verifica si el artículo que quieres crear ya existe.</small>
+            </div>
+
+            <!-- Error General -->
+            <div *ngIf="error" class="alert alert-danger">
+              ❌ {{ error }}
+            </div>
+
+            <!-- Campo Nombre -->
+            <div class="mb-3">
+              <label for="nombre" class="form-label">
+                <strong>Nombre del Artículo</strong> *
+              </label>
+              <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                [(ngModel)]="articulo.nombre"
+                (input)="verificarArticulosExistentes()"
+                required
+                minlength="3"
+                class="form-control form-control-lg"
+                placeholder="Ingresa el nombre del artículo"
+                [class.is-invalid]="articulosExistentes.length > 0 && !isEditMode"
+              >
+              <div class="form-text">
+                Buscará automáticamente artículos con nombres similares
+              </div>
+              <div *ngIf="articulosExistentes.length > 0 && !isEditMode" class="invalid-feedback">
+                ⚠️ Ya existen artículos con nombres similares
+              </div>
+            </div>
+
+            <!-- Campo Descripción -->
+            <div class="mb-3">
+              <label for="descripcion" class="form-label">
+                <strong>Descripción</strong> *
+              </label>
+              <textarea
+                id="descripcion"
+                name="descripcion"
+                [(ngModel)]="articulo.descripcion"
+                required
+                minlength="10"
+                rows="4"
+                class="form-control"
+                placeholder="Describe detalladamente el artículo..."
+              ></textarea>
+              <div class="form-text">
+                Proporciona una descripción clara y detallada del artículo
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Campo Precio -->
+              <div class="col-md-6 mb-3">
+                <label for="precio" class="form-label">
+                  <strong>Precio de Referencia</strong> *
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    id="precio"
+                    name="precioReferencia"
+                    [(ngModel)]="articulo.precioReferencia"
+                    required
+                    min="0"
+                    step="0.01"
+                    class="form-control"
+                    placeholder="0.00"
+                  >
+                </div>
+                <div class="form-text">
+                  Precio estimado para referencia en cotizaciones
+                </div>
+              </div>
+
+              <!-- Campo Partida -->
+              <div class="col-md-6 mb-3">
+                <label for="partida" class="form-label">
+                  <strong>Partida Presupuestal</strong> *
+                </label>
+                <select
+                  id="partida"
+                  name="partidaCodigo"
+                  [(ngModel)]="articulo.partidaCodigo"
+                  required
+                  class="form-select"
+                >
+                  <option value="">Selecciona una partida...</option>
+                  <option *ngFor="let partida of partidas" [value]="partida.codigo">
+                    {{ partida.codigo }} - {{ partida.nombre }}
+                  </option>
+                </select>
+                <div class="form-text">
+                  Clasificación presupuestal del artículo
+                </div>
+              </div>
+            </div>
+
+            <!-- Campo Estado (solo en edición) -->
+            <div *ngIf="isEditMode" class="mb-4">
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="activo"
+                  name="activo"
+                  [(ngModel)]="articulo.activo"
+                  style="transform: scale(1.2);"
+                >
+                <label class="form-check-label fw-bold" for="activo">
+                  {{ articulo.activo ? '✅ Artículo Activo' : '❌ Artículo Inactivo' }}
+                </label>
+              </div>
+              <div class="form-text">
+                Los artículos inactivos no estarán disponibles para cotizaciones
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex gap-2 flex-wrap pt-3 border-top">
+              <button
+                type="submit"
+                class="btn btn-success btn-lg"
+                [disabled]="articuloForm.invalid || loading"
+              >
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                {{ isEditMode ? '💾 Actualizar Artículo' : '➕ Crear Artículo' }}
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-secondary btn-lg"
+                (click)="cancelar()"
+                [disabled]="loading"
+              >
+                ↩️ Cancelar
+              </button>
+
+              <!-- Botón Desactivar solo en edición -->
+              <button
+                *ngIf="isEditMode && articulo.activo"
+                type="button"
+                class="btn btn-danger btn-lg ms-auto"
+                (click)="desactivarArticulo()"
+                [disabled]="loading"
+              >
+                🚫 Desactivar
+              </button>
+            </div>
+          </form>
+
+          <!-- Mensaje de sin permisos -->
+          <div *ngIf="!tienePermisos()" class="alert alert-warning text-center">
+            <h5>⚠️ Sin Permisos</h5>
+            <p>No tienes permisos para gestionar artículos.</p>
+            <button class="btn btn-secondary" (click)="cancelar()">Volver al Catálogo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

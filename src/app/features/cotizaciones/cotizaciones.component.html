@@ -1,0 +1,305 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" routerLink="/dashboard">
+        <i class="fas fa-arrow-left me-2"></i>
+        Volver al Dashboard
+      </a>
+      <div class="d-flex align-items-center">
+        <span class="text-light me-3">🛒 Sistema de Cotizaciones</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Header Section -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <h1>🛒 Cotizaciones</h1>
+        <p class="text-muted">Crea y gestiona tus cotizaciones por partida presupuestal</p>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">🔄 Cargando datos...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !loading" class="alert alert-danger text-center">
+      <p>❌ {{ error }}</p>
+      <button (click)="cargarDatosIniciales()" class="btn btn-outline-danger">Reintentar</button>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div *ngIf="!loading && !error" class="row">
+      <!-- Panel Izquierdo: Selección y Catálogo -->
+      <div class="col-md-8">
+        <!-- Selección de Proyecto y Partida -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">📋 Selecciona Proyecto y Partida</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <!-- Selección de Proyecto -->
+              <div class="col-md-6">
+                <label class="form-label">Proyecto *</label>
+                <select 
+                  class="form-select" 
+                  [value]="proyectoSeleccionado?.id || ''"
+                  (change)="onProyectoChangeSeleccionado($event)"
+                >
+                  <option value="">Selecciona un proyecto</option>
+                  <option *ngFor="let proyecto of proyectos" [value]="proyecto.id">
+                    {{ proyecto.nombre }} ({{ proyecto.edicion }})
+                  </option>
+                </select>
+              </div>
+
+              <!-- Selección de Partida -->
+              <div class="col-md-6">
+                <label class="form-label">Partida Presupuestal *</label>
+                <select 
+                  class="form-select" 
+                  [disabled]="!proyectoSeleccionado"
+                  [value]="partidaSeleccionada?.id || ''"
+                  (change)="onPartidaChangeSeleccionado($event)"
+                >
+                  <option value="">Selecciona una partida</option>
+                  <option *ngFor="let partida of partidas" [value]="partida.id">
+                    {{ partida.codigo }} - {{ partida.nombre }} (${{ partida.saldoDisponible | number:'1.2-2' }})
+                  </option>
+                </select>
+              </div>
+
+              <!-- Información de Presupuesto -->
+              <div *ngIf="partidaSeleccionada" class="col-12">
+                <div class="budget-info p-3 bg-light rounded">
+                  <h6>💰 Información de Presupuesto</h6>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <strong>Saldo Disponible:</strong><br>
+                      <span class="text-success">${{ saldoDisponible | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Total Carrito:</strong><br>
+                      <span [class]="haExcedidoPresupuesto ? 'text-danger' : 'text-primary'">
+                        ${{ totalCarrito | number:'1.2-2' }}
+                      </span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Saldo Restante:</strong><br>
+                      <span [class]="haExcedidoPresupuesto ? 'text-danger' : 'text-success'">
+                        ${{ saldoRestante | number:'1.2-2' }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- ✅ NUEVO: Indicador de estado de presupuesto -->
+                  <div *ngIf="partidaSeleccionada" class="alert mt-3 mb-0" [class]="haExcedidoPresupuesto ? 'alert-danger' : (saldoRestante < 1000 ? 'alert-warning' : 'alert-success')">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong *ngIf="!haExcedidoPresupuesto && saldoRestante >= 1000">✅ Presupuesto disponible</strong>
+                        <strong *ngIf="!haExcedidoPresupuesto && saldoRestante < 1000">⚠️ Presupuesto limitado</strong>
+                        <strong *ngIf="haExcedidoPresupuesto">🚫 Presupuesto excedido</strong>
+                        <br>
+                        <small>
+                          Límite: ${{ saldoDisponible | number:'1.2-2' }} | 
+                          Usado: ${{ totalCarrito | number:'1.2-2' }} | 
+                          Restante: <span [class]="saldoRestante >= 0 ? 'text-success' : 'text-danger'">${{ saldoRestante | number:'1.2-2' }}</span>
+                        </small>
+                      </div>
+                      <div *ngIf="saldoRestante === 0" class="text-danger">
+                        <small>💰 Presupuesto agotado</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Catálogo de Artículos -->
+        <div *ngIf="partidaSeleccionada" class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">📦 Catálogo de Artículos - {{ partidaSeleccionada.codigo }}</h5>
+            <div class="search-box">
+              <input 
+                type="text" 
+                [(ngModel)]="searchTerm" 
+                (input)="buscarArticulos()"
+                placeholder="🔍 Buscar artículo..." 
+                class="form-control"
+              >
+            </div>
+          </div>
+
+          <!-- ✅ NUEVO: Mensaje informativo -->
+          <div *ngIf="partidaSeleccionada" class="alert alert-info mx-3 mt-3 mb-0">
+            <small>
+              🔍 <strong>Filtrado por partida:</strong> Solo se muestran artículos de la partida <strong>{{ partidaSeleccionada.codigo }} - {{ partidaSeleccionada.nombre }}</strong>
+            </small>
+          </div>
+
+          <div class="card-body">
+            <!-- Lista de Artículos -->
+            <div *ngIf="articulosFiltrados.length > 0" class="row g-3">
+              <div *ngFor="let articulo of articulosFiltrados" class="col-md-6 col-lg-4">
+                <div class="articulo-card card h-100">
+                  <div class="card-body">
+                    <h6 class="card-title">{{ articulo.nombre }}</h6>
+                    <p class="card-text small text-muted">{{ articulo.descripcion }}</p>
+                    <div class="articulo-info">
+                      <span class="badge bg-primary">{{ articulo.partidaCodigo }}</span>
+                      <span class="precio">${{ articulo.precioReferencia | number:'1.2-2' }}</span>
+                    </div>
+                    
+                    <!-- ✅ NUEVO: Botón con validación de presupuesto -->
+                    <button 
+                      (click)="agregarAlCarrito(articulo)"
+                      class="btn w-100 mt-2"
+                      [class]="puedeAgregarArticulo(articulo) ? 'btn-success' : 'btn-secondary'"
+                      [disabled]="!puedeAgregarArticulo(articulo)"
+                      title="{{ !puedeAgregarArticulo(articulo) ? 'No hay suficiente presupuesto para este artículo' : 'Agregar al carrito' }}"
+                    >
+                      {{ puedeAgregarArticulo(articulo) ? '🛒 Agregar' : '🚫 Sin presupuesto' }}
+                    </button>
+
+                    <!-- ✅ NUEVO: Mensaje de sin presupuesto -->
+                    <div *ngIf="!puedeAgregarArticulo(articulo)" class="mt-1">
+                      <small class="text-danger">
+                        💰 Necesitas ${{ (articulo.precioReferencia - saldoRestante) | number:'1.2-2' }} más
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="articulosFiltrados.length === 0" class="text-center py-4">
+              <p class="text-muted">📭 No se encontraron artículos en la partida {{ partidaSeleccionada.codigo }}</p>
+              <small class="text-muted" *ngIf="searchTerm">Intenta con otros términos de búsqueda</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Derecho: Carrito de Compras -->
+      <div class="col-md-4">
+        <div class="card sticky-top" style="top: 20px;">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">🛒 Carrito de Compras</h5>
+            <button 
+              *ngIf="carrito.length > 0"
+              (click)="limpiarCarrito()"
+              class="btn btn-outline-danger btn-sm"
+            >
+              🗑️ Limpiar
+            </button>
+          </div>
+          <div class="card-body">
+            <!-- Carrito Vacío -->
+            <div *ngIf="carrito.length === 0" class="text-center py-4">
+              <p class="text-muted">Tu carrito está vacío</p>
+              <small class="text-muted">Selecciona artículos del catálogo para agregarlos</small>
+            </div>
+
+            <!-- Items del Carrito -->
+            <div *ngIf="carrito.length > 0" class="carrito-items">
+              <div *ngFor="let item of carrito" class="carrito-item mb-3 p-3 border rounded">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h6 class="mb-0">{{ item.articulo.nombre }}</h6>
+                  <button 
+                    (click)="eliminarDelCarrito(item)"
+                    class="btn btn-outline-danger btn-sm"
+                  >
+                    ❌
+                  </button>
+                </div>
+                
+                <p class="small text-muted mb-2">{{ item.articulo.descripcion }}</p>
+                
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="small">Cantidad</label>
+                    <input 
+                      type="number" 
+                      [value]="item.cantidad"
+                      (change)="actualizarCantidad(item, $any($event.target).valueAsNumber)"
+                      min="1"
+                      class="form-control form-control-sm"
+                    >
+                  </div>
+                  <div class="col-6">
+                    <label class="small">Precio Unitario</label>
+                    <input 
+                      type="number" 
+                      [value]="item.precioUnitario"
+                      (change)="actualizarPrecio(item, $any($event.target).valueAsNumber)"
+                      min="0"
+                      step="0.01"
+                      class="form-control form-control-sm"
+                    >
+                  </div>
+                </div>
+                
+                <div class="mt-2 text-end">
+                  <strong>Subtotal: ${{ item.subtotal | number:'1.2-2' }}</strong>
+                </div>
+              </div>
+
+              <!-- Resumen del Carrito -->
+              <div class="carrito-total p-3 bg-light rounded">
+                <div class="d-flex justify-content-between mb-2">
+                  <strong>Total Carrito:</strong>
+                  <span [class]="haExcedidoPresupuesto ? 'text-danger' : 'text-primary'">
+                    ${{ totalCarrito | number:'1.2-2' }}
+                  </span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Saldo Disponible:</span>
+                  <span>${{ saldoDisponible | number:'1.2-2' }}</span>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                  <span>Saldo Restante:</span>
+                  <span [class]="haExcedidoPresupuesto ? 'text-danger' : 'text-success'">
+                    ${{ saldoRestante | number:'1.2-2' }}
+                  </span>
+                </div>
+
+                <!-- Advertencia de presupuesto -->
+                <div *ngIf="haExcedidoPresupuesto" class="alert alert-warning mt-2 mb-0">
+                  ⚠️ Ajusta tu carrito para no exceder el presupuesto
+                </div>
+
+                <!-- ✅ NUEVO: Indicador de presupuesto agotado -->
+                <div *ngIf="saldoRestante === 0 && !haExcedidoPresupuesto" class="alert alert-info mt-2 mb-0">
+                  ✅ Presupuesto completamente utilizado
+                </div>
+
+                <!-- Botón Generar Cotización -->
+                <button 
+                  (click)="generarCotizacion()"
+                  [disabled]="!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto"
+                  class="btn w-100 mt-3"
+                  [class]="(!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto) ? 'btn-secondary' : 'btn-primary'"
+                >
+                  {{ haExcedidoPresupuesto ? '⚠️ Ajusta Presupuesto' : '📄 Generar Cotización' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

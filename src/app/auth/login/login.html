@@ -1,0 +1,81 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- Header -->
+    <div class="login-header">
+      <div class="login-icon">
+        🔐
+      </div>
+      <h3>Acceso al Sistema</h3>
+      <p>Ingresa con tus credenciales institucionales</p>
+    </div>
+
+    <!-- Body -->
+    <div class="login-body">
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email" class="form-label">Correo Institucional</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            formControlName="email"
+            placeholder="usuario@itescam.edu.mx"
+            [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          >
+          <div class="invalid-feedback" *ngIf="loginForm.get('email')?.errors?.['required']">
+            El correo electrónico es requerido
+          </div>
+          <div class="invalid-feedback" *ngIf="loginForm.get('email')?.errors?.['email']">
+            Por favor ingresa un correo válido
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password" class="form-label">Contraseña</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            formControlName="password"
+            placeholder="Mínimo 8 caracteres"
+            [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          >
+          <div class="invalid-feedback" *ngIf="loginForm.get('password')?.errors?.['required']">
+            La contraseña es requerida
+          </div>
+          <div class="invalid-feedback" *ngIf="loginForm.get('password')?.errors?.['minlength']">
+            La contraseña debe tener al menos 8 caracteres
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="alert alert-danger" *ngIf="error" role="alert">
+          <strong>Error:</strong> {{ error }}
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn btn-login"
+          [disabled]="loginForm.invalid || loading"
+        >
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          {{ loading ? 'Verificando...' : 'Iniciar Sesión' }}
+        </button>
+
+        <!-- Botón de prueba para Mariana (eliminar en producción) -->
+      
+      </form>
+
+      <!-- Footer -->
+      <div class="login-footer">
+        <p>
+          ¿Eres docente y no tienes cuenta? 
+          <a class="register-link" [routerLink]="['/auth/register']">Regístrate aquí</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

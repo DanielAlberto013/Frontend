@@ -1,0 +1,135 @@
+/* Estilos generales para reportes */
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Estadísticas */
+.bg-primary, .bg-success, .bg-info, .bg-warning {
+  border: none;
+}
+
+/* Tablas */
+.table-responsive {
+  border-radius: 0.5rem;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Tarjetas de cotizaciones para docentes */
+.cotizacion-card {
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.cotizacion-card:hover {
+  background: #e9ecef;
+  border-color: #007bff;
+}
+
+/* Estilos para el ticket de compra (solo impresión) */
+.ticket-compra {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Courier New', monospace;
+  background: white;
+}
+
+.ticket-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.ticket-header p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.ticket-info p {
+  margin: 5px 0;
+}
+
+.ticket-items table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ticket-items th,
+.ticket-items td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.ticket-total h4 {
+  margin: 20px 0;
+  font-weight: bold;
+}
+
+.ticket-footer {
+  margin-top: 30px;
+  color: #666;
+}
+
+/* Ocultar elementos en impresión excepto el ticket */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .ticket-compra,
+  .ticket-compra * {
+    visibility: visible;
+  }
+  
+  .ticket-compra {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .table-responsive {
+    font-size: 0.9rem;
+  }
+  
+  .ticket-compra {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Mejoras visuales */
+.badge {
+  font-size: 0.75em;
+}
+
+.btn {
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}

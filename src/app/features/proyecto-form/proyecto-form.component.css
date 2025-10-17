@@ -1,0 +1,84 @@
+.form-section {
+     padding: 1.5rem;
+     border: 1px solid #e9ecef;
+     border-radius: 0.5rem;
+     background: #f8f9fa;
+   }
+   
+   .section-title {
+     color: #2c3e50;
+     border-bottom: 2px solid #3498db;
+     padding-bottom: 0.5rem;
+     margin-bottom: 1.5rem;
+   }
+   
+   .partida-item {
+     border-left: 4px solid #3498db;
+     transition: all 0.3s ease;
+   }
+   
+   .partida-item:hover {
+     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+     transform: translateY(-2px);
+   }
+   
+   .budget-summary {
+     border: 2px solid #e9ecef;
+   }
+   
+   .budget-distribution {
+     border: 1px solid #dee2e6;
+   }
+   
+   .progress {
+     height: 8px;
+   }
+   
+   .progress-bar {
+     transition: width 0.3s ease;
+   }
+   
+   /* Estilos para formularios */
+   .form-control:read-only {
+     background-color: #f8f9fa;
+     opacity: 0.8;
+   }
+   
+   .invalid-feedback {
+     display: block;
+   }
+   
+   /* Responsive */
+   @media (max-width: 768px) {
+     .form-section {
+       padding: 1rem;
+     }
+     
+     .partida-item .card-body {
+       padding: 1rem;
+     }
+   }
+   
+   /* Animaciones */
+   .card {
+     transition: box-shadow 0.3s ease;
+   }
+   
+   .btn {
+     transition: all 0.2s ease;
+   }
+   
+   /* Mejoras visuales */
+   .input-group-text {
+     background-color: #e9ecef;
+     border-color: #ced4da;
+   }
+   
+   .alert {
+     border: none;
+     border-radius: 0.5rem;
+   }
+   
+   .bg-light {
+     background-color: #f8f9fa !important;
+   }
