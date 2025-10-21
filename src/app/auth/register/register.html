@@ -1,122 +1,73 @@
-<div class="register-container">
-  <div class="register-card">
-    <!-- Header -->
-    <div class="register-header">
-      <div class="register-icon">
-        👨‍🏫
+<div class="login-container">
+  <div class="login-card">
+    <h1 class="login-title">Registro Docente</h1>
+    <p class="login-subtitle">Únete a nuestra plataforma de gestión</p>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="login-form">
+
+      <!-- Nombre completo -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput type="text" formControlName="nombre" placeholder="Ingresa tu nombre completo" />
+        <mat-error *ngIf="registerForm.get('nombre')?.errors?.['required']">
+          El nombre es obligatorio.
+        </mat-error>
+        <mat-error *ngIf="registerForm.get('nombre')?.errors?.['minlength']">
+          Mínimo 3 caracteres.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Correo electrónico -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Correo Institucional</mat-label>
+        <input matInput type="email" formControlName="email" placeholder="usuario@itescam.edu.mx" />
+        <mat-error *ngIf="registerForm.get('email')?.errors?.['required']">
+          El correo es obligatorio.
+        </mat-error>
+        <mat-error *ngIf="registerForm.get('email')?.errors?.['email']">
+          Ingresa un correo válido.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Contraseña -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña</mat-label>
+        <input matInput type="password" formControlName="password" placeholder="********" />
+        <mat-error *ngIf="registerForm.get('password')?.errors?.['required']">
+          La contraseña es obligatoria.
+        </mat-error>
+        <mat-error *ngIf="registerForm.get('password')?.errors?.['minlength']">
+          Mínimo 8 caracteres.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Confirmar Contraseña -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Confirmar Contraseña</mat-label>
+        <input matInput type="password" formControlName="confirmPassword" placeholder="********" />
+        <mat-error *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">
+          Confirmar contraseña es obligatorio.
+        </mat-error>
+        <mat-error *ngIf="registerForm.errors?.['passwordMismatch'] && registerForm.get('confirmPassword')?.touched">
+          Las contraseñas no coinciden.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Mensaje de error -->
+      <div class="error-message" *ngIf="error">
+        {{ error }}
       </div>
-      <h3>Registro Docente</h3>
-      <p>Únete a nuestra plataforma de gestión</p>
-    </div>
 
-    <!-- Body -->
-    <div class="register-body">
-      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-        <!-- Nombre -->
-        <div class="form-group">
-          <label for="nombre" class="form-label">Nombre Completo</label>
-          <input
-            type="text"
-            class="form-control"
-            id="nombre"
-            formControlName="nombre"
-            placeholder="Ingresa tu nombre completo"
-            [class.is-invalid]="registerForm.get('nombre')?.invalid && registerForm.get('nombre')?.touched"
-          >
-          <div class="invalid-feedback" *ngIf="registerForm.get('nombre')?.errors?.['required']">
-            El nombre completo es requerido
-          </div>
-          <div class="invalid-feedback" *ngIf="registerForm.get('nombre')?.errors?.['minlength']">
-            El nombre debe tener al menos 3 caracteres
-          </div>
-        </div>
+      <!-- Botón -->
+      <button mat-raised-button color="primary" class="login-button" [disabled]="loading || registerForm.invalid">
+        <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+        <span *ngIf="!loading">Crear Cuenta</span>
+      </button>
+    </form>
 
-        <!-- Email -->
-        <div class="form-group">
-          <label for="email" class="form-label">Correo Institucional</label>
-          <input
-            type="email"
-            class="form-control"
-            id="email"
-            formControlName="email"
-            placeholder="usuario@itescam.edu.mx"
-            [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
-          >
-          <div class="invalid-feedback" *ngIf="registerForm.get('email')?.errors?.['required']">
-            El correo electrónico es requerido
-          </div>
-          <div class="invalid-feedback" *ngIf="registerForm.get('email')?.errors?.['email']">
-            Por favor ingresa un correo válido
-          </div>
-        </div>
-
-        <!-- Password -->
-        <div class="form-group">
-          <label for="password" class="form-label">Contraseña</label>
-          <input
-            type="password"
-            class="form-control"
-            id="password"
-            formControlName="password"
-            placeholder="Mínimo 8 caracteres"
-            [class.is-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
-          >
-          <div class="invalid-feedback" *ngIf="registerForm.get('password')?.errors?.['required']">
-            La contraseña es requerida
-          </div>
-          <div class="invalid-feedback" *ngIf="registerForm.get('password')?.errors?.['minlength']">
-            La contraseña debe tener al menos 8 caracteres
-          </div>
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="form-group">
-          <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
-          <input
-            type="password"
-            class="form-control"
-            id="confirmPassword"
-            formControlName="confirmPassword"
-            placeholder="Confirma tu contraseña"
-            [class.is-invalid]="(registerForm.get('confirmPassword')?.invalid || registerForm.errors?.['passwordMismatch']) && registerForm.get('confirmPassword')?.touched"
-          >
-          <div class="invalid-feedback" *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">
-            Confirmar contraseña es requerido
-          </div>
-          <div class="invalid-feedback" *ngIf="registerForm.errors?.['passwordMismatch'] && registerForm.get('confirmPassword')?.touched">
-            Las contraseñas no coinciden
-          </div>
-        </div>
-
-        <!-- Info Box -->
-        <div class="alert alert-info" role="alert">
-          <strong>Información:</strong> Este registro es exclusivo para docentes del Intescam. 
-          Se requiere correo institucional @itescam.edu.mx
-        </div>
-
-        <!-- Error Message -->
-        <div class="alert alert-danger" *ngIf="error" role="alert">
-          <strong>Error:</strong> {{ error }}
-        </div>
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="btn btn-register"
-          [disabled]="registerForm.invalid || loading"
-        >
-          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-          {{ loading ? 'Registrando...' : 'Crear Cuenta Docente' }}
-        </button>
-      </form>
-
-      <!-- Footer -->
-      <div class="register-footer">
-        <p>
-          ¿Ya tienes una cuenta? 
-          <a class="login-link" [routerLink]="['/auth/login']">Inicia sesión aquí</a>
-        </p>
-      </div>
+    <div class="register-link">
+      ¿Ya tienes una cuenta?
+      <a routerLink="/auth/login">Inicia sesión aquí</a>
     </div>
   </div>
 </div>

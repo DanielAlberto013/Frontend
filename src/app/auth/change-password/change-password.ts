@@ -4,10 +4,26 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth';
 
+// Módulos de Angular Material
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon'; // si usas íconos
+
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatIconModule
+  ],
   templateUrl: './change-password.html',
   styleUrls: ['./change-password.css']
 })
@@ -47,7 +63,6 @@ export class ChangePasswordComponent {
     this.loading = true;
     const { currentPassword, newPassword } = this.changePasswordForm.value;
 
-    // Simulación - en un caso real llamarías al backend
     setTimeout(() => {
       this.loading = false;
       this.successMessage = 'Contraseña cambiada exitosamente';

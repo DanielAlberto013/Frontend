@@ -1,193 +1,60 @@
-<div class="container-fluid">
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-      <a class="navbar-brand" href="#">
-        <i class="fas fa-chart-line me-2"></i>
-        Sistema de Finanzas - Intescam
-      </a>
-      <div class="d-flex align-items-center">
-        <span class="text-light me-3">
-          Bienvenido, <strong>{{ currentUser?.nombre }}</strong>
-          <small class="ms-1">({{ currentUser?.role }})</small>
-        </span>
-        <button class="btn btn-outline-light" (click)="logout()">
-          🚪 Cerrar Sesión
-        </button>
+<div class="dashboard-container">
+
+  <!-- Topbar -->
+  <nav class="topbar">
+    <div class="logo">
+      <i class="fas fa-chart-line"></i>
+      Sistema de Finanzas - Intescam
+    </div>
+
+    <div class="user-menu" *ngIf="currentUser">
+      <span class="user-name">👋 {{ currentUser.nombre }}</span>
+      <div class="dropdown">
+        <button class="dropdown-toggle">⚙️ Opciones</button>
+        <div class="dropdown-menu">
+          <p><strong>Rol:</strong> {{ currentUser.role }}</p>
+          <p><strong>Email:</strong> {{ currentUser.email }}</p>
+          <hr>
+          <button (click)="logout()" class="dropdown-btn logout">🚪 Cerrar Sesión</button>
+          <button routerLink="/auth/change-password" class="dropdown-btn change-password">🔒 Cambiar Contraseña</button>
+        </div>
       </div>
     </div>
   </nav>
 
-  <!-- Main Content -->
-  <div class="container mt-4">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header bg-white">
-            <h4 class="mb-0">📊 Dashboard Principal</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <!-- Card Proyectos -->
-              <div class="col-md-3 mb-3">
-                <div class="card text-white bg-success h-100">
-                  <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">📁 Proyectos</h5>
-                    <p class="card-text flex-grow-1">
-                      Gestiona tus proyectos de investigación
-                    </p>
-                    <button 
-                      class="btn btn-light mt-auto" 
-                      [routerLink]="'/proyectos'"
-                      [class.disabled]="!currentUser"
-                    >
-                      {{ currentUser ? 'Ir a Proyectos' : 'Cargando...' }}
-                    </button>
-                  </div>
-                </div>
-              </div>
+  <!-- Bienvenida -->
+  <div class="welcome-banner">
+    <h2>👋 ¡Bienvenido, {{ currentUser?.nombre }}!</h2>
+    <p>Selecciona una sección para comenzar a gestionar el sistema</p>
+  </div>
 
-              <!-- Card Catálogo -->
-              <div class="col-md-3 mb-3">
-                <div class="card text-white bg-info h-100">
-                  <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">📋 Catálogo</h5>
-                    <p class="card-text flex-grow-1">
-                      Consulta el catálogo de artículos
-                    </p>
-                    <button 
-                      class="btn btn-light mt-auto" 
-                      routerLink="/catalogo"
-                    >
-                      Ir al Catálogo
-                    </button>
-                  </div>
-                </div>
-              </div>
+  <!-- Tarjetas principales -->
+  <div class="cards-container">
+    <div class="card-item card-gradient-blue" routerLink="/proyectos">
+      <div class="card-icon animated-icon">📁</div>
+      <h3>Proyectos</h3>
+      <p>Gestiona tus proyectos de investigación</p>
+    </div>
 
-              <!-- Card Cotizaciones -->
-              <div class="col-md-3 mb-3">
-                <div class="card text-white bg-warning h-100">
-                  <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">🛒 Cotizaciones</h5>
-                    <p class="card-text flex-grow-1">
-                      Crea y gestiona tus cotizaciones
-                    </p>
-                    <button 
-                      class="btn btn-light mt-auto" 
-                      routerLink="/cotizaciones"
-                    >
-                      Ir a Cotizaciones
-                    </button>
-                  </div>
-                </div>
-              </div>
+    <div class="card-item card-gradient-purple" routerLink="/catalogo">
+      <div class="card-icon animated-icon">📋</div>
+      <h3>Catálogo</h3>
+      <p>Consulta el catálogo de artículos</p>
+    </div>
 
-              <!-- Card Reportes/Tickets - SEGÚN ROL -->
-              <div class="col-md-3 mb-3">
-                <div class="card text-white h-100" [class.bg-secondary]="authService.isAdmin() || authService.isRevisor()" [class.bg-primary]="authService.isDocente()">
-                  <div class="card-body d-flex flex-column">
-                    
-                    <!-- PARA ADMIN/REVISOR -->
-                    <div *ngIf="authService.isAdmin() || authService.isRevisor()">
-                      <h5 class="card-title">📊 Reportes</h5>
-                      <p class="card-text flex-grow-1">
-                        Genera reportes y estadísticas del sistema
-                      </p>
-                      <button 
-                        class="btn btn-light mt-auto" 
-                        routerLink="/reportes"
-                      >
-                        Ver Reportes
-                      </button>
-                    </div>
+    <div class="card-item card-gradient-green" routerLink="/cotizaciones">
+      <div class="card-icon animated-icon">🛒</div>
+      <h3>Cotizaciones</h3>
+      <p>Crea y gestiona tus cotizaciones</p>
+    </div>
 
-                    <!-- PARA DOCENTES -->
-                    <div *ngIf="authService.isDocente()">
-                      <h5 class="card-title">🧾 Crear Ticket</h5>
-                      <p class="card-text flex-grow-1">
-                        Genera tickets de tus cotizaciones aprobadas
-                      </p>
-                      <button 
-                        class="btn btn-light mt-auto" 
-                        routerLink="/reportes"
-                      >
-                        Crear Ticket
-                      </button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Información del Usuario -->
-            <div class="mt-4 p-3 bg-light rounded">
-              <h5>👋 Bienvenido, {{ currentUser?.nombre }}</h5>
-              <p class="mb-1"><strong>Rol:</strong> {{ currentUser?.role }}</p>
-              <p class="mb-1"><strong>Email:</strong> {{ currentUser?.email }}</p>
-              <p class="mb-0 text-muted">Selecciona una opción del menú para comenzar a gestionar el sistema.</p>
-            </div>
-
-            <!-- Acciones Rápidas según Rol -->
-            <div class="mt-4" *ngIf="currentUser">
-              <h6>⚡ Acciones Rápidas</h6>
-              <div class="d-flex gap-2 flex-wrap">
-                
-                <!-- Para Docentes -->
-                <button 
-                  *ngIf="authService.isDocente()"
-                  class="btn btn-outline-primary btn-sm"
-                  routerLink="/cotizaciones"
-                >
-                  🛒 Comenzar Cotización
-                </button>
-                
-                <button 
-                  *ngIf="authService.isDocente()"
-                  class="btn btn-outline-success btn-sm"
-                  routerLink="/proyectos/nuevo"
-                >
-                  📁 Crear Proyecto
-                </button>
-
-                <button 
-                  *ngIf="authService.isDocente()"
-                  class="btn btn-outline-info btn-sm"
-                  routerLink="/reportes"
-                >
-                  🧾 Generar Ticket
-                </button>
-                
-                <!-- Para Revisores/Admin -->
-                <button 
-                  *ngIf="authService.isRevisor() || authService.isAdmin()"
-                  class="btn btn-outline-success btn-sm"
-                  routerLink="/proyectos"
-                >
-                  👁️ Revisar Proyectos
-                </button>
-
-                <button 
-                  *ngIf="authService.isRevisor() || authService.isAdmin()"
-                  class="btn btn-outline-warning btn-sm"
-                  routerLink="/reportes"
-                >
-                  📊 Ver Reportes
-                </button>
-
-                <button 
-                  *ngIf="authService.isAdmin()"
-                  class="btn btn-outline-info btn-sm"
-                  routerLink="/catalogo"
-                >
-                  ➕ Gestionar Catálogo
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="card-item card-gradient-orange" routerLink="/reportes">
+      <div class="card-icon animated-icon">📊</div>
+      <h3 *ngIf="authService.isAdmin() || authService.isRevisor()">Reportes</h3>
+      <h3 *ngIf="authService.isDocente()">Crear Ticket</h3>
+      <p *ngIf="authService.isAdmin() || authService.isRevisor()">Genera reportes y estadísticas</p>
+      <p *ngIf="authService.isDocente()">Genera tickets de tus cotizaciones aprobadas</p>
     </div>
   </div>
+
 </div>

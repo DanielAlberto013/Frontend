@@ -4,10 +4,25 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth';
 
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
+
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatIconModule
+  ],
   templateUrl: './register.html',
   styleUrls: ['./register.css']
 })
@@ -41,13 +56,12 @@ export class RegisterComponent {
       this.error = 'Por favor corrige los errores en el formulario.';
       return;
     }
-  
+
     this.loading = true;
-    
+
     this.authService.register(this.registerForm.value).subscribe({
       next: () => {
         this.loading = false;
-        // CAMBIO: En lugar de ir al dashboard, mostrar mensaje y redirigir al login
         alert('✅ Registro exitoso. Ahora puedes iniciar sesión.');
         this.router.navigate(['/auth/login']);
       },
@@ -56,8 +70,5 @@ export class RegisterComponent {
         this.error = error.error?.message || 'Error al registrar usuario. El correo puede estar en uso.';
       }
     });
-  }
-  goToLogin(): void {
-    this.router.navigate(['/auth/login']);
   }
 }

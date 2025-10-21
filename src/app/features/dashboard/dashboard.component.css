@@ -1,25 +1,205 @@
-/* Estilos adicionales para mejorar el dashboard */
-.card {
-  transition: transform 0.2s ease-in-out;
+/* Contenedor general */
+.dashboard-container {
+  font-family: 'Poppins', sans-serif;
+  background: #f0f4f8;
+  min-height: 100vh;
 }
 
-.card:hover {
-  transform: translateY(-2px);
+/* Topbar moderno */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #16073a, #18073b);
+  color: #fff;
+  padding: 12px 25px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
-.btn {
-  transition: all 0.2s ease-in-out;
+.topbar .logo {
+  font-weight: 700;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.navbar-brand {
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+/* Dropdown animado */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.dropdown-toggle:hover {
+  background: #1e40af;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  padding: 15px;
+  min-width: 220px;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-menu p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.dropdown-menu hr {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dropdown-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  margin-top: 5px;
+  color: #fff;
+  transition: 0.3s;
+}
+
+.dropdown-btn.logout { background: #ef4444; }
+.dropdown-btn.logout:hover { background: #b91c1c; }
+
+.dropdown-btn.change-password { background: #170e68; }
+.dropdown-btn.change-password:hover { background: #0f121d; }
+
+/* Bienvenida */
+.welcome-banner {
+  text-align: center;
+  margin: 30px 20px;
+}
+
+.welcome-banner h2 {
+  color: #1e3a8a;
+  font-size: 2rem;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.welcome-banner p {
+  color: #4b5563;
+  font-size: 1rem;
+  margin-top: 5px;
+}
+
+/* Contenedor de tarjetas */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 25px;
+  padding: 0 20px 40px 20px;
+}
+
+/* Tarjetas premium con animación */
+.card-item {
+  background: #fff;
+  border-radius: 20px;
+  padding: 25px 20px;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+  transition: transform 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
+  cursor: pointer;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-item:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+/* Iconos animados */
+.animated-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+  display: inline-block;
+  transition: transform 0.4s ease, scale 0.4s ease;
+}
+
+.card-item:hover .animated-icon {
+  transform: rotate(-10deg) scale(1.2);
+}
+
+/* Títulos */
+.card-item h3 {
+  margin: 12px 0;
+  font-size: 1.3rem;
   font-weight: 600;
 }
 
-/* Mejorar la visualización de las cards */
-.h-100 {
-  height: 100%;
+/* Texto */
+.card-item p {
+  font-size: 0.95rem;
 }
 
-.mt-auto {
-  margin-top: auto;
+/* Gradientes */
+.card-gradient-blue {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.card-gradient-purple {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+}
+
+.card-gradient-green {
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+}
+
+.card-gradient-orange {
+  background: linear-gradient(135deg, #facc15, #fbbf24);
+}
+
+.dashboard-container {
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #e9dfdf, #ddcece 40%, #e4e2e2 80%);
+  background-blend-mode: overlay;
+  display: flex;
+  flex-direction: column;
 }

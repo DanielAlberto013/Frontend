@@ -12,9 +12,10 @@ import { AuthService } from '../../auth/auth';
 })
 export class DashboardComponent implements OnInit {
   currentUser: any;
+  profileMenuOpen = false; // 🔹 Control del menú de perfil
 
   constructor(
-    public authService: AuthService,  // Cambiado a public
+    public authService: AuthService,
     private router: Router
   ) {}
 
@@ -27,6 +28,17 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // 🔹 Toggle del menú de perfil
+  toggleProfileMenu(): void {
+    this.profileMenuOpen = !this.profileMenuOpen;
+  }
+
+  // 🔹 Redirigir a cambio de contraseña
+  changePassword(): void {
+    this.router.navigate(['/auth/change-password']);
+  }
+
+  // 🔹 Cerrar sesión
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);

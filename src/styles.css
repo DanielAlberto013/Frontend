@@ -30,3 +30,5 @@ html, body {
   background-color: #0056b3;
   border-color: #0056b3;
 }
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
