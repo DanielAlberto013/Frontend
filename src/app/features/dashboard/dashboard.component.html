@@ -1,60 +1,145 @@
+<!-- Contenedor de partículas flotantes -->
+<div class="particles-container"></div>
+
 <div class="dashboard-container">
+  <!-- Topbar Moderno -->
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand-section">
+        <div class="logo">
+          <div class="logo-icon">
+            <i class="fas fa-chart-network"></i>
+          </div>
+          <div class="logo-text">
+            <span class="logo-primary">SistemaFinanzas</span>
+            <span class="logo-secondary">ITESCAM</span>
+          </div>
+        </div>
+      </div>
 
-  <!-- Topbar -->
-  <nav class="topbar">
-    <div class="logo">
-      <i class="fas fa-chart-line"></i>
-      Sistema de Finanzas - Intescam
-    </div>
-
-    <div class="user-menu" *ngIf="currentUser">
-      <span class="user-name">👋 {{ currentUser.nombre }}</span>
-      <div class="dropdown">
-        <button class="dropdown-toggle">⚙️ Opciones</button>
-        <div class="dropdown-menu">
-          <p><strong>Rol:</strong> {{ currentUser.role }}</p>
-          <p><strong>Email:</strong> {{ currentUser.email }}</p>
-          <hr>
-          <button (click)="logout()" class="dropdown-btn logout">🚪 Cerrar Sesión</button>
-          <button routerLink="/auth/change-password" class="dropdown-btn change-password">🔒 Cambiar Contraseña</button>
+      <div class="user-section" *ngIf="currentUser">
+        <div class="user-info">
+          <div class="user-avatar">
+            {{ currentUser.nombre.charAt(0) }}
+          </div>
+          <div class="user-details">
+            <span class="user-greeting">{{ currentUser.nombre }}</span>
+            <span class="user-role">{{ currentUser.role }}</span>
+          </div>
+        </div>
+        
+        <div class="dropdown-container">
+          <button class="dropdown-trigger" mat-icon-button>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-panel">
+            <div class="user-profile">
+              <div class="profile-avatar">{{ currentUser.nombre.charAt(0) }}</div>
+              <div class="profile-info">
+                <strong>{{ currentUser.nombre }}</strong>
+                <span>{{ currentUser.email }}</span>
+                <small class="role-badge">{{ currentUser.role }}</small>
+              </div>
+            </div>
+            <div class="dropdown-actions">
+              <button class="action-btn" routerLink="/auth/change-password">
+                <i class="fas fa-key"></i>
+                Cambiar Contraseña
+              </button>
+              <button class="action-btn logout" (click)="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Cerrar Sesión
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </nav>
+  </header>
 
-  <!-- Bienvenida -->
-  <div class="welcome-banner">
-    <h2>👋 ¡Bienvenido, {{ currentUser?.nombre }}!</h2>
-    <p>Selecciona una sección para comenzar a gestionar el sistema</p>
-  </div>
+  <!-- Contenido Principal -->
+  <main class="dashboard-main">
+    <!-- Header de Bienvenida -->
+    <section class="welcome-section">
+      <div class="welcome-content">
+        <h1 class="welcome-title">
+          Bienvenido de vuelta, {{ currentUser?.nombre }}
+          <div class="welcome-underline"></div>
+        </h1>
+        <p class="welcome-subtitle">Selecciona un módulo para comenzar a gestionar el sistema</p>
+      </div>
+      <div class="welcome-graphic">
+        <div class="graphic-dots"></div>
+      </div>
+    </section>
 
-  <!-- Tarjetas principales -->
-  <div class="cards-container">
-    <div class="card-item card-gradient-blue" routerLink="/proyectos">
-      <div class="card-icon animated-icon">📁</div>
-      <h3>Proyectos</h3>
-      <p>Gestiona tus proyectos de investigación</p>
-    </div>
+    <!-- Grid de Módulos -->
+    <section class="modules-grid">
+      <div class="module-card" routerLink="/proyectos" [class]="'module-primary'">
+        <div class="card-background"></div>
+        <div class="card-content">
+          <div class="card-icon">
+            <i class="fas fa-folder-open"></i>
+          </div>
+          <div class="card-text">
+            <h3>Proyectos</h3>
+            <p>Gestiona tus proyectos de investigación</p>
+          </div>
+          <div class="card-arrow">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
 
-    <div class="card-item card-gradient-purple" routerLink="/catalogo">
-      <div class="card-icon animated-icon">📋</div>
-      <h3>Catálogo</h3>
-      <p>Consulta el catálogo de artículos</p>
-    </div>
+      <div class="module-card" routerLink="/catalogo" [class]="'module-secondary'">
+        <div class="card-background"></div>
+        <div class="card-content">
+          <div class="card-icon">
+            <i class="fas fa-list-alt"></i>
+          </div>
+          <div class="card-text">
+            <h3>Catálogo</h3>
+            <p>Consulta el catálogo de artículos</p>
+          </div>
+          <div class="card-arrow">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
 
-    <div class="card-item card-gradient-green" routerLink="/cotizaciones">
-      <div class="card-icon animated-icon">🛒</div>
-      <h3>Cotizaciones</h3>
-      <p>Crea y gestiona tus cotizaciones</p>
-    </div>
+      <div class="module-card" routerLink="/cotizaciones" [class]="'module-accent'">
+        <div class="card-background"></div>
+        <div class="card-content">
+          <div class="card-icon">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <div class="card-text">
+            <h3>Cotizaciones</h3>
+            <p>Crea y gestiona tus cotizaciones</p>
+          </div>
+          <div class="card-arrow">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
 
-    <div class="card-item card-gradient-orange" routerLink="/reportes">
-      <div class="card-icon animated-icon">📊</div>
-      <h3 *ngIf="authService.isAdmin() || authService.isRevisor()">Reportes</h3>
-      <h3 *ngIf="authService.isDocente()">Crear Ticket</h3>
-      <p *ngIf="authService.isAdmin() || authService.isRevisor()">Genera reportes y estadísticas</p>
-      <p *ngIf="authService.isDocente()">Genera tickets de tus cotizaciones aprobadas</p>
-    </div>
-  </div>
-
+      <div class="module-card" routerLink="/reportes" [class]="'module-warning'">
+        <div class="card-background"></div>
+        <div class="card-content">
+          <div class="card-icon">
+            <i class="fas fa-chart-bar"></i>
+          </div>
+          <div class="card-text">
+            <h3 *ngIf="authService.isAdmin() || authService.isRevisor()">Reportes</h3>
+            <h3 *ngIf="authService.isDocente()">Crear Ticket</h3>
+            <p *ngIf="authService.isAdmin() || authService.isRevisor()">Genera reportes y estadísticas</p>
+            <p *ngIf="authService.isDocente()">Genera tickets de tus cotizaciones aprobadas</p>
+          </div>
+          <div class="card-arrow">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
