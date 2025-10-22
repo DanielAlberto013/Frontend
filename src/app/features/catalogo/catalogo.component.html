@@ -1,119 +1,161 @@
 <div class="catalogo-container">
-  <!-- Header -->
-  <div class="header">
-    <h1>📋 Catálogo de Artículos</h1>
-    <p>Lista de artículos disponibles para cotizaciones</p>
+  <!-- Header Mejorado -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-boxes"></i>
+      </div>
+      <div class="header-text">
+        <h1>Catálogo de Artículos</h1>
+        <p>Lista de artículos disponibles para cotizaciones</p>
+      </div>
+    </div>
+    
+    <!-- Botón para regresar al dashboard -->
+    <button class="btn btn-dashboard" routerLink="/dashboard">
+      <i class="fas fa-tachometer-alt"></i>
+      Volver al Dashboard
+    </button>
   </div>
 
-  <!-- Filtros -->
-  <div class="filtros-card">
-    <div class="filtros-row">
-      <div class="search-box">
-        <input 
-          type="text" 
-          [(ngModel)]="searchTerm" 
-          (ngModelChange)="onSearchChange()"
-          placeholder="🔍 Buscar artículo..." 
-          class="search-input"
-        >
-      </div>
-      
-      <div class="partida-filter">
-        <select 
-          [(ngModel)]="partidaFilter" 
-          (ngModelChange)="onPartidaFilterChange()"
-          class="filter-select"
-        >
-          <option value="">Todas las partidas</option>
-          <option value="21.1">21.1 - Papelería y Útiles</option>
-          <option value="25.1">25.1 - Productos Químicos</option>
-          <option value="29.4">29.4 - Material Didáctico</option>
-        </select>
-      </div>
+  <!-- Filtros Mejorados -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="filters-content">
+        <div class="search-container">
+          <div class="search-input-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (ngModelChange)="onSearchChange()"
+              placeholder="Buscar artículo por nombre o descripción..." 
+              class="search-input"
+            >
+          </div>
+          
+          <div class="select-wrapper">
+            <i class="fas fa-filter select-icon"></i>
+            <select 
+              [(ngModel)]="partidaFilter" 
+              (ngModelChange)="onPartidaFilterChange()"
+              class="filter-select"
+            >
+              <option value="">Todas las partidas</option>
+              <option value="21.1">21.1 - Papelería y Útiles</option>
+              <option value="25.1">25.1 - Productos Químicos</option>
+              <option value="29.4">29.4 - Material Didáctico</option>
+            </select>
+          </div>
 
-      <button (click)="limpiarFiltros()" class="btn btn-secondary">
-        🗑️ Limpiar
+          <button (click)="limpiarFiltros()" class="btn btn-clear">
+            <i class="fas fa-broom"></i>
+            Limpiar Filtros
+          </button>
+
+          <!-- Botón para agregar nuevo artículo (solo admin/revisor) -->
+          <button 
+            *ngIf="authService.isAdmin() || authService.isRevisor()"
+            class="btn btn-primary btn-new"
+            (click)="agregarNuevoArticulo()"
+          >
+            <i class="fas fa-plus-circle"></i>
+            Nuevo Artículo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estados de Carga y Error Mejorados -->
+  <div *ngIf="loading" class="state-container loading-state">
+    <div class="spinner"></div>
+    <p>Cargando catálogo...</p>
+  </div>
+
+  <div *ngIf="error && !loading" class="state-container error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3>Error al cargar el catálogo</h3>
+    <p>{{ error }}</p>
+    <button (click)="cargarArticulos()" class="btn btn-retry">
+      <i class="fas fa-redo"></i>
+      Reintentar
+    </button>
+  </div>
+
+  <!-- Grid de Artículos Mejorado -->
+  <div *ngIf="!loading && !error" class="articles-section">
+    <div *ngIf="articulosFiltrados.length === 0" class="state-container empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-inbox"></i>
+      </div>
+      <h3>No se encontraron artículos</h3>
+      <p>No hay artículos que coincidan con los filtros aplicados</p>
+      <button (click)="limpiarFiltros()" class="btn btn-primary">
+        <i class="fas fa-eye"></i>
+        Ver todos los artículos
       </button>
+    </div>
 
-      <!-- Botón para agregar nuevo artículo (solo admin/revisor) -->
-      <button 
-        *ngIf="authService.isAdmin() || authService.isRevisor()"
-        class="btn btn-primary"
-        (click)="agregarNuevoArticulo()"
+    <div *ngIf="articulosFiltrados.length > 0" class="articles-grid">
+      <div 
+        *ngFor="let articulo of articulosFiltrados" 
+        class="article-card"
+        [class.inactive]="!articulo.activo"
       >
-        ➕ Nuevo Artículo
-      </button>
-    </div>
-  </div>
-
-  <!-- Loading -->
-  <div *ngIf="loading" class="loading">
-    <p>🔄 Cargando catálogo...</p>
-  </div>
-
-  <!-- Error -->
-  <div *ngIf="error && !loading" class="error">
-    <p>❌ {{ error }}</p>
-    <button (click)="cargarArticulos()" class="btn btn-secondary">Reintentar</button>
-  </div>
-
-  <!-- Lista de Artículos -->
-  <div *ngIf="!loading && !error" class="articulos-grid">
-    <div 
-      *ngFor="let articulo of articulosFiltrados" 
-      class="articulo-card"
-      [class.inactive]="!articulo.activo"
-    >
-      <div class="articulo-header">
-        <h3>{{ articulo.nombre }}</h3>
-        <span class="partida-badge">{{ articulo.partidaCodigo }}</span>
-      </div>
-      
-      <p class="articulo-descripcion">{{ articulo.descripcion }}</p>
-      
-      <div class="articulo-details">
-        <div class="precio">
-          <strong>Precio ref:</strong> ${{ articulo.precioReferencia | number:'1.2-2' }}
+        <div class="card-header">
+          <div class="article-title-section">
+            <h3 class="article-title">{{ articulo.nombre }}</h3>
+            <span class="partida-badge">{{ articulo.partidaCodigo }}</span>
+          </div>
+          <div class="status-indicator" [class.active]="articulo.activo" [class.inactive]="!articulo.activo">
+            <i class="fas" [class.fa-check-circle]="articulo.activo" [class.fa-times-circle]="!articulo.activo"></i>
+            {{ articulo.activo ? 'Activo' : 'Inactivo' }}
+          </div>
         </div>
-        <div class="estado">
-          <span [class]="articulo.activo ? 'status-active' : 'status-inactive'">
-            {{ articulo.activo ? '✅ Activo' : '❌ Inactivo' }}
-          </span>
+        
+        <p class="article-description">{{ articulo.descripcion }}</p>
+        
+        <div class="article-details">
+          <div class="price-section">
+            <span class="price-label">Precio de referencia:</span>
+            <!-- CORRECCIÓN: Cambiado de presupuestoReferencia a precioReferencia -->
+            <span class="price-value">${{ articulo.precioReferencia | number:'1.2-2' }}</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Acciones -->
-      <div class="articulo-actions">
-        <button 
-          *ngIf="authService.isDocente() && articulo.activo"
-          class="btn btn-sm btn-success"
-          (click)="agregarACotizacion(articulo)"
-        >
-          🛒 Agregar
-        </button>
+        <!-- Acciones Mejoradas -->
+        <div class="article-actions">
+          <button 
+            *ngIf="authService.isDocente() && articulo.activo"
+            class="btn btn-action btn-add"
+            (click)="agregarACotizacion(articulo)"
+          >
+            <i class="fas fa-cart-plus"></i>
+            Agregar
+          </button>
 
-        <button 
-          *ngIf="authService.isAdmin() || authService.isRevisor()"
-          class="btn btn-sm btn-primary"
-          (click)="editarArticulo(articulo)"
-        >
-          ✏️ Editar
-        </button>
+          <button 
+            *ngIf="authService.isAdmin() || authService.isRevisor()"
+            class="btn btn-action btn-edit"
+            (click)="editarArticulo(articulo)"
+          >
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
 
-        <button 
-          *ngIf="(authService.isAdmin() || authService.isRevisor()) && articulo.activo"
-          (click)="desactivarArticulo(articulo)"
-          class="btn btn-sm btn-danger"
-        >
-          🚫 Desactivar
-        </button>
+          <button 
+            *ngIf="(authService.isAdmin() || authService.isRevisor()) && articulo.activo"
+            (click)="desactivarArticulo(articulo)"
+            class="btn btn-action btn-deactivate"
+          >
+            <i class="fas fa-ban"></i>
+            Desactivar
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- Empty State -->
-  <div *ngIf="!loading && !error && articulosFiltrados.length === 0" class="empty-state">
-    <p>📭 No se encontraron artículos</p>
-    <button (click)="limpiarFiltros()" class="btn btn-primary">Ver todos los artículos</button>
   </div>
 </div>

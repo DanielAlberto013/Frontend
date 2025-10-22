@@ -164,7 +164,7 @@ export class ArticuloFormComponent implements OnInit {
       }
     });
   }
-
+  
   desactivarArticulo(): void {
     if (confirm(`¿Estás seguro de desactivar "${this.articulo.nombre}"? El artículo ya no estará disponible para cotizaciones.`)) {
       this.loading = true;

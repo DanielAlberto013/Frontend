@@ -1,160 +1,276 @@
-<div class="container-fluid">
-     <!-- Header -->
-     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-       <div class="container">
-         <a class="navbar-brand" routerLink="/dashboard">
-           <i class="fas fa-arrow-left me-2"></i>
-           Volver al Dashboard
-         </a>
-         <div class="d-flex align-items-center">
-           <span class="text-light me-3">
-             {{ authService.isDocente() ? 'Mis Proyectos' : 'Todos los Proyectos' }}
-           </span>
-         </div>
-       </div>
-     </nav>
-   
-     <div class="container">
-       <!-- Header Section -->
-       <div class="row mb-4">
-         <div class="col-md-8">
-           <h1>📁 Gestión de Proyectos</h1>
-           <p class="text-muted">
-             {{ authService.isDocente() ? 
-                'Gestiona tus proyectos de investigación y su presupuesto' : 
-                'Revisa y administra todos los proyectos del sistema' }}
-           </p>
-         </div>
-         <div class="col-md-4 text-end">
-          <button 
+<div class="container-fluid proyectos-container">
+  <!-- Header con Angular Material -->
+  <mat-toolbar color="primary" class="mb-4 shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+      <button 
+        mat-raised-button 
+        routerLink="/dashboard"
+        class="back-button"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        Volver al Dashboard
+      </button>
+      
+      <div class="d-flex align-items-center">
+        <mat-icon class="me-2">folder</mat-icon>
+        <span class="toolbar-title">
+          {{ authService.isDocente() ? 'Mis Proyectos' : 'Todos los Proyectos' }}
+        </span>
+      </div>
+    </div>
+  </mat-toolbar>
+
+  <div class="container">
+    <!-- Header Section con Material -->
+    <div class="row mb-4 align-items-center">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center mb-2">
+          <div class="header-icon">
+            <mat-icon>folder_open</mat-icon>
+          </div>
+          <div>
+            <h1 class="page-title">Gestión de Proyectos</h1>
+            <p class="page-subtitle">
+              {{ authService.isDocente() ? 
+                 'Gestiona tus proyectos de investigación y su presupuesto' : 
+                 'Revisa y administra todos los proyectos del sistema' }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 text-end">
+        <button 
           *ngIf="authService.isDocente()"
           routerLink="/proyectos/nuevo"
-          class="btn btn-success btn-lg"
+          mat-raised-button
+          color="accent"
+          class="new-project-btn"
         >
-          ➕ Nuevo Proyecto
+          <mat-icon>add_circle</mat-icon>
+          Nuevo Proyecto
         </button>
-   
-       <!-- Loading -->
-       <div *ngIf="loading" class="text-center py-5">
-         <div class="spinner-border text-primary" role="status">
-           <span class="visually-hidden">Cargando...</span>
-         </div>
-         <p class="mt-2">🔄 Cargando proyectos...</p>
-       </div>
-   
-       <!-- Error -->
-       <div *ngIf="error && !loading" class="alert alert-danger text-center">
-         <p>❌ {{ error }}</p>
-         <button (click)="cargarProyectos()" class="btn btn-outline-danger">Reintentar</button>
-       </div>
-   
-       <!-- Lista de Proyectos -->
-       <div *ngIf="!loading && !error">
-         <!-- Empty State -->
-         <div *ngIf="proyectos.length === 0" class="text-center py-5">
-           <div class="empty-state">
-             <h3>📭 No hay proyectos</h3>
-             <p class="text-muted">
-               {{ authService.isDocente() ? 
-                  'Aún no has creado ningún proyecto. ¡Comienza ahora!' : 
-                  'No hay proyectos registrados en el sistema.' }}
-             </p>
-             <button 
-               *ngIf="authService.isDocente()"
-               (click)="crearNuevoProyecto()"
-               class="btn btn-primary btn-lg"
-             >
-               🚀 Crear Mi Primer Proyecto
-             </button>
-           </div>
-         </div>
-   
-         <!-- Grid de Proyectos -->
-         <div *ngIf="proyectos.length > 0" class="row">
-           <div *ngFor="let proyecto of proyectos" class="col-md-6 col-lg-4 mb-4">
-             <div class="card h-100 proyecto-card">
-               <div class="card-header d-flex justify-content-between align-items-center">
-                 <h5 class="card-title mb-0">{{ proyecto.nombre }}</h5>
-                 <span [class]="'badge ' + getEstadoBadgeClass(proyecto.estado)">
-                   {{ getEstadoText(proyecto.estado) }}
-                 </span>
-               </div>
-               
-               <div class="card-body">
-                 <p class="card-text">{{ proyecto.descripcion }}</p>
-                 
-                 <div class="proyecto-info">
-                   <div class="info-item">
-                     <strong>👤 Responsable:</strong> 
-                     <span>{{ proyecto.docente ? proyecto.docente.nombre : 'Docente' }}</span>
-                   </div>
-                   <div class="info-item">
-                     <strong>📅 Edición:</strong> 
-                     <span>{{ proyecto.edicion }}</span>
-                   </div>
-                   <div class="info-item">
-                     <strong>💰 Presupuesto Total:</strong> 
-                     <span>${{ proyecto.presupuestoTotal | number:'1.2-2' }}</span>
-                   </div>
-                   <div class="info-item">
-                     <strong>🏛️ Federal:</strong> 
-                     <span>${{ proyecto.presupuestoFederal | number:'1.2-2' }}</span>
-                   </div>
-                   <div class="info-item">
-                     <strong>🏠 Estatal:</strong> 
-                     <span>${{ proyecto.presupuestoEstatal | number:'1.2-2' }}</span>
-                   </div>
-                 </div>
-               </div>
-   
-               <div class="card-footer">
-                 <div class="d-flex gap-2 flex-wrap">
-                   <!-- Acciones para Docentes -->
-                   <button 
-                     *ngIf="authService.isDocente()"
-                     (click)="verDetalle(proyecto)"
-                     class="btn btn-outline-primary btn-sm"
-                   >
-                     👁️ Ver
-                   </button>
-                   
-                   <button 
-                     *ngIf="authService.isDocente() && proyecto.estado === 'BORRADOR'"
-                     (click)="editarProyecto(proyecto)"
-                     class="btn btn-outline-secondary btn-sm"
-                   >
-                     ✏️ Editar
-                   </button>
-   
-                   <!-- Acciones para Revisores/Admin -->
-                   <button 
-                     *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
-                     (click)="cambiarEstado(proyecto, 'APROBADO')"
-                     class="btn btn-outline-success btn-sm"
-                   >
-                     ✅ Aprobar
-                   </button>
-   
-                   <button 
-                     *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
-                     (click)="cambiarEstado(proyecto, 'RECHAZADO')"
-                     class="btn btn-outline-danger btn-sm"
-                   >
-                     ❌ Rechazar
-                   </button>
-   
-                   <button 
-                     *ngIf="authService.isRevisor() || authService.isAdmin()"
-                     (click)="verDetalle(proyecto)"
-                     class="btn btn-outline-info btn-sm"
-                   >
-                     📊 Revisar
-                   </button>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
-     </div>
-   </div>
+      </div>
+    </div>
+
+    <!-- Estadísticas con Cards de Material -->
+    <div *ngIf="!loading && proyectos.length > 0" class="row mb-4">
+      <div class="col-12">
+        <mat-card class="stats-card">
+          <mat-card-content>
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <h5 class="stats-title">
+                  <mat-icon>analytics</mat-icon>
+                  Resumen de Proyectos
+                </h5>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex justify-content-end gap-4 flex-wrap">
+                  <div class="stat-item approved">
+                    <span class="stat-count">{{ getProyectosCount('APROBADO') }}</span>
+                    <span class="stat-label">Aprobados</span>
+                  </div>
+                  <div class="stat-item review">
+                    <span class="stat-count">{{ getProyectosCount('EN_REVISION') }}</span>
+                    <span class="stat-label">En Revisión</span>
+                  </div>
+                  <div class="stat-item rejected">
+                    <span class="stat-count">{{ getProyectosCount('RECHAZADO') }}</span>
+                    <span class="stat-label">Rechazados</span>
+                  </div>
+                  <div class="stat-item draft">
+                    <span class="stat-count">{{ getProyectosCount('BORRADOR') }}</span>
+                    <span class="stat-label">Borradores</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Loading con Spinner de Material -->
+    <div *ngIf="loading" class="text-center py-5">
+      <mat-spinner diameter="60" class="mb-3"></mat-spinner>
+      <p class="loading-text">Cargando proyectos...</p>
+    </div>
+
+    <!-- Error con Card de Material -->
+    <div *ngIf="error && !loading" class="row justify-content-center">
+      <div class="col-md-8">
+        <mat-card class="error-card">
+          <mat-card-content class="text-center py-4">
+            <mat-icon color="warn" class="error-icon">error_outline</mat-icon>
+            <h4 class="error-title">Error al cargar proyectos</h4>
+            <p class="error-message">{{ error }}</p>
+            <button 
+              (click)="cargarProyectos()" 
+              mat-raised-button 
+              color="warn"
+              class="retry-btn"
+            >
+              <mat-icon>refresh</mat-icon>
+              Reintentar
+            </button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Lista de Proyectos -->
+    <div *ngIf="!loading && !error">
+      <!-- Empty State con Material -->
+      <div *ngIf="proyectos.length === 0" class="row justify-content-center">
+        <div class="col-md-6">
+          <mat-card class="empty-state-card">
+            <mat-card-content class="text-center py-5">
+              <mat-icon class="empty-icon">folder_open</mat-icon>
+              <h3 class="empty-title">No hay proyectos</h3>
+              <p class="empty-message">
+                {{ authService.isDocente() ? 
+                   'Aún no has creado ningún proyecto. ¡Comienza ahora!' : 
+                   'No hay proyectos registrados en el sistema.' }}
+              </p>
+              <button 
+                *ngIf="authService.isDocente()"
+                (click)="crearNuevoProyecto()"
+                mat-raised-button
+                color="primary"
+                class="create-btn"
+              >
+                <mat-icon>rocket_launch</mat-icon>
+                Crear Mi Primer Proyecto
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Grid de Proyectos con Material Cards -->
+      <div *ngIf="proyectos.length > 0" class="row">
+        <div *ngFor="let proyecto of proyectos" class="col-md-6 col-lg-4 mb-4">
+          <mat-card class="project-card mat-elevation-z2">
+            <!-- Header de la Card -->
+            <mat-card-header class="project-card-header">
+              <mat-card-title class="project-title" [title]="proyecto.nombre">
+                {{ proyecto.nombre }}
+              </mat-card-title>
+              <span [class]="'status-badge ' + getEstadoBadgeClass(proyecto.estado)">
+                {{ getEstadoText(proyecto.estado) }}
+              </span>
+            </mat-card-header>
+
+            <mat-card-content class="project-card-content">
+              <!-- Descripción -->
+              <p class="project-description">
+                {{ proyecto.descripcion || 'Sin descripción' }}
+              </p>
+
+              <!-- Información del Proyecto -->
+              <div class="project-info">
+                <div class="info-row">
+                  <mat-icon>person</mat-icon>
+                  <span class="info-label">Responsable:</span>
+                  <span class="info-value">{{ proyecto.docente ? proyecto.docente.nombre : 'Docente' }}</span>
+                </div>
+                <div class="info-row">
+                  <mat-icon>calendar_today</mat-icon>
+                  <span class="info-label">Edición:</span>
+                  <span class="info-value">{{ proyecto.edicion || 'N/A' }}</span>
+                </div>
+              </div>
+
+              <!-- Presupuesto -->
+              <mat-divider class="my-3"></mat-divider>
+              
+              <div class="budget-section">
+                <div class="budget-header">
+                  <mat-icon>attach_money</mat-icon>
+                  <span class="budget-title">Presupuesto Total:</span>
+                  <span class="budget-total">${{ proyecto.presupuestoTotal | number:'1.2-2' }}</span>
+                </div>
+                
+                <div class="budget-breakdown">
+                  <div class="budget-item federal">
+                    <span class="budget-label">
+                      <mat-icon>flag</mat-icon>
+                      Federal:
+                    </span>
+                    <span class="budget-amount">${{ proyecto.presupuestoFederal | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="budget-item estatal">
+                    <span class="budget-label">
+                      <mat-icon>account_balance</mat-icon>
+                      Estatal:
+                    </span>
+                    <span class="budget-amount">${{ proyecto.presupuestoEstatal | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions class="project-card-actions">
+              <!-- Acciones para Docentes -->
+              <button 
+                *ngIf="authService.isDocente()"
+                (click)="verDetalle(proyecto)"
+                mat-stroked-button
+                color="primary"
+                class="action-btn"
+              >
+                <mat-icon>visibility</mat-icon>
+                Ver
+              </button>
+              
+              <button 
+                *ngIf="authService.isDocente() && proyecto.estado === 'BORRADOR'"
+                (click)="editarProyecto(proyecto)"
+                mat-stroked-button
+                color="basic"
+                class="action-btn"
+              >
+                <mat-icon>edit</mat-icon>
+                Editar
+              </button>
+
+              <!-- Acciones para Revisores/Admin -->
+              <button 
+                *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
+                (click)="cambiarEstado(proyecto, 'APROBADO')"
+                mat-stroked-button
+                color="success"
+                class="action-btn"
+              >
+                <mat-icon>check_circle</mat-icon>
+                Aprobar
+              </button>
+
+              <button 
+                *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
+                (click)="cambiarEstado(proyecto, 'RECHAZADO')"
+                mat-stroked-button
+                color="warn"
+                class="action-btn"
+              >
+                <mat-icon>cancel</mat-icon>
+                Rechazar
+              </button>
+
+              <button 
+                *ngIf="authService.isRevisor() || authService.isAdmin()"
+                (click)="verDetalle(proyecto)"
+                mat-stroked-button
+                color="info"
+                class="action-btn"
+              >
+                <mat-icon>assessment</mat-icon>
+                Revisar
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
