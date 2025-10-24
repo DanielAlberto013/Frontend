@@ -44,14 +44,15 @@ export const appRoutes: Routes = [
     path: 'proyectos/editar/:id', 
     loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.ProyectoFormComponent)
   },
+  { 
+    path: 'reportes', 
+    loadComponent: () => import('./features/reportes/reportes.component').then(m => m.ReportesComponent)
+  },
   
   { 
     path: 'cotizaciones', 
     loadComponent: () => import('./features/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
   },
-  { 
-    path: 'reportes', 
-    loadComponent: () => import('./features/reportes/reportes.component').then(m => m.ReportesComponent)
-  },
+  
   { path: '**', redirectTo: '/auth/login' }
 ];

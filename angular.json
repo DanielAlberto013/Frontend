@@ -29,9 +29,14 @@
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "src/styles.css"
             ],
-"scripts": [
-  "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
-]
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+          
+            "allowedCommonJsDependencies": [
+              "jspdf",
+              "jspdf-autotable"
+            ]
           },
           "configurations": {
             "production": {
@@ -47,12 +52,22 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              
+              "allowedCommonJsDependencies": [
+                "jspdf",
+                "jspdf-autotable"
+              ]
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+           
+              "allowedCommonJsDependencies": [
+                "jspdf",
+                "jspdf-autotable"
+              ]
             }
           },
           "defaultConfiguration": "production"

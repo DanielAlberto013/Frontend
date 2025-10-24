@@ -1,12 +1,21 @@
+// src/app/features/reportes/reportes.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth';
-import { ProyectosService } from '../../core/services/proyectos.service';
-import { CotizacionesService } from '../../core/services/cotizaciones.service';
-import { Proyecto } from '../../core/models/proyecto.model';
-import { Cotizacion } from '../../core/models/cotizacion.model';
+import { ReportesService, ReportePorPartida, TicketDocente } from '../../core/services/reportes.service';
+
+interface ProyectoReporte {
+  proyectoId: string;
+  proyectoNombre: string;
+  docenteNombre: string;
+  presupuestoTotal: number;
+  presupuestoFederal: number;
+  presupuestoEstatal: number;
+  partidaCodigo: string;
+  partidaNombre: string;
+}
 
 @Component({
   selector: 'app-reportes',
@@ -16,42 +25,21 @@ import { Cotizacion } from '../../core/models/cotizacion.model';
   styleUrls: ['./reportes.component.css']
 })
 export class ReportesComponent implements OnInit {
-  // Datos
-  proyectos: Proyecto[] = [];
-  proyectosAprobados: Proyecto[] = [];
-  cotizaciones: Cotizacion[] = [];
-  misCotizaciones: Cotizacion[] = [];
-  todosLosUsuarios: any[] = [];
+  // Datos para admin
+  reportesPorPartida: ReportePorPartida[] = [];
+  proyectosUnicos: ProyectoReporte[] = [];
   
-  // Filtros para admin
-  fechaInicio: string = '';
-  fechaFin: string = '';
-  proyectoFiltro: string = '';
-  estadoFiltro: string = 'APROBADO';
+  // Datos para docente
+  ticketDocente: TicketDocente | null = null;
   
-  // Estadísticas
-  estadisticas = {
-    totalProyectos: 0,
-    proyectosAprobados: 0,
-    proyectosPendientes: 0,
-    totalCotizaciones: 0,
-    cotizacionesAprobadas: 0,
-    presupuestoTotal: 0,
-    presupuestoUtilizado: 0,
-    totalUsuarios: 0,
-    docentesActivos: 0
-  };
-
   // Estados
   loading = true;
   error: string | null = null;
-  cotizacionSeleccionada: Cotizacion | null = null;
-  today: Date = new Date();
 
   constructor(
     public authService: AuthService,
-    private proyectosService: ProyectosService,
-    private cotizacionesService: CotizacionesService
+    private reportesService: ReportesService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -60,314 +48,104 @@ export class ReportesComponent implements OnInit {
 
   cargarDatos(): void {
     this.loading = true;
+    this.error = null;
 
     if (this.authService.isAdmin() || this.authService.isRevisor()) {
-      this.cargarDatosAdmin();
+      this.cargarReportesAdmin();
     } else if (this.authService.isDocente()) {
-      this.cargarDatosDocente();
+      this.cargarTicketDocente();
     } else {
       this.loading = false;
     }
   }
 
-  private cargarDatosAdmin(): void {
-    // Simular carga de datos para admin
-    setTimeout(() => {
-      // Proyectos de ejemplo
-      this.proyectos = [
-        {
-          id: '1',
-          nombre: 'Desarrollo de Material Biodegradable',
-          descripcion: 'Investigación sobre materiales alternativos al plástico',
-          docenteId: '1',
-          docente: {
-            id: '1',
-            nombre: 'Juan Pérez',
-            email: 'juan@email.com',
-            role: 'DOCENTE',
-            createdAt: new Date()
-          },
-          presupuestoTotal: 100000,
-          presupuestoFederal: 50000,
-          presupuestoEstatal: 50000,
-          edicion: '2025',
-          estado: 'APROBADO',
-          createdAt: new Date('2024-01-15'),
-          updatedAt: new Date('2024-01-20')
-        },
-        {
-          id: '2',
-          nombre: 'Sistema de Riego Automatizado',
-          descripcion: 'Implementación de sistema IoT para optimizar riego',
-          docenteId: '2',
-          docente: {
-            id: '2',
-            nombre: 'María García',
-            email: 'maria@email.com',
-            role: 'DOCENTE',
-            createdAt: new Date()
-          },
-          presupuestoTotal: 150000,
-          presupuestoFederal: 75000,
-          presupuestoEstatal: 75000,
-          edicion: '2025',
-          estado: 'EN_REVISION',
-          createdAt: new Date('2024-01-10'),
-          updatedAt: new Date('2024-01-18')
-        },
-        {
-          id: '3',
-          nombre: 'Análisis de Suelos Agrícolas',
-          descripcion: 'Estudio de composición química de suelos',
-          docenteId: '3',
-          docente: {
-            id: '3',
-            nombre: 'Carlos López',
-            email: 'carlos@email.com',
-            role: 'DOCENTE',
-            createdAt: new Date()
-          },
-          presupuestoTotal: 80000,
-          presupuestoFederal: 40000,
-          presupuestoEstatal: 40000,
-          edicion: '2025',
-          estado: 'APROBADO',
-          createdAt: new Date('2024-02-05'),
-          updatedAt: new Date('2024-02-10')
-        }
-      ];
-
-      // Cotizaciones de ejemplo
-      this.cotizaciones = [
-        {
-          id: '1',
-          proyectoId: '1',
-          partidaCodigo: '21.1',
-          fuente: 'FEDERAL',
-          items: [
-            {
-              id: '1',
-              articuloId: '1',
-              articulo: {
-                id: '1',
-                nombre: 'Hojas Blancas A4',
-                partidaCodigo: '21.1',
-                precioReferencia: 120.50,
-                activo: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              },
-              cantidad: 5,
-              precioUnitario: 120.50,
-              subtotal: 602.50
-            },
-            {
-              id: '2',
-              articuloId: '2',
-              articulo: {
-                id: '2',
-                nombre: 'Lápices Mirado No. 2',
-                partidaCodigo: '21.1',
-                precioReferencia: 45.00,
-                activo: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              },
-              cantidad: 3,
-              precioUnitario: 45.00,
-              subtotal: 135.00
-            }
-          ],
-          total: 737.50,
-          estado: 'APROBADO',
-          createdAt: new Date('2024-01-25'),
-          updatedAt: new Date('2024-01-26')
-        }
-      ];
-
-      // Usuarios de ejemplo
-      this.todosLosUsuarios = [
-        {
-          id: '1',
-          nombre: 'Juan Pérez',
-          email: 'juan@email.com',
-          role: 'DOCENTE',
-          createdAt: new Date('2024-01-01'),
-          proyectos: 2,
-          estado: 'Activo'
-        },
-        {
-          id: '2',
-          nombre: 'María García',
-          email: 'maria@email.com',
-          role: 'DOCENTE',
-          createdAt: new Date('2024-01-05'),
-          proyectos: 1,
-          estado: 'Activo'
-        },
-        {
-          id: '3',
-          nombre: 'Carlos López',
-          email: 'carlos@email.com',
-          role: 'DOCENTE',
-          createdAt: new Date('2024-01-10'),
-          proyectos: 1,
-          estado: 'Activo'
-        },
-        {
-          id: '4',
-          nombre: 'Mariana Brito',
-          email: 'mariana@email.com',
-          role: 'REVISOR',
-          createdAt: new Date('2024-01-01'),
-          proyectos: 0,
-          estado: 'Activo'
-        },
-        {
-          id: '5',
-          nombre: 'Admin Sistema',
-          email: 'admin@email.com',
-          role: 'ADMIN',
-          createdAt: new Date('2024-01-01'),
-          proyectos: 0,
-          estado: 'Activo'
-        }
-      ];
-
-      // Calcular estadísticas
-      this.calcularEstadisticas();
-      this.proyectosAprobados = this.proyectos.filter(p => p.estado === 'APROBADO');
-      
-      this.loading = false;
-    }, 1000);
+  private cargarReportesAdmin(): void {
+    this.reportesService.getReportePorPartida().subscribe({
+      next: (reportes: ReportePorPartida[]) => {
+        this.reportesPorPartida = reportes;
+        this.proyectosUnicos = this.obtenerProyectosUnicos(reportes);
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.error = 'Error al cargar los reportes';
+        this.loading = false;
+        console.error('Error:', error);
+      }
+    });
   }
 
-  private cargarDatosDocente(): void {
-    // Simular carga de datos para docente
-    setTimeout(() => {
-      this.misCotizaciones = [
-        {
-          id: '1',
-          proyectoId: '1',
-          partidaCodigo: '21.1',
-          fuente: 'FEDERAL',
-          items: [
-            {
-              id: '1',
-              articuloId: '1',
-              articulo: {
-                id: '1',
-                nombre: 'Hojas Blancas A4',
-                partidaCodigo: '21.1',
-                precioReferencia: 120.50,
-                activo: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              },
-              cantidad: 5,
-              precioUnitario: 120.50,
-              subtotal: 602.50
-            },
-            {
-              id: '2',
-              articuloId: '2',
-              articulo: {
-                id: '2',
-                nombre: 'Lápices Mirado No. 2',
-                partidaCodigo: '21.1',
-                precioReferencia: 45.00,
-                activo: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              },
-              cantidad: 3,
-              precioUnitario: 45.00,
-              subtotal: 135.00
-            }
-          ],
-          total: 737.50,
-          estado: 'APROBADO',
-          createdAt: new Date('2024-01-25'),
-          updatedAt: new Date('2024-01-26')
+  private obtenerProyectosUnicos(reportes: ReportePorPartida[]): ProyectoReporte[] {
+    const proyectosMap = new Map<string, ProyectoReporte>();
+    
+    reportes.forEach(partida => {
+      partida.proyectos.forEach(proyecto => {
+        if (!proyectosMap.has(proyecto.proyectoId)) {
+          proyectosMap.set(proyecto.proyectoId, {
+            ...proyecto,
+            partidaCodigo: partida.partidaCodigo,
+            partidaNombre: partida.partidaNombre
+          });
         }
-      ];
-      
-      this.loading = false;
-    }, 1000);
+      });
+    });
+    
+    return Array.from(proyectosMap.values());
   }
 
-  private calcularEstadisticas(): void {
-    this.estadisticas.totalProyectos = this.proyectos.length;
-    this.estadisticas.proyectosAprobados = this.proyectos.filter(p => p.estado === 'APROBADO').length;
-    this.estadisticas.proyectosPendientes = this.proyectos.filter(p => p.estado === 'EN_REVISION').length;
-    this.estadisticas.totalCotizaciones = this.cotizaciones.length;
-    this.estadisticas.cotizacionesAprobadas = this.cotizaciones.filter(c => c.estado === 'APROBADO').length;
-    this.estadisticas.presupuestoTotal = this.proyectos.reduce((total, p) => total + p.presupuestoTotal, 0);
-    this.estadisticas.presupuestoUtilizado = this.cotizaciones.reduce((total, c) => total + c.total, 0);
-    this.estadisticas.totalUsuarios = this.todosLosUsuarios.length;
-    this.estadisticas.docentesActivos = this.todosLosUsuarios.filter(u => u.role === 'DOCENTE').length;
+  private cargarTicketDocente(): void {
+    this.reportesService.getTicketDocente().subscribe({
+      next: (ticket: TicketDocente) => {
+        this.ticketDocente = ticket;
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.error = 'Error al cargar el ticket';
+        this.loading = false;
+        console.error('Error:', error);
+      }
+    });
   }
 
-  // Métodos para generar reportes
-  generarReporteProyectosAprobados(): void {
-    alert('📊 Generando reporte de proyectos aprobados en PDF...');
-    // Aquí iría la lógica para generar PDF
+  // ✅ NUEVO MÉTODO: Regresar al dashboard
+  regresarAlDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 
   generarReporteExcel(): void {
-    alert('📈 Generando reporte en Excel...');
-    // Aquí iría la lógica para generar Excel
+    if (this.proyectosUnicos.length > 0) {
+      this.reportesService.generarReporteExcel(this.reportesPorPartida);
+    } else {
+      alert('No hay datos para generar el reporte');
+    }
   }
 
-  generarReporteEstadisticas(): void {
-    alert('📋 Generando reporte de estadísticas...');
-    // Aquí iría la lógica para generar reporte de estadísticas
+  generarReportePDF(): void {
+    if (this.proyectosUnicos.length > 0) {
+      this.reportesService.generarReportePDF(this.proyectosUnicos);
+    } else {
+      alert('No hay datos para generar el reporte');
+    }
   }
 
-  generarTicketCompra(cotizacion: Cotizacion): void {
-    this.cotizacionSeleccionada = cotizacion;
-    alert('🧾 Generando ticket de compra...\n\nPuedes imprimir esta página para obtener tu ticket.');
-    
-    // Esperar un momento para que Angular actualice la vista
+  generarTicketPDF(): void {
+    if (this.ticketDocente) {
+      this.reportesService.generarTicketPDF(this.ticketDocente);
+    } else {
+      alert('No hay datos para generar el ticket');
+    }
+  }
+
+  imprimirTicket(): void {
     setTimeout(() => {
       window.print();
     }, 500);
   }
 
-  filtrarProyectos(): void {
-    // Lógica de filtrado para admin
-    console.log('Aplicando filtros...');
+  getTotalGeneral(): number {
+    return this.proyectosUnicos.reduce((total, proyecto) => total + proyecto.presupuestoTotal, 0);
   }
 
-  limpiarFiltros(): void {
-    this.fechaInicio = '';
-    this.fechaFin = '';
-    this.proyectoFiltro = '';
-    this.estadoFiltro = 'APROBADO';
-  }
-
-  getProyectosFiltrados(): Proyecto[] {
-    let proyectos = this.proyectosAprobados;
-
-    if (this.fechaInicio) {
-      proyectos = proyectos.filter(p => 
-        new Date(p.createdAt) >= new Date(this.fechaInicio)
-      );
-    }
-
-    if (this.fechaFin) {
-      proyectos = proyectos.filter(p => 
-        new Date(p.createdAt) <= new Date(this.fechaFin)
-      );
-    }
-
-    if (this.proyectoFiltro) {
-      proyectos = proyectos.filter(p => 
-        p.nombre.toLowerCase().includes(this.proyectoFiltro.toLowerCase()) ||
-        p.docente.nombre.toLowerCase().includes(this.proyectoFiltro.toLowerCase())
-      );
-    }
-
-    return proyectos;
+  getTotalProyectos(): number {
+    return this.proyectosUnicos.length;
   }
 }

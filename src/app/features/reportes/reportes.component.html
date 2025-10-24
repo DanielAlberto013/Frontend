@@ -1,342 +1,196 @@
-<div class="container-fluid">
-     <!-- Header -->
-     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-       <div class="container">
-         <a class="navbar-brand" routerLink="/dashboard">
-           <i class="fas fa-arrow-left me-2"></i>
-           Volver al Dashboard
-         </a>
-         <div class="d-flex align-items-center">
-           <span class="text-light me-3">
-             {{ (authService.isAdmin() || authService.isRevisor()) ? '📊 Reportes del Sistema' : '🧾 Mis Comprobantes' }}
-           </span>
-         </div>
-       </div>
-     </nav>
-   
-     <div class="container">
-       <!-- Loading -->
-       <div *ngIf="loading" class="text-center py-5">
-         <div class="spinner-border text-primary" role="status">
-           <span class="visually-hidden">Cargando...</span>
-         </div>
-         <p class="mt-2">🔄 Cargando reportes...</p>
-       </div>
-   
-       <!-- Error -->
-       <div *ngIf="error && !loading" class="alert alert-danger text-center">
-         <p>❌ {{ error }}</p>
-         <button (click)="cargarDatos()" class="btn btn-outline-danger">Reintentar</button>
-       </div>
-   
-       <!-- CONTENIDO PARA ADMIN/REVISOR -->
-       <div *ngIf="(authService.isAdmin() || authService.isRevisor()) && !loading && !error">
-         
-         <!-- Estadísticas Rápidas -->
-         <div class="row mb-4">
-           <div class="col-12">
-             <h2>📊 Dashboard de Reportes</h2>
-             <p class="text-muted">Estadísticas generales del sistema de finanzas</p>
-           </div>
-           
-           <!-- Tarjetas de Estadísticas -->
-           <div class="col-md-3 mb-3">
-             <div class="card bg-primary text-white">
-               <div class="card-body text-center">
-                 <h4>{{ estadisticas.totalProyectos }}</h4>
-                 <p class="mb-0">Total Proyectos</p>
-               </div>
-             </div>
-           </div>
-           
-           <div class="col-md-3 mb-3">
-             <div class="card bg-success text-white">
-               <div class="card-body text-center">
-                 <h4>{{ estadisticas.proyectosAprobados }}</h4>
-                 <p class="mb-0">Proyectos Aprobados</p>
-               </div>
-             </div>
-           </div>
-           
-           <div class="col-md-3 mb-3">
-             <div class="card bg-info text-white">
-               <div class="card-body text-center">
-                 <h4>{{ estadisticas.totalCotizaciones }}</h4>
-                 <p class="mb-0">Cotizaciones</p>
-               </div>
-             </div>
-           </div>
-           
-           <div class="col-md-3 mb-3">
-             <div class="card bg-warning text-white">
-               <div class="card-body text-center">
-                 <h4>{{ estadisticas.totalUsuarios }}</h4>
-                 <p class="mb-0">Usuarios</p>
-               </div>
-             </div>
-           </div>
-         </div>
-   
-         <!-- Sección de Reportes -->
-         <div class="row">
-           <!-- Panel de Generación de Reportes -->
-           <div class="col-md-4">
-             <div class="card">
-               <div class="card-header">
-                 <h5 class="mb-0">🔄 Generar Reportes</h5>
-               </div>
-               <div class="card-body">
-                 <div class="d-grid gap-2">
-                   <button class="btn btn-primary" (click)="generarReporteProyectosAprobados()">
-                     📊 Proyectos Aprobados (PDF)
-                   </button>
-                   <button class="btn btn-success" (click)="generarReporteExcel()">
-                     📈 Reporte General (Excel)
-                   </button>
-                   <button class="btn btn-info" (click)="generarReporteEstadisticas()">
-                     📋 Estadísticas (PDF)
-                   </button>
-                 </div>
-                 
-                 <hr>
-                 
-                 <h6>🔍 Filtros Avanzados</h6>
-                 <div class="mb-3">
-                   <label class="form-label">Fecha Inicio</label>
-                   <input type="date" [(ngModel)]="fechaInicio" class="form-control">
-                 </div>
-                 <div class="mb-3">
-                   <label class="form-label">Fecha Fin</label>
-                   <input type="date" [(ngModel)]="fechaFin" class="form-control">
-                 </div>
-                 <div class="mb-3">
-                   <label class="form-label">Buscar Proyecto/Docente</label>
-                   <input type="text" [(ngModel)]="proyectoFiltro" class="form-control" placeholder="Nombre del proyecto o docente">
-                 </div>
-                 
-                 <div class="d-grid gap-2">
-                   <button class="btn btn-outline-primary" (click)="filtrarProyectos()">
-                     🔍 Aplicar Filtros
-                   </button>
-                   <button class="btn btn-outline-secondary" (click)="limpiarFiltros()">
-                     🗑️ Limpiar Filtros
-                   </button>
-                 </div>
-               </div>
-             </div>
-   
-             <!-- Información de Usuarios -->
-             <div class="card mt-4">
-               <div class="card-header">
-                 <h5 class="mb-0">👥 Usuarios del Sistema</h5>
-               </div>
-               <div class="card-body">
-                 <div class="table-responsive">
-                   <table class="table table-sm">
-                     <thead>
-                       <tr>
-                         <th>Nombre</th>
-                         <th>Rol</th>
-                         <th>Proyectos</th>
-                       </tr>
-                     </thead>
-                     <tbody>
-                       <tr *ngFor="let usuario of todosLosUsuarios">
-                         <td>{{ usuario.nombre }}</td>
-                         <td>
-                           <span [class]="usuario.role === 'ADMIN' ? 'badge bg-danger' : (usuario.role === 'REVISOR' ? 'badge bg-warning' : 'badge bg-primary')">
-                             {{ usuario.role }}
-                           </span>
-                         </td>
-                         <td>{{ usuario.proyectos }}</td>
-                       </tr>
-                     </tbody>
-                   </table>
-                 </div>
-               </div>
-             </div>
-           </div>
-   
-           <!-- Lista de Proyectos Aprobados -->
-           <div class="col-md-8">
-             <div class="card">
-               <div class="card-header d-flex justify-content-between align-items-center">
-                 <h5 class="mb-0">✅ Proyectos Aprobados</h5>
-                 <span class="badge bg-success">{{ getProyectosFiltrados().length }} proyectos</span>
-               </div>
-               <div class="card-body">
-                 <div class="table-responsive">
-                   <table class="table table-striped">
-                     <thead>
-                       <tr>
-                         <th>Proyecto</th>
-                         <th>Docente</th>
-                         <th>Presupuesto</th>
-                         <th>Edición</th>
-                         <th>Fecha</th>
-                       </tr>
-                     </thead>
-                     <tbody>
-                       <tr *ngFor="let proyecto of getProyectosFiltrados()">
-                         <td>
-                           <strong>{{ proyecto.nombre }}</strong>
-                           <br>
-                           <small class="text-muted">{{ proyecto.descripcion }}</small>
-                         </td>
-                         <td>{{ proyecto.docente.nombre }}</td>
-                         <td>
-                           <strong>${{ proyecto.presupuestoTotal | number:'1.2-2' }}</strong>
-                           <br>
-                           <small class="text-muted">
-                             Fed: ${{ proyecto.presupuestoFederal | number:'1.2-2' }} | 
-                             Est: ${{ proyecto.presupuestoEstatal | number:'1.2-2' }}
-                           </small>
-                         </td>
-                         <td>{{ proyecto.edicion }}</td>
-                         <td>{{ proyecto.createdAt | date:'dd/MM/yyyy' }}</td>
-                       </tr>
-                     </tbody>
-                   </table>
-                 </div>
-                 
-                 <div *ngIf="getProyectosFiltrados().length === 0" class="text-center py-4">
-                   <p class="text-muted">📭 No se encontraron proyectos con los filtros aplicados</p>
-                 </div>
-               </div>
-             </div>
-   
-             <!-- Estadísticas Detalladas -->
-             <div class="card mt-4">
-               <div class="card-header">
-                 <h5 class="mb-0">📈 Estadísticas Detalladas</h5>
-               </div>
-               <div class="card-body">
-                 <div class="row text-center">
-                   <div class="col-md-4 mb-3">
-                     <div class="border rounded p-3">
-                       <h3 class="text-primary">${{ estadisticas.presupuestoTotal | number:'1.2-2' }}</h3>
-                       <p class="mb-0">Presupuesto Total</p>
-                     </div>
-                   </div>
-                   <div class="col-md-4 mb-3">
-                     <div class="border rounded p-3">
-                       <h3 class="text-success">${{ estadisticas.presupuestoUtilizado | number:'1.2-2' }}</h3>
-                       <p class="mb-0">Presupuesto Utilizado</p>
-                     </div>
-                   </div>
-                   <div class="col-md-4 mb-3">
-                     <div class="border rounded p-3">
-                       <h3 class="text-info">{{ estadisticas.docentesActivos }}</h3>
-                       <p class="mb-0">Docentes Activos</p>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
-   
-       <!-- CONTENIDO PARA DOCENTES -->
-       <div *ngIf="authService.isDocente() && !loading && !error">
-         <div class="row">
-           <div class="col-12">
-             <h2>🧾 Mis Comprobantes de Cotización</h2>
-             <p class="text-muted">Genera tickets de compra para tus cotizaciones aprobadas</p>
-           </div>
-   
-           <!-- Lista de Cotizaciones del Docente -->
-           <div class="col-md-12">
-             <div class="card">
-               <div class="card-header">
-                 <h5 class="mb-0">📋 Mis Cotizaciones</h5>
-               </div>
-               <div class="card-body">
-                 <div *ngIf="misCotizaciones.length === 0" class="text-center py-4">
-                   <p class="text-muted">📭 No tienes cotizaciones aprobadas</p>
-                   <small class="text-muted">Las cotizaciones aparecerán aquí una vez que sean aprobadas</small>
-                 </div>
-   
-                 <div *ngFor="let cotizacion of misCotizaciones" class="cotizacion-card mb-4 p-3 border rounded">
-                   <div class="row">
-                     <div class="col-md-8">
-                       <h6>Cotización #{{ cotizacion.id }}</h6>
-                       <p class="mb-1">
-                         <strong>Partida:</strong> {{ cotizacion.partidaCodigo }} | 
-                         <strong>Fuente:</strong> {{ cotizacion.fuente }}
-                       </p>
-                       <p class="mb-1">
-                         <strong>Artículos:</strong> {{ cotizacion.items.length }} | 
-                         <strong>Total:</strong> ${{ cotizacion.total | number:'1.2-2' }}
-                       </p>
-                       <p class="mb-0">
-                         <strong>Fecha:</strong> {{ cotizacion.createdAt | date:'dd/MM/yyyy' }} | 
-                         <span class="badge bg-success">{{ cotizacion.estado }}</span>
-                       </p>
-                     </div>
-                     <div class="col-md-4 text-end">
-                       <button 
-                         class="btn btn-primary"
-                         (click)="generarTicketCompra(cotizacion)"
-                       >
-                         🧾 Generar Ticket
-                       </button>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
-     </div>
-   </div>
-   
-   <!-- TICKET DE COMPRA (Solo visible al imprimir) -->
-   <div *ngIf="cotizacionSeleccionada" class="ticket-compra d-none d-print-block">
-     <div class="ticket-header text-center">
-       <h3>INTESCAM - Sistema de Finanzas</h3>
-       <p>Ticket de Cotización</p>
-       <hr>
-     </div>
-     
-     <div class="ticket-info">
-       <p><strong>Fecha:</strong> {{ cotizacionSeleccionada.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
-       <p><strong>Cotización ID:</strong> {{ cotizacionSeleccionada.id }}</p>
-       <p><strong>Partida:</strong> {{ cotizacionSeleccionada.partidaCodigo }}</p>
-       <p><strong>Fuente:</strong> {{ cotizacionSeleccionada.fuente }}</p>
-       <hr>
-     </div>
-     
-     <div class="ticket-items">
-       <h5>Artículos Cotizados:</h5>
-       <table class="table table-sm">
-         <thead>
-           <tr>
-             <th>Artículo</th>
-             <th>Cantidad</th>
-             <th>Precio Unit.</th>
-             <th>Subtotal</th>
-           </tr>
-         </thead>
-         <tbody>
-           <tr *ngFor="let item of cotizacionSeleccionada.items">
-             <td>{{ item.articulo.nombre }}</td>
-             <td>{{ item.cantidad }}</td>
-             <td>${{ item.precioUnitario | number:'1.2-2' }}</td>
-             <td>${{ item.subtotal | number:'1.2-2' }}</td>
-           </tr>
-         </tbody>
-       </table>
-     </div>
-     
-     <div class="ticket-total text-end">
-       <h4>Total: ${{ cotizacionSeleccionada.total | number:'1.2-2' }}</h4>
-     </div>
-     
-     <div class="ticket-footer text-center mt-4">
-       <hr>
-       <p><small>Este ticket es un comprobante de la cotización generada en el sistema.</small></p>
-       <p><small>Intescam - {{ today | date:'dd/MM/yyyy' }}</small></p>
-     </div>
-   </div>
+<!-- src/app/features/reportes/reportes.component.html -->
+<div class="reportes-container">
+  <!-- HEADER CON BOTÓN DE REGRESO -->
+  <div class="header">
+    <div class="header-content">
+      <button class="btn-regresar" (click)="regresarAlDashboard()">
+        <i class="fas fa-arrow-left"></i>
+        Regresar al Dashboard
+      </button>
+      <div class="header-info">
+        <h1>
+          <i class="fas fa-chart-bar"></i>
+          <span *ngIf="authService.isAdmin() || authService.isRevisor()">Reportes de Proyectos Aprobados</span>
+          <span *ngIf="authService.isDocente()">Mis Proyectos Aprobados</span>
+        </h1>
+        <p *ngIf="authService.isAdmin() || authService.isRevisor()">
+          Lista completa de proyectos aprobados en el sistema
+        </p>
+        <p *ngIf="authService.isDocente()">
+          Resumen de tus proyectos aprobados
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando datos...</p>
+  </div>
+
+  <!-- ERROR -->
+  <div *ngIf="error && !loading" class="error">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="cargarDatos()">Reintentar</button>
+  </div>
+
+  <!-- CONTENIDO PARA ADMIN/REVISOR -->
+  <div *ngIf="(authService.isAdmin() || authService.isRevisor()) && !loading && !error" class="admin-content">
+    
+    <!-- BOTONES DE EXPORTACIÓN -->
+    <div class="export-buttons">
+      <button class="btn-excel" (click)="generarReporteExcel()" [disabled]="proyectosUnicos.length === 0">
+        <i class="fas fa-file-excel"></i> Exportar a Excel
+      </button>
+      <button class="btn-pdf" (click)="generarReportePDF()" [disabled]="proyectosUnicos.length === 0">
+        <i class="fas fa-file-pdf"></i> Exportar a PDF
+      </button>
+      <button class="btn-regresar-inline" (click)="regresarAlDashboard()">
+        <i class="fas fa-home"></i> Dashboard
+      </button>
+    </div>
+
+    <!-- RESUMEN GENERAL -->
+    <div class="resumen-general">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ proyectosUnicos.length }}</h3>
+          <p>Proyectos Aprobados</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+          <h3>${{ getTotalGeneral().toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</h3>
+          <p>Presupuesto Total</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTA DIRECTA DE PROYECTOS -->
+    <div class="proyectos-lista">
+      <div *ngFor="let proyecto of proyectosUnicos" class="proyecto-card-directo">
+        <div class="proyecto-header-directo">
+          <h3>{{ proyecto.proyectoNombre }}</h3>
+          <span class="estado-badge aprobado">Aprobado</span>
+        </div>
+        
+        <div class="proyecto-info-directo">
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Docente:</strong>
+              <span>{{ proyecto.docenteNombre }}</span>
+            </div>
+            <div class="info-item">
+              <strong>Partida:</strong>
+              <span>{{ proyecto.partidaCodigo }} - {{ proyecto.partidaNombre }}</span>
+            </div>
+            <div class="info-item">
+              <strong>Presupuesto Total:</strong>
+              <span class="monto">${{ proyecto.presupuestoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+            <div class="info-item">
+              <strong>Federal:</strong>
+              <span class="monto">${{ proyecto.presupuestoFederal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+            <div class="info-item">
+              <strong>Estatal:</strong>
+              <span class="monto">${{ proyecto.presupuestoEstatal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="proyecto-status-directo">
+          <i class="fas fa-check-circle"></i>
+          <span>Listo para realizar cotizaciones</span>
+        </div>
+      </div>
+
+      <!-- SIN DATOS -->
+      <div *ngIf="proyectosUnicos.length === 0" class="no-data">
+        <i class="fas fa-inbox"></i>
+        <h3>No hay proyectos aprobados</h3>
+        <p>No se encontraron proyectos con estado APROBADO en el sistema</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO PARA DOCENTE -->
+  <div *ngIf="authService.isDocente() && !loading && !error" class="docente-content">
+    
+    <!-- BOTONES DEL TICKET -->
+    <div class="ticket-actions" *ngIf="ticketDocente">
+      <button class="btn-pdf" (click)="generarTicketPDF()" [disabled]="ticketDocente.proyectos.length === 0">
+        <i class="fas fa-download"></i> Descargar PDF
+      </button>
+      <button class="btn-print" (click)="imprimirTicket()" [disabled]="ticketDocente.proyectos.length === 0">
+        <i class="fas fa-print"></i> Imprimir Ticket
+      </button>
+      <button class="btn-regresar-inline" (click)="regresarAlDashboard()">
+        <i class="fas fa-home"></i> Dashboard
+      </button>
+    </div>
+
+    <!-- TICKET DEL DOCENTE -->
+    <div *ngIf="ticketDocente" class="ticket-container">
+      <div class="ticket-header">
+        <div class="ticket-logo">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="ticket-info">
+          <h2>Mis Proyectos Aprobados</h2>
+          <p>ITESCAM - Sistema de Finanzas</p>
+        </div>
+      </div>
+
+      <div class="ticket-body">
+        <!-- INFORMACIÓN DEL DOCENTE -->
+        <div class="docente-info">
+          <h3>{{ ticketDocente.docenteNombre }}</h3>
+          <p>Fecha de generación: {{ ticketDocente.fechaGeneracion | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+
+        <!-- PROYECTOS APROBADOS -->
+        <div *ngIf="ticketDocente.proyectos.length > 0" class="proyectos-ticket">
+          <div *ngFor="let proyecto of ticketDocente.proyectos" class="proyecto-ticket">
+            <div class="proyecto-header">
+              <h4>{{ proyecto.nombre }}</h4>
+              <span class="total">${{ proyecto.presupuestoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+            
+            <div class="proyecto-detalles">
+              <p><strong>Descripción:</strong> {{ proyecto.descripcion }}</p>
+              <p><strong>Edición:</strong> {{ proyecto.edicion }}</p>
+              <p><strong>Presupuesto Federal:</strong> ${{ proyecto.presupuestoFederal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</p>
+              <p><strong>Presupuesto Estatal:</strong> ${{ proyecto.presupuestoEstatal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOTAL GENERAL -->
+        <div class="ticket-total">
+          <h3>Presupuesto Total Aprobado: ${{ ticketDocente.totalGeneral.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</h3>
+        </div>
+
+        <!-- SIN PROYECTOS -->
+        <div *ngIf="ticketDocente.proyectos.length === 0" class="no-proyectos">
+          <i class="fas fa-folder-open"></i>
+          <h4>No tienes proyectos aprobados</h4>
+          <p>Los proyectos aparecerán aquí una vez que sean aprobados por el administrador</p>
+        </div>
+      </div>
+
+      <div class="ticket-footer">
+        <p>ITESCAM - Sistema de Gestión de Finanzas</p>
+        <small>Este documento lista tus proyectos aprobados para gestión de recursos</small>
+      </div>
+    </div>
+  </div>
+</div>
