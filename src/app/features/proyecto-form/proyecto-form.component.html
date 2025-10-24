@@ -2,12 +2,12 @@
   <!-- Header -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container">
-      <a class="navbar-brand" routerLink="/proyectos">
+      <a class="navbar-brand" [routerLink]="esEdicion && proyectoId ? ['/proyectos', proyectoId] : ['/proyectos']">
         <i class="fas fa-arrow-left me-2"></i>
-        Volver a Proyectos
+        {{ esEdicion ? 'Volver al Detalle' : 'Volver a Proyectos' }}
       </a>
       <div class="d-flex align-items-center">
-        <span class="text-light me-3">📝 Crear Nuevo Proyecto</span>
+        <span class="text-light me-3">{{ esEdicion ? '✏️ Editar Proyecto' : '📝 Crear Nuevo Proyecto' }}</span>
       </div>
     </div>
   </nav>
@@ -18,8 +18,12 @@
         <!-- Card Principal -->
         <div class="card">
           <div class="card-header">
-            <h4 class="mb-0">🚀 Crear Nuevo Proyecto de Investigación</h4>
-            <p class="text-muted mb-0">Completa la información básica y asigna el presupuesto por partidas</p>
+            <h4 class="mb-0">{{ tituloFormulario }}</h4>
+            <p class="text-muted mb-0">
+              {{ esEdicion ? 
+                 'Modifica la información del proyecto existente' : 
+                 'Completa la información básica y asigna el presupuesto por partidas' }}
+            </p>
           </div>
 
           <div class="card-body">
@@ -174,7 +178,7 @@
                             [class.is-invalid]="partida.get('codigo')?.invalid && partida.get('codigo')?.touched"
                           >
                             <option value="">Selecciona una partida</option>
-                            <option *ngFor="let partida of partidasPredefinidas" [value]="partida.codigo">
+                            <option *ngFor="let partida of partidasReales" [value]="partida.codigo">
                               {{ partida.codigo }} - {{ partida.nombre }}
                             </option>
                           </select>
@@ -245,7 +249,7 @@
                 <div class="alert alert-info">
                   <small>
                     💡 <strong>Consejo:</strong> Asegúrate de que la suma de todas las partidas sea exactamente igual al presupuesto total. 
-                    Las partidas deben coincidir con el clasificador por objeto de gasto oficial.
+                    Las partidas deben coincidir con el clasificador por objeto de gasto oficial del sistema.
                   </small>
                 </div>
               </div>
@@ -267,7 +271,7 @@
                   [disabled]="loading"
                 >
                   <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-                  {{ loading ? 'Creando Proyecto...' : '✅ Crear Proyecto' }}
+                  {{ loading ? (esEdicion ? 'Actualizando...' : 'Creando...') : (esEdicion ? '✅ Actualizar Proyecto' : '✅ Crear Proyecto') }}
                 </button>
               </div>
             </form>

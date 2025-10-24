@@ -36,12 +36,18 @@ export const appRoutes: Routes = [
     loadComponent: () => import('./features/proyectos/proyectos-list.component').then(m => m.ProyectosListComponent)
   },
   { 
-    path: 'cotizaciones', 
-    loadComponent: () => import('./features/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
-  },
-  { 
     path: 'proyectos/nuevo', 
     loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.ProyectoFormComponent)
+  },
+  // 🔥 RUTAS NUEVAS PARA EDITAR Y VER DETALLES
+  { 
+    path: 'proyectos/editar/:id', 
+    loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.ProyectoFormComponent)
+  },
+  
+  { 
+    path: 'cotizaciones', 
+    loadComponent: () => import('./features/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
   },
   { 
     path: 'reportes', 

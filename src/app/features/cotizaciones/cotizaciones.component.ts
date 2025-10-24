@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Articulo } from '../../core/models/articulo.model';
 import { Proyecto } from '../../core/models/proyecto.model';
 import { PartidaPresupuestal } from '../../core/models/partida.model';
@@ -9,6 +9,7 @@ import { CotizacionItem } from '../../core/models/cotizacion.model';
 import { ArticulosService } from '../../core/services/articulos.service';
 import { ProyectosService } from '../../core/services/proyectos.service';
 import { PartidasService } from '../../core/services/partidas.service';
+import { CotizacionesService } from '../../core/services/cotizaciones.service';
 import { AuthService } from '../../auth/auth';
 
 @Component({
@@ -41,6 +42,8 @@ export class CotizacionesComponent implements OnInit {
     private articulosService: ArticulosService,
     private proyectosService: ProyectosService,
     private partidasService: PartidasService,
+    private cotizacionesService: CotizacionesService,
+    private router: Router,
     public authService: AuthService
   ) {}
 
@@ -50,100 +53,71 @@ export class CotizacionesComponent implements OnInit {
 
   cargarDatosIniciales(): void {
     this.loading = true;
-    
-    // Por ahora simulamos datos ya que no hay backend
-    this.simularCargaDatos();
+    this.cargarProyectosUsuario();
   }
 
-  private simularCargaDatos(): void {
-    setTimeout(() => {
-      // Proyectos de ejemplo
-      this.proyectos = [
-        {
-          id: '1',
-          nombre: 'Desarrollo de Material Biodegradable',
-          descripcion: 'Investigación sobre materiales alternativos al plástico',
-          docenteId: '1',
-          docente: {
-            id: '1',
-            nombre: 'Juan Pérez',
-            email: 'juan@email.com',
-            role: 'DOCENTE',
-            createdAt: new Date()
-          },
-          presupuestoTotal: 100000,
-          presupuestoFederal: 50000,
-          presupuestoEstatal: 50000,
-          edicion: '2025',
-          estado: 'EN_REVISION',
-          createdAt: new Date('2024-01-15'),
-          updatedAt: new Date('2024-01-20')
-        }
-      ];
-
-      // Partidas de ejemplo
-      this.partidas = [
-        {
-          id: '1',
-          codigo: '21.1',
-          nombre: 'Materiales de Papelería',
-          descripcion: 'Papelería y útiles de oficina',
-          importeAsignado: 20000,
-          proyectoId: '1',
-          saldoDisponible: 20000,
-          createdAt: new Date()
+  private cargarProyectosUsuario(): void {
+    if (this.authService.isAdmin() || this.authService.isRevisor()) {
+      this.proyectosService.getProyectosPorEstado('APROBADO').subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.proyectos = response.data;
+            this.cargarArticulos();
+          } else {
+            this.error = 'No se pudieron cargar los proyectos aprobados';
+            this.loading = false;
+          }
         },
-        {
-          id: '2',
-          codigo: '25.1',
-          nombre: 'Productos Químicos',
-          descripcion: 'Reactivos y productos químicos para laboratorio',
-          importeAsignado: 30000,
-          proyectoId: '1',
-          saldoDisponible: 30000,
-          createdAt: new Date()
+        error: (error) => {
+          this.error = 'Error al cargar proyectos aprobados';
+          this.loading = false;
+          console.error('Error:', error);
         }
-      ];
-
-      // Artículos de ejemplo
-      this.articulos = [
-        {
-          id: '1',
-          nombre: 'Hojas Blancas A4',
-          descripcion: 'Paquete de 500 hojas tamaño carta',
-          partidaCodigo: '21.1',
-          precioReferencia: 120.50,
-          activo: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
+      });
+    } else if (this.authService.isDocente()) {
+      this.proyectosService.getMisProyectos().subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.proyectos = response.data.filter(p => p.estado === 'APROBADO');
+            if (this.proyectos.length === 0) {
+              this.error = 'No tienes proyectos aprobados para realizar cotizaciones. Contacta al administrador.';
+            }
+            this.cargarArticulos();
+          } else {
+            this.error = 'No se pudieron cargar tus proyectos';
+            this.loading = false;
+          }
         },
-        {
-          id: '2',
-          nombre: 'Lápices Mirado No. 2',
-          descripcion: 'Caja con 12 lápices',
-          partidaCodigo: '21.1',
-          precioReferencia: 45.00,
-          activo: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: '3',
-          nombre: 'Reactivo Etileno',
-          descripcion: 'Reactivo para laboratorio químico',
-          partidaCodigo: '25.1',
-          precioReferencia: 280.75,
-          activo: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
+        error: (error) => {
+          this.error = 'Error al cargar tus proyectos';
+          this.loading = false;
+          console.error('Error:', error);
         }
-      ];
-
+      });
+    } else {
       this.loading = false;
-    }, 1000);
+    }
   }
 
-  // Métodos corregidos para los selects
+  private cargarArticulos(): void {
+    this.articulosService.getArticulos().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.articulos = response.data;
+          this.loading = false;
+        } else {
+          this.error = 'No se pudieron cargar los artículos';
+          this.loading = false;
+        }
+      },
+      error: (error) => {
+        this.error = 'Error al cargar artículos';
+        this.loading = false;
+        console.error('Error:', error);
+      }
+    });
+  }
+
   onProyectoChangeSeleccionado(event: any): void {
     const proyectoId = event.target.value;
     const proyecto = this.proyectos.find(p => p.id === proyectoId);
@@ -163,19 +137,39 @@ export class CotizacionesComponent implements OnInit {
   onProyectoChange(proyecto: Proyecto): void {
     this.proyectoSeleccionado = proyecto;
     this.partidaSeleccionada = null;
-    this.carrito = []; // Limpiar carrito al cambiar proyecto
+    this.carrito = [];
+    this.cargarPartidasProyecto(proyecto.id);
+  }
+
+  private cargarPartidasProyecto(proyectoId: string): void {
+    this.partidasService.getPartidasByProyecto(proyectoId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.partidas = response.data;
+        } else {
+          this.partidas = [];
+          console.warn('No se encontraron partidas para este proyecto');
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar partidas:', error);
+        this.partidas = [];
+      }
+    });
   }
 
   onPartidaChange(partida: PartidaPresupuestal): void {
     this.partidaSeleccionada = partida;
-    this.carrito = []; // Limpiar carrito al cambiar partida
+    this.carrito = [];
   }
 
-  // ✅ NUEVO MÉTODO: Verificar si se puede agregar un artículo
+  getNombrePartida(codigo: string): string {
+    return this.articulosService.getNombrePartida(codigo);
+  }
+
   puedeAgregarArticulo(articulo: Articulo): boolean {
     if (!this.partidaSeleccionada) return false;
     
-    // Verificar que el artículo pertenezca a la partida seleccionada
     if (articulo.partidaCodigo !== this.partidaSeleccionada.codigo) {
       return false;
     }
@@ -184,7 +178,7 @@ export class CotizacionesComponent implements OnInit {
     let costoAdicional = articulo.precioReferencia;
     
     if (itemExistente) {
-      costoAdicional = itemExistente.precioUnitario; // Costo de una unidad adicional
+      costoAdicional = itemExistente.precioUnitario;
     }
     
     return this.totalCarrito + costoAdicional <= this.saldoDisponible;
@@ -196,35 +190,27 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
-    // ✅ VALIDACIÓN CRÍTICA: Verificar que el artículo pertenezca a la partida seleccionada
     if (articulo.partidaCodigo !== this.partidaSeleccionada.codigo) {
       alert(`❌ No puedes agregar este artículo a la partida ${this.partidaSeleccionada.codigo}\n\nEl artículo "${articulo.nombre}" pertenece a la partida ${articulo.partidaCodigo} y solo puede ser agregado en cotizaciones de esa partida.`);
       return;
     }
 
-    // ✅ VALIDACIÓN DE PRESUPUESTO: Verificar que no se exceda el saldo
     const subtotalItem = articulo.precioReferencia;
-    
-    // Calcular el nuevo total si agregamos este artículo
     let nuevoTotal = this.totalCarrito;
     const itemExistente = this.carrito.find(item => item.articuloId === articulo.id);
     
     if (itemExistente) {
-      // Si ya existe, calcular el nuevo subtotal
       nuevoTotal = this.totalCarrito - itemExistente.subtotal + (itemExistente.cantidad + 1) * itemExistente.precioUnitario;
     } else {
-      // Si es nuevo, sumar el subtotal
       nuevoTotal = this.totalCarrito + subtotalItem;
     }
 
-    // ✅ BLOQUEO: No permitir agregar si excede el presupuesto
     if (nuevoTotal > this.saldoDisponible) {
       const saldoRestante = this.saldoDisponible - this.totalCarrito;
       alert(`🚫 PRESUPUESTO INSUFICIENTE\n\nNo puedes agregar "${articulo.nombre}"\n\n💰 Saldo disponible en ${this.partidaSeleccionada.codigo}: $${this.saldoDisponible}\n🛒 Total actual del carrito: $${this.totalCarrito}\n💵 Saldo restante: $${saldoRestante}\n\nEste artículo costaría: $${subtotalItem}\n\n⚠️ Ajusta tu carrito o selecciona artículos más económicos.`);
       return;
     }
 
-    // Si pasa todas las validaciones, agregar al carrito
     if (itemExistente) {
       itemExistente.cantidad += 1;
       itemExistente.subtotal = itemExistente.cantidad * itemExistente.precioUnitario;
@@ -243,6 +229,31 @@ export class CotizacionesComponent implements OnInit {
     this.actualizarCarrito();
   }
 
+  // ✅ NUEVO MÉTODO: Disminuir cantidad en 1
+  disminuirCantidad(item: CotizacionItem): void {
+    if (item.cantidad > 1) {
+      this.actualizarCantidad(item, item.cantidad - 1);
+    }
+  }
+
+  // ✅ NUEVO MÉTODO: Aumentar cantidad en 1
+  aumentarCantidad(item: CotizacionItem): void {
+    if (this.puedeAumentarCantidad(item)) {
+      this.actualizarCantidad(item, item.cantidad + 1);
+    }
+  }
+
+  // ✅ NUEVO MÉTODO: Verificar si se puede aumentar la cantidad
+  puedeAumentarCantidad(item: CotizacionItem): boolean {
+    if (!this.partidaSeleccionada) return false;
+    
+    const nuevoSubtotal = (item.cantidad + 1) * item.precioUnitario;
+    const totalSinEsteItem = this.totalCarrito - item.subtotal;
+    const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
+    
+    return nuevoTotal <= this.saldoDisponible;
+  }
+
   eliminarDelCarrito(item: CotizacionItem): void {
     this.carrito = this.carrito.filter(i => i.id !== item.id);
     this.actualizarCarrito();
@@ -254,13 +265,15 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
-    // ✅ VALIDAR PRESUPUESTO ANTES DE ACTUALIZAR
     const nuevoSubtotal = nuevaCantidad * item.precioUnitario;
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
 
     if (nuevoTotal > this.saldoDisponible) {
-      alert(`❌ No puedes aumentar la cantidad. Excederías el presupuesto disponible.\n\nSaldo disponible: $${this.saldoDisponible}\nNuevo total: $${nuevoTotal}`);
+      const saldoRestante = this.saldoDisponible - totalSinEsteItem;
+      const maximoPermitido = Math.floor(saldoRestante / item.precioUnitario);
+      
+      alert(`❌ No puedes aumentar la cantidad. Excederías el presupuesto disponible.\n\nSaldo disponible: $${this.saldoDisponible}\nMáximo permitido: ${maximoPermitido} unidades\nNuevo total: $${nuevoTotal}`);
       return;
     }
 
@@ -272,7 +285,6 @@ export class CotizacionesComponent implements OnInit {
   actualizarPrecio(item: CotizacionItem, nuevoPrecio: number): void {
     if (nuevoPrecio < 0) return;
     
-    // ✅ VALIDAR PRESUPUESTO ANTES DE ACTUALIZAR
     const nuevoSubtotal = item.cantidad * nuevoPrecio;
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
@@ -288,7 +300,6 @@ export class CotizacionesComponent implements OnInit {
   }
 
   actualizarCarrito(): void {
-    // Forzar actualización de la vista
     this.carrito = [...this.carrito];
   }
 
@@ -311,18 +322,15 @@ export class CotizacionesComponent implements OnInit {
   get articulosFiltrados(): Articulo[] {
     let articulosFiltrados = this.articulos;
     
-    // Primero filtrar por partida seleccionada
     if (this.partidaSeleccionada) {
       articulosFiltrados = articulosFiltrados.filter(articulo => 
         articulo.activo && articulo.partidaCodigo === this.partidaSeleccionada?.codigo
       );
     }
     
-    // Luego aplicar búsqueda si existe
     if (this.searchTerm) {
       articulosFiltrados = articulosFiltrados.filter(articulo => 
-        articulo.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        articulo.descripcion.toLowerCase().includes(this.searchTerm.toLowerCase())
+        articulo.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     }
     
@@ -351,31 +359,81 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
-    // Mostrar resumen de la cotización
-    const resumen = `
-      📋 RESUMEN DE COTIZACIÓN
+    const confirmacion = confirm(`¿Estás seguro de crear la cotización?\n\n📋 Resumen:\n• Proyecto: ${this.proyectoSeleccionado.nombre}\n• Partida: ${this.partidaSeleccionada.codigo}\n• Total: $${this.totalCarrito.toFixed(2)}\n• Artículos: ${this.carrito.length}\n\nEsta acción no se puede deshacer.`);
+    
+    if (!confirmacion) {
+      return;
+    }
 
-      Proyecto: ${this.proyectoSeleccionado.nombre}
-      Partida: ${this.partidaSeleccionada.codigo} - ${this.partidaSeleccionada.nombre}
-      Fuente: ${this.fuenteSeleccionada}
+    const cotizacionData = {
+      proyectoId: this.proyectoSeleccionado.id,
+      partidaCodigo: this.partidaSeleccionada.codigo,
+      fuente: this.fuenteSeleccionada,
+      items: this.carrito.map(item => ({
+        articuloId: item.articuloId,
+        cantidad: item.cantidad,
+        precioUnitario: item.precioUnitario
+      }))
+    };
 
-      Artículos (${this.carrito.length}):
-      ${this.carrito.map(item => 
-        `• ${item.articulo.nombre} - ${item.cantidad} x $${item.precioUnitario} = $${item.subtotal}`
-      ).join('\n')}
-
-      💰 TOTAL: $${this.totalCarrito}
-      📊 Saldo disponible: $${this.saldoDisponible}
-      💵 Saldo restante: $${this.saldoRestante}
-
-      ✅ Cotización lista para enviar a revisión
-    `;
-
-    alert(resumen);
+    this.loading = true;
+    
+    this.cotizacionesService.createCotizacion(cotizacionData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.partidasService.actualizarSaldoPartida(
+            this.partidaSeleccionada!.id, 
+            this.totalCarrito
+          ).subscribe({
+            next: (saldoResponse) => {
+              this.loading = false;
+              if (saldoResponse.success) {
+                alert('✅ Cotización creada exitosamente y enviada a revisión\n\n💰 Saldo actualizado: $' + 
+                      (saldoResponse.data?.saldoDisponible || 0).toFixed(2));
+                this.carrito = [];
+                this.cargarPartidasProyecto(this.proyectoSeleccionado!.id);
+              } else {
+                alert('⚠️ Cotización creada, pero no se pudo actualizar el saldo: ' + saldoResponse.message);
+                this.carrito = [];
+              }
+            },
+            error: (saldoError) => {
+              this.loading = false;
+              alert('⚠️ Cotización creada, pero hubo un error al actualizar el saldo');
+              console.error('Error actualizando saldo:', saldoError);
+              this.carrito = [];
+            }
+          });
+        } else {
+          this.loading = false;
+          alert('❌ Error al crear la cotización: ' + response.message);
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        alert('❌ Error al crear la cotización');
+        console.error('Error:', error);
+      }
+    });
   }
 
   buscarArticulos(): void {
-    // Simulación de búsqueda
-    console.log('Buscando:', this.searchTerm);
+    // La búsqueda se aplica automáticamente
+  }
+
+  get hayProyectosDisponibles(): boolean {
+    return this.proyectos.length > 0;
+  }
+
+  get mensajeProyectos(): string {
+    if (this.authService.isDocente()) {
+      return this.hayProyectosDisponibles ? 
+        'Selecciona uno de tus proyectos aprobados para comenzar' : 
+        'No tienes proyectos aprobados. Contacta al administrador.';
+    } else {
+      return this.hayProyectosDisponibles ? 
+        'Selecciona un proyecto aprobado para gestionar cotizaciones' : 
+        'No hay proyectos aprobados en el sistema.';
+    }
   }
 }

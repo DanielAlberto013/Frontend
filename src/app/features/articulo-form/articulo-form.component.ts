@@ -17,7 +17,6 @@ export class ArticuloFormComponent implements OnInit {
   articulo: Articulo = {
     id: '',
     nombre: '',
-    descripcion: '',
     precioReferencia: 0,
     partidaCodigo: '',
     activo: true
@@ -28,27 +27,40 @@ export class ArticuloFormComponent implements OnInit {
   error: string | null = null;
   articulosExistentes: Articulo[] = [];
 
-  // Opciones de partidas
-  partidas = [
-    { codigo: '21.1', nombre: 'Papelería y Útiles' },
-    { codigo: '25.1', nombre: 'Productos Químicos' },
-    { codigo: '29.4', nombre: 'Material Didáctico' }
-  ];
+  // Partidas dinámicas desde el servicio
+  partidas: {codigo: string, nombre: string}[] = [];
 
-  // Cambiar a public para que sea accesible en el template
   constructor(
     private articulosService: ArticulosService,
-    public authService: AuthService, // Cambiado a public
+    public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    this.cargarPartidas();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
       this.cargarArticulo(id);
     }
+  }
+
+  cargarPartidas(): void {
+    this.articulosService.getPartidas().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Mapear las partidas con sus nombres descriptivos
+          this.partidas = response.data.map(codigo => ({
+            codigo: codigo,
+            nombre: this.articulosService.getNombrePartida(codigo)
+          }));
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar partidas:', error);
+      }
+    });
   }
 
   cargarArticulo(id: string): void {
@@ -117,7 +129,6 @@ export class ArticuloFormComponent implements OnInit {
   private crearArticulo(): void {
     const createData: CreateArticuloRequest = {
       nombre: this.articulo.nombre,
-      descripcion: this.articulo.descripcion,
       precioReferencia: this.articulo.precioReferencia,
       partidaCodigo: this.articulo.partidaCodigo
     };
@@ -142,7 +153,6 @@ export class ArticuloFormComponent implements OnInit {
   private actualizarArticulo(): void {
     const updateData: UpdateArticuloRequest = {
       nombre: this.articulo.nombre,
-      descripcion: this.articulo.descripcion,
       precioReferencia: this.articulo.precioReferencia,
       partidaCodigo: this.articulo.partidaCodigo,
       activo: this.articulo.activo
@@ -190,7 +200,6 @@ export class ArticuloFormComponent implements OnInit {
     this.router.navigate(['/catalogo']);
   }
 
-  // Helper method para usar en el template
   tienePermisos(): boolean {
     return this.authService.isAdmin() || this.authService.isRevisor();
   }

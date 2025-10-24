@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+// src/app/app.component.ts
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { DataInitializerService } from './core/services/data-initializer.service';
 
 @Component({
   selector: 'app-root',
@@ -10,6 +12,13 @@ import { RouterOutlet } from '@angular/router';
   `,
   styleUrls: ['./app.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'Sistema de Finanzas - Intescam';
+
+  constructor(private dataInitializer: DataInitializerService) {}
+
+  ngOnInit(): void {
+    // Inicializar datos cuando la aplicación comience
+    this.dataInitializer.initializeData();
+  }
 }

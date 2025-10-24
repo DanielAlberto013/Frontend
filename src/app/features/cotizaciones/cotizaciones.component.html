@@ -37,8 +37,10 @@
 
     <!-- Contenido Principal -->
     <div *ngIf="!loading && !error" class="row">
-      <!-- Panel Izquierdo: Selección y Catálogo -->
+      
+      <!-- ✅ PANEL IZQUIERDO: Selección y Catálogo (ESTE ES EL QUE DEBERÍA VERSE) -->
       <div class="col-md-8">
+        
         <!-- Selección de Proyecto y Partida -->
         <div class="card mb-4">
           <div class="card-header">
@@ -56,7 +58,7 @@
                 >
                   <option value="">Selecciona un proyecto</option>
                   <option *ngFor="let proyecto of proyectos" [value]="proyecto.id">
-                    {{ proyecto.nombre }} ({{ proyecto.edicion }})
+                    {{ proyecto.nombre }} ({{ proyecto.edicion }}) - ${{ proyecto.presupuestoTotal | number:'1.2-2' }}
                   </option>
                 </select>
               </div>
@@ -72,15 +74,37 @@
                 >
                   <option value="">Selecciona una partida</option>
                   <option *ngFor="let partida of partidas" [value]="partida.id">
-                    {{ partida.codigo }} - {{ partida.nombre }} (${{ partida.saldoDisponible | number:'1.2-2' }})
+                    {{ partida.codigo }} - {{ getNombrePartida(partida.codigo) }} (${{ partida.saldoDisponible | number:'1.2-2' }})
                   </option>
                 </select>
+              </div>
+
+              <!-- Información del Proyecto Seleccionado -->
+              <div *ngIf="proyectoSeleccionado" class="col-12">
+                <div class="project-info p-3 bg-light rounded">
+                  <h6>📊 Información del Proyecto</h6>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <strong>Nombre:</strong> {{ proyectoSeleccionado.nombre }}<br>
+                      <strong>Edición:</strong> {{ proyectoSeleccionado.edicion }}<br>
+                      <strong>Estado:</strong> 
+                      <span [class]="proyectoSeleccionado.estado === 'APROBADO' ? 'text-success' : 'text-warning'">
+                        {{ proyectoSeleccionado.estado === 'APROBADO' ? '✅ Aprobado' : '⏳ En Revisión' }}
+                      </span>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Presupuesto Total:</strong> ${{ proyectoSeleccionado.presupuestoTotal | number:'1.2-2' }}<br>
+                      <strong>Federal:</strong> ${{ proyectoSeleccionado.presupuestoFederal | number:'1.2-2' }}<br>
+                      <strong>Estatal:</strong> ${{ proyectoSeleccionado.presupuestoEstatal | number:'1.2-2' }}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Información de Presupuesto -->
               <div *ngIf="partidaSeleccionada" class="col-12">
                 <div class="budget-info p-3 bg-light rounded">
-                  <h6>💰 Información de Presupuesto</h6>
+                  <h6>💰 Información de Presupuesto - {{ partidaSeleccionada.codigo }}</h6>
                   <div class="row">
                     <div class="col-md-4">
                       <strong>Saldo Disponible:</strong><br>
@@ -100,7 +124,7 @@
                     </div>
                   </div>
                   
-                  <!-- ✅ NUEVO: Indicador de estado de presupuesto -->
+                  <!-- Indicador de estado de presupuesto -->
                   <div *ngIf="partidaSeleccionada" class="alert mt-3 mb-0" [class]="haExcedidoPresupuesto ? 'alert-danger' : (saldoRestante < 1000 ? 'alert-warning' : 'alert-success')">
                     <div class="d-flex justify-content-between align-items-center">
                       <div>
@@ -128,7 +152,7 @@
         <!-- Catálogo de Artículos -->
         <div *ngIf="partidaSeleccionada" class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">📦 Catálogo de Artículos - {{ partidaSeleccionada.codigo }}</h5>
+            <h5 class="mb-0">📦 Catálogo de Artículos - {{ partidaSeleccionada.codigo }} - {{ getNombrePartida(partidaSeleccionada.codigo) }}</h5>
             <div class="search-box">
               <input 
                 type="text" 
@@ -140,10 +164,10 @@
             </div>
           </div>
 
-          <!-- ✅ NUEVO: Mensaje informativo -->
+          <!-- Mensaje informativo -->
           <div *ngIf="partidaSeleccionada" class="alert alert-info mx-3 mt-3 mb-0">
             <small>
-              🔍 <strong>Filtrado por partida:</strong> Solo se muestran artículos de la partida <strong>{{ partidaSeleccionada.codigo }} - {{ partidaSeleccionada.nombre }}</strong>
+              🔍 <strong>Filtrado por partida:</strong> Solo se muestran artículos de la partida <strong>{{ partidaSeleccionada.codigo }} - {{ getNombrePartida(partidaSeleccionada.codigo) }}</strong>
             </small>
           </div>
 
@@ -154,13 +178,12 @@
                 <div class="articulo-card card h-100">
                   <div class="card-body">
                     <h6 class="card-title">{{ articulo.nombre }}</h6>
-                    <p class="card-text small text-muted">{{ articulo.descripcion }}</p>
                     <div class="articulo-info">
-                      <span class="badge bg-primary">{{ articulo.partidaCodigo }}</span>
+                      <span class="badge bg-primary">{{ articulo.partidaCodigo }} - {{ getNombrePartida(articulo.partidaCodigo) }}</span>
                       <span class="precio">${{ articulo.precioReferencia | number:'1.2-2' }}</span>
                     </div>
                     
-                    <!-- ✅ NUEVO: Botón con validación de presupuesto -->
+                    <!-- Botón con validación de presupuesto -->
                     <button 
                       (click)="agregarAlCarrito(articulo)"
                       class="btn w-100 mt-2"
@@ -171,7 +194,7 @@
                       {{ puedeAgregarArticulo(articulo) ? '🛒 Agregar' : '🚫 Sin presupuesto' }}
                     </button>
 
-                    <!-- ✅ NUEVO: Mensaje de sin presupuesto -->
+                    <!-- Mensaje de sin presupuesto -->
                     <div *ngIf="!puedeAgregarArticulo(articulo)" class="mt-1">
                       <small class="text-danger">
                         💰 Necesitas ${{ (articulo.precioReferencia - saldoRestante) | number:'1.2-2' }} más
@@ -189,9 +212,28 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Panel Derecho: Carrito de Compras -->
+        <!-- Mensaje cuando no hay partida seleccionada -->
+        <div *ngIf="!partidaSeleccionada && proyectoSeleccionado" class="card">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Selecciona una partida presupuestal</h5>
+            <p class="text-muted">Elige una partida del proyecto para ver los artículos disponibles</p>
+          </div>
+        </div>
+
+        <!-- Mensaje cuando no hay proyecto seleccionado -->
+        <div *ngIf="!proyectoSeleccionado" class="card">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Selecciona un proyecto</h5>
+            <p class="text-muted">{{ mensajeProyectos }}</p>
+          </div>
+        </div>
+
+      </div> <!-- Fin col-md-8 -->
+
+      <!-- ✅ PANEL DERECHO: Carrito de Compras -->
       <div class="col-md-4">
         <div class="card sticky-top" style="top: 20px;">
           <div class="card-header d-flex justify-content-between align-items-center">
@@ -219,15 +261,27 @@
                   <button 
                     (click)="eliminarDelCarrito(item)"
                     class="btn btn-outline-danger btn-sm"
+                    title="Eliminar todo el producto"
                   >
                     ❌
                   </button>
                 </div>
                 
-                <p class="small text-muted mb-2">{{ item.articulo.descripcion }}</p>
-                
-                <div class="row g-2">
-                  <div class="col-6">
+                <div class="row g-2 align-items-center">
+                  <!-- Botón Disminuir -->
+                  <div class="col-2">
+                    <button 
+                      (click)="disminuirCantidad(item)"
+                      class="btn btn-outline-warning btn-sm w-100"
+                      [disabled]="item.cantidad <= 1"
+                      title="Disminuir cantidad"
+                    >
+                      ➖
+                    </button>
+                  </div>
+                  
+                  <!-- Cantidad -->
+                  <div class="col-4">
                     <label class="small">Cantidad</label>
                     <input 
                       type="number" 
@@ -237,7 +291,21 @@
                       class="form-control form-control-sm"
                     >
                   </div>
-                  <div class="col-6">
+                  
+                  <!-- Botón Aumentar -->
+                  <div class="col-2">
+                    <button 
+                      (click)="aumentarCantidad(item)"
+                      class="btn btn-outline-success btn-sm w-100"
+                      [disabled]="!puedeAumentarCantidad(item)"
+                      title="Aumentar cantidad"
+                    >
+                      ➕
+                    </button>
+                  </div>
+
+                  <!-- Precio Unitario -->
+                  <div class="col-4">
                     <label class="small">Precio Unitario</label>
                     <input 
                       type="number" 
@@ -252,6 +320,8 @@
                 
                 <div class="mt-2 text-end">
                   <strong>Subtotal: ${{ item.subtotal | number:'1.2-2' }}</strong>
+                  <br>
+                  <small class="text-muted">{{ item.cantidad }} x ${{ item.precioUnitario | number:'1.2-2' }}</small>
                 </div>
               </div>
 
@@ -281,7 +351,7 @@
                   ⚠️ Ajusta tu carrito para no exceder el presupuesto
                 </div>
 
-                <!-- ✅ NUEVO: Indicador de presupuesto agotado -->
+                <!-- Indicador de presupuesto agotado -->
                 <div *ngIf="saldoRestante === 0 && !haExcedidoPresupuesto" class="alert alert-info mt-2 mb-0">
                   ✅ Presupuesto completamente utilizado
                 </div>
@@ -299,7 +369,8 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
+      </div> <!-- Fin col-md-4 -->
+
+    </div> <!-- Fin row principal -->
+  </div> <!-- Fin container -->
+</div> <!-- Fin container-fluid -->

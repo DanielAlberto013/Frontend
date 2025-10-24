@@ -14,7 +14,7 @@
       <div class="d-flex align-items-center">
         <mat-icon class="me-2">folder</mat-icon>
         <span class="toolbar-title">
-          {{ authService.isDocente() ? 'Mis Proyectos' : 'Todos los Proyectos' }}
+          {{ authService.isDocente() ? 'Mis Proyectos' : 'Gestión de Proyectos - Administración' }}
         </span>
       </div>
     </div>
@@ -29,11 +29,13 @@
             <mat-icon>folder_open</mat-icon>
           </div>
           <div>
-            <h1 class="page-title">Gestión de Proyectos</h1>
+            <h1 class="page-title">
+              {{ authService.isDocente() ? 'Mis Proyectos' : 'Gestión de Proyectos' }}
+            </h1>
             <p class="page-subtitle">
               {{ authService.isDocente() ? 
                  'Gestiona tus proyectos de investigación y su presupuesto' : 
-                 'Revisa y administra todos los proyectos del sistema' }}
+                 'Revisa, aprueba y administra todos los proyectos del sistema' }}
             </p>
           </div>
         </div>
@@ -52,6 +54,43 @@
       </div>
     </div>
 
+    <!-- 🔥 NUEVO: Filtros para Admin -->
+    <div *ngIf="esAdmin()" class="card mb-4">
+      <div class="card-body">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-4">
+            <label class="form-label">Filtrar por estado</label>
+            <select 
+              [(ngModel)]="filtroEstado" 
+              (ngModelChange)="onFiltroChange()"
+              class="form-select"
+            >
+              <option value="">Todos los estados</option>
+              <option value="BORRADOR">📝 Borradores</option>
+              <option value="EN_REVISION">⏳ En Revisión</option>
+              <option value="APROBADO">✅ Aprobados</option>
+              <option value="RECHAZADO">❌ Rechazados</option>
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Buscar proyecto</label>
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (ngModelChange)="onSearchChange()"
+              placeholder="Buscar por nombre o docente..." 
+              class="form-control"
+            >
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button (click)="limpiarFiltros()" class="btn btn-outline-secondary">
+              🧹 Limpiar Filtros
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Estadísticas con Cards de Material -->
     <div *ngIf="!loading && proyectos.length > 0" class="row mb-4">
       <div class="col-12">
@@ -63,6 +102,9 @@
                   <mat-icon>analytics</mat-icon>
                   Resumen de Proyectos
                 </h5>
+                <p class="stats-subtitle" *ngIf="esAdmin()">
+                  {{ proyectosFiltrados.length }} de {{ proyectos.length }} proyectos mostrados
+                </p>
               </div>
               <div class="col-md-6">
                 <div class="d-flex justify-content-end gap-4 flex-wrap">
@@ -121,15 +163,19 @@
     <!-- Lista de Proyectos -->
     <div *ngIf="!loading && !error">
       <!-- Empty State con Material -->
-      <div *ngIf="proyectos.length === 0" class="row justify-content-center">
+      <div *ngIf="proyectosFiltrados.length === 0" class="row justify-content-center">
         <div class="col-md-6">
           <mat-card class="empty-state-card">
             <mat-card-content class="text-center py-5">
               <mat-icon class="empty-icon">folder_open</mat-icon>
-              <h3 class="empty-title">No hay proyectos</h3>
+              <h3 class="empty-title">
+                {{ esAdmin() && filtroEstado ? 'No hay proyectos con este estado' : 'No hay proyectos' }}
+              </h3>
               <p class="empty-message">
                 {{ authService.isDocente() ? 
                    'Aún no has creado ningún proyecto. ¡Comienza ahora!' : 
+                   filtroEstado ? 
+                   'No hay proyectos con el estado seleccionado' :
                    'No hay proyectos registrados en el sistema.' }}
               </p>
               <button 
@@ -142,14 +188,24 @@
                 <mat-icon>rocket_launch</mat-icon>
                 Crear Mi Primer Proyecto
               </button>
+              <button 
+                *ngIf="esAdmin() && filtroEstado"
+                (click)="limpiarFiltros()"
+                mat-stroked-button
+                color="primary"
+                class="mt-2"
+              >
+                <mat-icon>clear_all</mat-icon>
+                Ver todos los proyectos
+              </button>
             </mat-card-content>
           </mat-card>
         </div>
       </div>
 
       <!-- Grid de Proyectos con Material Cards -->
-      <div *ngIf="proyectos.length > 0" class="row">
-        <div *ngFor="let proyecto of proyectos" class="col-md-6 col-lg-4 mb-4">
+      <div *ngIf="proyectosFiltrados.length > 0" class="row">
+        <div *ngFor="let proyecto of proyectosFiltrados" class="col-md-6 col-lg-4 mb-4">
           <mat-card class="project-card mat-elevation-z2">
             <!-- Header de la Card -->
             <mat-card-header class="project-card-header">
@@ -171,8 +227,13 @@
               <div class="project-info">
                 <div class="info-row">
                   <mat-icon>person</mat-icon>
-                  <span class="info-label">Responsable:</span>
-                  <span class="info-value">{{ proyecto.docente ? proyecto.docente.nombre : 'Docente' }}</span>
+                  <span class="info-label">Docente:</span>
+                  <span class="info-value">{{ proyecto.docente ? proyecto.docente.nombre : 'N/A' }}</span>
+                </div>
+                <div class="info-row">
+                  <mat-icon>email</mat-icon>
+                  <span class="info-label">Email:</span>
+                  <span class="info-value">{{ proyecto.docente ? proyecto.docente.email : 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                   <mat-icon>calendar_today</mat-icon>
@@ -208,65 +269,114 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Mensaje de estado informativo -->
+              <div class="estado-mensaje mt-3">
+                <div [class]="'mensaje ' + getMensajeEstadoClass(proyecto)">
+                  <mat-icon class="mensaje-icon">
+                    {{ proyecto.estado === 'BORRADOR' ? 'edit' : 
+                       proyecto.estado === 'EN_REVISION' ? 'schedule' : 
+                       proyecto.estado === 'APROBADO' ? 'check_circle' : 'warning' }}
+                  </mat-icon>
+                  <span class="mensaje-text">{{ getMensajeEstado(proyecto) }}</span>
+                </div>
+              </div>
             </mat-card-content>
 
             <mat-card-actions class="project-card-actions">
               <!-- Acciones para Docentes -->
-              <button 
-                *ngIf="authService.isDocente()"
-                (click)="verDetalle(proyecto)"
-                mat-stroked-button
-                color="primary"
-                class="action-btn"
-              >
-                <mat-icon>visibility</mat-icon>
-                Ver
-              </button>
-              
-              <button 
-                *ngIf="authService.isDocente() && proyecto.estado === 'BORRADOR'"
-                (click)="editarProyecto(proyecto)"
-                mat-stroked-button
-                color="basic"
-                class="action-btn"
-              >
-                <mat-icon>edit</mat-icon>
-                Editar
-              </button>
+              <div *ngIf="authService.isDocente()" class="d-flex gap-1 flex-wrap">
+                <button 
+                  (click)="verDetalle(proyecto)"
+                  mat-stroked-button
+                  color="primary"
+                  class="action-btn"
+                >
+                  <mat-icon>visibility</mat-icon>
+                  Ver
+                </button>
+                
+                <button 
+                  *ngIf="puedeEditar(proyecto)"
+                  (click)="editarProyecto(proyecto)"
+                  mat-stroked-button
+                  color="basic"
+                  class="action-btn"
+                >
+                  <mat-icon>edit</mat-icon>
+                  Editar
+                </button>
 
-              <!-- Acciones para Revisores/Admin -->
-              <button 
-                *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
-                (click)="cambiarEstado(proyecto, 'APROBADO')"
-                mat-stroked-button
-                color="success"
-                class="action-btn"
-              >
-                <mat-icon>check_circle</mat-icon>
-                Aprobar
-              </button>
+                <button 
+                  *ngIf="puedeEnviarARevision(proyecto)"
+                  (click)="enviarARevision(proyecto)"
+                  mat-stroked-button
+                  color="accent"
+                  class="action-btn"
+                >
+                  <mat-icon>send</mat-icon>
+                  Enviar a Revisión
+                </button>
 
-              <button 
-                *ngIf="(authService.isRevisor() || authService.isAdmin()) && proyecto.estado === 'EN_REVISION'"
-                (click)="cambiarEstado(proyecto, 'RECHAZADO')"
-                mat-stroked-button
-                color="warn"
-                class="action-btn"
-              >
-                <mat-icon>cancel</mat-icon>
-                Rechazar
-              </button>
+                <button 
+                  *ngIf="puedeEditar(proyecto)"
+                  (click)="eliminarProyecto(proyecto)"
+                  mat-stroked-button
+                  color="warn"
+                  class="action-btn"
+                >
+                  <mat-icon>delete</mat-icon>
+                  Eliminar
+                </button>
+              </div>
 
-              <button 
-                *ngIf="authService.isRevisor() || authService.isAdmin()"
-                (click)="verDetalle(proyecto)"
-                mat-stroked-button
-                color="info"
-                class="action-btn"
-              >
-                <mat-icon>assessment</mat-icon>
-                Revisar
-              </button>
+              <!-- Acciones para Admin/Revisor -->
+              <div *ngIf="esAdmin()" class="d-flex gap-1 flex-wrap">
+                <button 
+                  (click)="verDetalle(proyecto)"
+                  mat-stroked-button
+                  color="primary"
+                  class="action-btn"
+                >
+                  <mat-icon>visibility</mat-icon>
+                  Ver Detalle
+                </button>
+
+                <!-- Aprobar proyecto (solo en revisión) -->
+                <button 
+                  *ngIf="proyecto.estado === 'EN_REVISION'"
+                  (click)="aprobarProyecto(proyecto)"
+                  mat-stroked-button
+                  color="success"
+                  class="action-btn"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                  Aprobar
+                </button>
+
+                <!-- Rechazar proyecto (solo en revisión) -->
+                <button 
+                  *ngIf="proyecto.estado === 'EN_REVISION'"
+                  (click)="rechazarProyecto(proyecto)"
+                  mat-stroked-button
+                  color="warn"
+                  class="action-btn"
+                >
+                  <mat-icon>cancel</mat-icon>
+                  Rechazar
+                </button>
+
+                <!-- Eliminar proyecto (admin puede eliminar en cualquier estado) -->
+                <button 
+                  (click)="eliminarProyecto(proyecto)"
+                  mat-stroked-button
+                  color="warn"
+                  class="action-btn"
+                >
+                  <mat-icon>delete</mat-icon>
+                  Eliminar
+                </button>
+              </div>
             </mat-card-actions>
           </mat-card>
         </div>

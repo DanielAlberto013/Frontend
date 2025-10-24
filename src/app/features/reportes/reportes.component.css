@@ -133,3 +133,59 @@
   border-color: #007bff;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
+/* reportes.component.css - AGREGAR ESTOS ESTILOS */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.partida-item, .proyecto-item {
+  transition: all 0.3s ease;
+}
+
+.partida-header:hover, .proyecto-header:hover {
+  background-color: #f8f9fa !important;
+}
+
+.reporte-partidas {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.cotizacion-item {
+  background: #f8f9fa;
+  border-left: 4px solid #007bff;
+}
+
+/* Estilos para la vista de impresión del ticket */
+@media print {
+  .ticket-compra {
+    display: block !important;
+    font-size: 12px;
+  }
+  
+  .ticket-compra * {
+    color: black !important;
+    background: white !important;
+  }
+  
+  .btn, .navbar, .card-header, .badge {
+    display: none !important;
+  }
+}
+
+/* Mejoras visuales para los reportes */
+.partida-content {
+  border-left: 3px solid #28a745;
+  padding-left: 15px;
+  margin-left: 10px;
+}
+
+.proyecto-content {
+  border-left: 2px solid #17a2b8;
+  padding-left: 15px;
+  margin-left: 10px;
+}
+
+.badge {
+  font-size: 0.7em;
+}

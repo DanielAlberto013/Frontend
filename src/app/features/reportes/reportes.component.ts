@@ -151,7 +151,6 @@ export class ReportesComponent implements OnInit {
               articulo: {
                 id: '1',
                 nombre: 'Hojas Blancas A4',
-                descripcion: 'Paquete de 500 hojas tamaño carta',
                 partidaCodigo: '21.1',
                 precioReferencia: 120.50,
                 activo: true,
@@ -168,7 +167,6 @@ export class ReportesComponent implements OnInit {
               articulo: {
                 id: '2',
                 nombre: 'Lápices Mirado No. 2',
-                descripcion: 'Caja con 12 lápices',
                 partidaCodigo: '21.1',
                 precioReferencia: 45.00,
                 activo: true,
@@ -260,7 +258,6 @@ export class ReportesComponent implements OnInit {
               articulo: {
                 id: '1',
                 nombre: 'Hojas Blancas A4',
-                descripcion: 'Paquete de 500 hojas tamaño carta',
                 partidaCodigo: '21.1',
                 precioReferencia: 120.50,
                 activo: true,
@@ -277,7 +274,6 @@ export class ReportesComponent implements OnInit {
               articulo: {
                 id: '2',
                 nombre: 'Lápices Mirado No. 2',
-                descripcion: 'Caja con 12 lápices',
                 partidaCodigo: '21.1',
                 precioReferencia: 45.00,
                 activo: true,
