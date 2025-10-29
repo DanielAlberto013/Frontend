@@ -1,8 +1,8 @@
+// src/app/core/services/documento-final.service.ts
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, forkJoin, switchMap, of } from 'rxjs';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-// ✅ CORREGIDO: Importar correctamente xlsx
 import { utils, write } from 'xlsx';
 import { DocumentoFinal, PartidaDocumento, ProductoDocumento, DocumentoFinalDocente } from '../models/documento-final.model';
 import { ProyectosService } from './proyectos.service';
@@ -34,7 +34,7 @@ export class DocumentoFinalService {
     '25501': 'Materiales, accesorios y suministros de laboratorio. Asignaciones destinadas a la adquisición de toda clase de materiales y suministros utilizados en los laboratorios médicos, químicos, de investigación, fotográficos, cinematográficos, audio-visión, entre otros, tales como: cilindros graduados, matraces, probetas, mecheros, campanas de cultivo, cápsulas de porcelana, embudos de vidrio o de polietileno, tubos de cultivo, vidrio de cobalto, tanques de revelado, materiales para radiografía, electrocardiografía, medicina nuclear; artículos para el revelado e impresión de fotografías. Esta partida incluye animales para experimentación.',
     '29101': 'Herramientas menores. Asignaciones destinadas a la adquisición de herramientas auxiliares de trabajo, utilizadas en carpintería, silvicultura, horticultura, ganadería, agricultura y otras industrias, tales como: desarmadores, martillos, llaves para tuercas, carretillas de mano, cuchillos, navajas, tijeras de mano, sierras de mano, alicates, hojas para seguetas, micrómetros, cintas métricas, pinzas, prensas, berbiquíes, garlopas, taladros, zapapicos, escaleras, detectores de metales manuales y demás bienes de consumo similares.',
     '29401': 'Refacciones y accesorios menores para equipo de cómputo y telecomunicaciones. Asignaciones destinadas a la adquisición de componentes y dispositivos internos o externos que se integran al equipo de cómputo y/o telecomunicaciones, con el objeto de conservar o recuperar su funcionalidad y que son de difícil control de inventarios, tales como: tarjetas electrónicas, unidades de discos internos (Duros, CD, DVD y Blueray), batería para laptop, puertos USB, puertos HDMI, circuitos, bocinas, pantallas, ratones, teclados, cámaras, entre otros.',
-    '33601': 'Servicios de apoyo administrativo, traducción, fotocopiado e impresión. Asignaciones destinadas a cubrir el costo de la contratación de servicios de fotocopiado y preparación de documentos; digitalización de documentos oficiales, fax, engargolado, enmicado, encuadernación, corte de papel, recepción de correspondencia y otros afines. Incluye servicios de apoyo secretarial, servicios de estenografía en los tribunales, transcripción simultánea de diálogos para la televisión, reuniones y conferencias; servicios comerciales no previstos en las demás partidas anteriores. Incluye servicios de impresión de documentos oficiales necesarios tales como: pasaportes, certificados especiales, títulos de crédito, formas fiscales y formas valoradas, y demás documentos para la identificación, trámites oficiales y servicios a la población; servicios de impresión y elaboración de material informativo, tales como: padrones de beneficiarios, reglas de operación, programas sectoriales, regionales, especiales; informes de labores, manuales de organización, de procedimientos y de servicios al público; decretos, convenios, acuerdos, instructivos, proyectos editoriales (libros, revistas y gacetas periódicas), folletos, trípticos, dípticos, carteles, mantas, rótulos, y demás servicios de impresión y elaboración de material informativo. Incluye gastos como: avisos, precisiones, convocatorias, edictos, bases, licitaciones, diario oficial, concursos y aclaraciones, y demás información en medios masivos. Excluye las inserciones derivadas de campañas publicitarias y de comunicación social, las cuales se deberán registrar en las partidas correspondientes al concepto 3600 Servicios de Comunicación Social y Publicidad.',
+    '33601': 'Servicios de apoyo administrativo, traducción, fotocopiado e impresión. Asignaciones destinadas a cubrir el costo de la contratación de servicios de fotocopiado y preparación de documentos; digitalización de documentos oficiales, fax, engargolado, enmicado, encuadernación, corte de papel, recepción de correspondencia y otros afines. Incluye servicios de apoyo secretarial, servicios de estenografía en los tribunales, transcripción simultánea de diálogos para la televisión, reuniones y conferencias; servicios comerciales no previstos en las demás partidas anteriores. Incluye servicios de impresión de documentos oficiales necesarios tales como: pasaportes, certificados especiales, títulos de crédito, formas fiscales y formas valoradas, y demás documentos para la identificación, trámites oficiales y servicios a la población; servicios de impresión y elaboración de material informativo, tales como: padrones de beneficiarios, reglas de operación, programas sectoriales, regionales, especiales; informes de labores, manuales de organización, de procedimientos y de servicios al público; decretos, convenios, acuerdos, instructivos, proyectos editoriales (libros, revistas y gacetas periódicas), folletos, trípticos, dípticos, carteles, mantas, rótulos, y demás servicios de impresión y elaboración de material informativo. Incluye gastos como: avisos, precisiones, convocatorias, edictos, bases, licitaciones, concursos y aclaraciones, y demás información en medios masivos. Excluye las inserciones derivadas de campañas publicitarias y de comunicación social, las cuales se deberán registrar en las partidas correspondientes al concepto 3600 Servicios de Comunicación Social y Publicidad.',
     '35301': 'Instalación, reparación y mantenimiento de equipo de cómputo y tecnologías de la información. Asignaciones destinadas a cubrir los gastos por servicios que se contraten con terceros para la instalación, reparación y mantenimiento de equipos de cómputo y tecnologías de la información, tales como: computadoras, impresoras, dispositivos de seguridad, reguladores, fuentes de potencia ininterrumpida, servidores de información, drones, entre otros, así como el mantenimiento en general. Incluye el pago de deducibles de seguros.'
   };
 
@@ -46,55 +46,90 @@ export class DocumentoFinalService {
     private authService: AuthService
   ) {}
 
-  // Obtener documento final para un docente
-  getDocumentoFinalDocente(): Observable<DocumentoFinalDocente> {
-    return this.proyectosService.getMisProyectos().pipe(
-      map(response => {
-        if (response.success && response.data) {
-          const proyectosAprobados = response.data.filter((p: any) => p.estado === 'APROBADO');
-          
-          const totalGeneral = proyectosAprobados.reduce((sum: number, proyecto: any) => 
-            sum + proyecto.presupuestoTotal, 0
+  // ✅ NUEVO MÉTODO: Obtener documento final desde cotizaciones reales
+  getDocumentoFinalDesdeCotizaciones(proyectoId: string): Observable<DocumentoFinal> {
+    return this.cotizacionesService.getCotizacionesByProyecto(proyectoId).pipe(
+      switchMap(cotizacionesResponse => {
+        if (!cotizacionesResponse.success || !cotizacionesResponse.data || cotizacionesResponse.data.length === 0) {
+          // Si no hay cotizaciones, retornar documento vacío
+          return this.proyectosService.getProyectoById(proyectoId).pipe(
+            map(proyectoResponse => {
+              if (proyectoResponse.success && proyectoResponse.data) {
+                return this.crearDocumentoVacio(proyectoResponse.data);
+              }
+              throw new Error('Proyecto no encontrado');
+            })
           );
-          
-          const docenteNombre = proyectosAprobados.length > 0 
-            ? proyectosAprobados[0].docente?.nombre || 'Docente Demo'
-            : 'Docente Demo';
-          
-          return {
-            docenteNombre: docenteNombre,
-            proyectos: proyectosAprobados,
-            totalGeneral: totalGeneral,
-            fechaGeneracion: new Date()
-          };
         }
-        return {
-          docenteNombre: 'Docente Demo',
-          proyectos: [],
-          totalGeneral: 0,
-          fechaGeneracion: new Date()
-        };
+
+        const cotizaciones = cotizacionesResponse.data;
+        
+        // Obtener el proyecto para información adicional
+        return this.proyectosService.getProyectoById(proyectoId).pipe(
+          map(proyectoResponse => {
+            if (!proyectoResponse.success || !proyectoResponse.data) {
+              throw new Error('Proyecto no encontrado');
+            }
+
+            const proyecto = proyectoResponse.data;
+            return this.crearDocumentoDesdeCotizaciones(proyecto, cotizaciones);
+          })
+        );
       })
     );
   }
 
-  // Obtener documentos finales para admin (todos los proyectos aprobados)
-  getDocumentosFinalesAdmin(): Observable<DocumentoFinal[]> {
-    return this.proyectosService.getProyectosPorEstado('APROBADO').pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data.map((proyecto: any) => this.crearDocumentoDesdeProyecto(proyecto));
-        }
-        return [];
-      })
-    );
-  }
-
-  // Crear documento final desde un proyecto
-  private crearDocumentoDesdeProyecto(proyecto: any): DocumentoFinal {
-    const partidasEjemplo = this.generarPartidasEjemplo(proyecto);
+  // ✅ NUEVO MÉTODO: Crear documento final desde cotizaciones reales
+  private crearDocumentoDesdeCotizaciones(proyecto: any, cotizaciones: any[]): DocumentoFinal {
+    // Agrupar cotizaciones por partida
+    const partidasMap = new Map<string, PartidaDocumento>();
     
-    const subtotal = partidasEjemplo.reduce((sum, partida) => sum + partida.subtotal, 0);
+   // ✅ CORREGIDO: Verificar que cotizaciones existe
+  if (cotizaciones && cotizaciones.length > 0) {
+    cotizaciones.forEach(cotizacion => {
+      const partidaCodigo = cotizacion.partidaCodigo;
+      
+      if (!partidasMap.has(partidaCodigo)) {
+        partidasMap.set(partidaCodigo, {
+          partidaCodigo: partidaCodigo,
+          partidaNombre: cotizacion.nombrePartida || this.getNombrePartida(partidaCodigo),
+          partidaDescripcion: this.descripcionesPartidas[partidaCodigo] || `Partida presupuestal ${partidaCodigo}`,
+          montoAutorizado: cotizacion.saldoPartida || 0,
+          productos: [],
+          subtotal: 0,
+          iva: 0,
+          total: 0
+        });
+      }
+      
+      const partida = partidasMap.get(partidaCodigo)!;
+      
+      // ✅ CORREGIDO: Verificar que items existe
+      if (cotizacion.items && cotizacion.items.length > 0) {
+        // Agregar items de la cotización como productos
+        cotizacion.items.forEach((item: any) => {
+          partida.productos.push({
+            cantidad: item.cantidad || 0,
+            descripcion: item.articulo?.nombre || 'Artículo no especificado',
+            precioUnitario: item.precioUnitario || 0,
+            total: item.subtotal || 0
+          });
+          
+          partida.subtotal += item.subtotal || 0;
+        });
+      }
+    });
+  }
+
+    // Calcular totales por partida
+    const partidas = Array.from(partidasMap.values()).map(partida => {
+      partida.iva = partida.subtotal * 0.16;
+      partida.total = partida.subtotal + partida.iva;
+      return partida;
+    });
+
+    // Calcular totales generales
+    const subtotal = partidas.reduce((sum, partida) => sum + partida.subtotal, 0);
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 
@@ -104,7 +139,7 @@ export class DocumentoFinalService {
       claveProyecto: this.generarClaveProyecto(proyecto),
       vigenciaProyecto: '01 de enero al 31 de diciembre de 2025',
       tipoFondo: this.determinarTipoFondo(proyecto),
-      partidas: partidasEjemplo,
+      partidas: partidas,
       docenteNombre: proyecto.docente?.nombre || 'Docente no asignado',
       fechaGeneracion: new Date(),
       subtotal: subtotal,
@@ -115,50 +150,103 @@ export class DocumentoFinalService {
     };
   }
 
-  // Generar partidas de ejemplo (para cuando no hay cotizaciones)
-  private generarPartidasEjemplo(proyecto: any): PartidaDocumento[] {
-    const partida21101: PartidaDocumento = {
-      partidaCodigo: '21101',
-      partidaNombre: 'MATERIALES, ÚTILES Y EQUIPOS MENORES DE OFICINA',
-      partidaDescripcion: this.descripcionesPartidas['21101'],
-      montoAutorizado: 5000,
-      productos: [
-        { cantidad: 1, descripcion: 'Bolígrafo Punto Fino Stick Azul Caja con 12 Piezas Pin Point - Azor', precioUnitario: 172.50, total: 172.50 },
-        { cantidad: 1, descripcion: 'Bolígrafo Punto Fino Stick Negro con 12 Piezas Pin Point - Azor', precioUnitario: 172.50, total: 172.50 },
-        { cantidad: 1, descripcion: 'Bolígrafo Punto Fino Stick Rojo Caja con 12 Piezas Pin Point - Azor', precioUnitario: 172.50, total: 172.50 },
-        { cantidad: 3, descripcion: 'Caja Cubo de 22 x 22 cm Negro Padcolor 3157-2', precioUnitario: 150.00, total: 450.00 },
-        { cantidad: 3, descripcion: 'Caja Cubo de Cartón con Tapa de 15 x 15 cm Color Natural 2911-1', precioUnitario: 143.00, total: 429.00 },
-        { cantidad: 3, descripcion: 'Caja Cubo Deluxe de 22 x 22 cm Paquete con 8 Piezas Colores Surtidos Padcolor 3163-3', precioUnitario: 200.00, total: 600.00 },
-        { cantidad: 1, descripcion: 'Corrector Roller Mega Bright de 5 mm x 12 m Smart', precioUnitario: 275.00, total: 275.00 },
-        { cantidad: 1, descripcion: 'Cuaderno Espiral de 150 Hojas Collage de Cuadro Chico Pasta Dura Silky', precioUnitario: 450.00, total: 450.00 },
-        { cantidad: 1, descripcion: 'Cuaderno Libreta Profesional 100 Hojas Pasta Dura 4 Pack - Cuadro Chico - Printaform', precioUnitario: 187.50, total: 187.50 },
-        { cantidad: 1, descripcion: 'Lapicero de 0.5 mm Colores Surtidos Blíster con 3 Piezas Z-Grip Zebra', precioUnitario: 187.50, total: 187.50 },
-        { cantidad: 1, descripcion: 'Lapicero de 0.7 mm Colores Surtidos Blíster con 3 Piezas Z-Grip Zebra', precioUnitario: 187.50, total: 187.50 },
-        { cantidad: 1, descripcion: 'Lápiz con Goma Número 2 Triangular con 10 Piezas Black Peps Maped', precioUnitario: 175.00, total: 175.00 },
-        { cantidad: 1, descripcion: 'Pegamento Blanco con 490 g Bully - Henkel', precioUnitario: 187.49, total: 187.49 },
-        { cantidad: 1, descripcion: 'Pizarrón Magnético, JASUVII Pizarrón Blanco 30x40cm. Con Bandeja para Rotuladores', precioUnitario: 375.00, total: 375.00 },
-        { cantidad: 1, descripcion: 'Puntillas para Lapicero de 0.7 mm con 2 Tubos de 12 Piezas Zebra', precioUnitario: 108.85, total: 108.85 },
-        { cantidad: 2, descripcion: 'Sacapuntas Maped de Plástico con Depósito Chico Igloo Blíster con 2 Piezas', precioUnitario: 90.00, total: 180.00 }
-      ],
-      subtotal: 4310.34,
-      iva: 689.65,
-      total: 4999.99
+  // ✅ NUEVO MÉTODO: Crear documento vacío (cuando no hay cotizaciones)
+  private crearDocumentoVacio(proyecto: any): DocumentoFinal {
+    return {
+      tipoConvocatoria: 'Convocatoria 2025: PROYECTOS DE INVESTIGACIÓN CIENTÍFICA, DESARROLLO TECNOLÓGICO E INNOVACIÓN',
+      nombreProyecto: proyecto.nombre,
+      claveProyecto: this.generarClaveProyecto(proyecto),
+      vigenciaProyecto: '01 de enero al 31 de diciembre de 2025',
+      tipoFondo: this.determinarTipoFondo(proyecto),
+      partidas: [],
+      docenteNombre: proyecto.docente?.nombre || 'Docente no asignado',
+      fechaGeneracion: new Date(),
+      subtotal: 0,
+      iva: 0,
+      total: 0,
+      montoAprobado: proyecto.presupuestoTotal,
+      proyecto: proyecto
     };
-
-    return [partida21101];
   }
 
+  // ✅ MODIFICAR: getDocumentosFinalesAdmin para usar datos reales
+  getDocumentosFinalesAdmin(): Observable<DocumentoFinal[]> {
+    return this.proyectosService.getProyectosPorEstado('APROBADO').pipe(
+      switchMap(proyectosResponse => {
+        if (!proyectosResponse.success || !proyectosResponse.data) {
+          return of([]);
+        }
+
+        const proyectos = proyectosResponse.data;
+        
+        // Para cada proyecto, obtener su documento final desde cotizaciones
+        const documentos$ = proyectos.map(proyecto => 
+          this.getDocumentoFinalDesdeCotizaciones(proyecto.id)
+        );
+
+        return forkJoin(documentos$);
+      })
+    );
+  }
+
+  // ✅ MODIFICAR: getDocumentoFinalDocente para usar datos reales
+  getDocumentoFinalDocente(): Observable<DocumentoFinalDocente> {
+    return this.proyectosService.getMisProyectos().pipe(
+      switchMap(response => {
+        if (!response.success || !response.data) {
+          return of({
+            docenteNombre: 'Docente Demo',
+            proyectos: [],
+            totalGeneral: 0,
+            fechaGeneracion: new Date()
+          });
+        }
+
+        const proyectosAprobados = response.data.filter((p: any) => p.estado === 'APROBADO');
+        
+        // Para cada proyecto aprobado, obtener su documento final
+        const documentos$ = proyectosAprobados.map((proyecto: any) => 
+          this.getDocumentoFinalDesdeCotizaciones(proyecto.id)
+        );
+
+        return forkJoin(documentos$).pipe(
+          map(documentos => {
+            const docenteNombre = proyectosAprobados.length > 0 
+              ? proyectosAprobados[0].docente?.nombre || 'Docente Demo'
+              : 'Docente Demo';
+            
+            const totalGeneral = documentos.reduce((sum, doc) => sum + doc.total, 0);
+
+            return {
+              docenteNombre: docenteNombre,
+              proyectos: documentos, // Ahora son documentos finales completos
+              totalGeneral: totalGeneral,
+              fechaGeneracion: new Date()
+            };
+          })
+        );
+      })
+    );
+  }
+
+  // ✅ MÉTODO AUXILIAR: Obtener nombre de partida
+  private getNombrePartida(codigo: string): string {
+    return this.articulosService.getNombrePartida(codigo);
+  }
+
+  // ✅ MÉTODO AUXILIAR: Generar clave de proyecto
   private generarClaveProyecto(proyecto: any): string {
     const año = new Date().getFullYear();
     const idCorto = proyecto.id.slice(-4);
     return `${idCorto}.${año.toString().slice(-2)}-PD`;
   }
 
+  // ✅ MÉTODO AUXILIAR: Determinar tipo de fondo
   private determinarTipoFondo(proyecto: any): 'FEDERAL' | 'ESTATAL' {
     return proyecto.presupuestoFederal >= proyecto.presupuestoEstatal ? 'FEDERAL' : 'ESTATAL';
   }
 
-  // ✅ GENERAR DOCUMENTO FINAL EN PDF
+  // ✅ GENERAR DOCUMENTO FINAL EN PDF (Método existente mejorado)
   generarPDFDocumentoFinal(documento: DocumentoFinal): void {
     const doc = new jsPDF();
     
@@ -278,7 +366,7 @@ export class DocumentoFinalService {
     doc.save(`documento-final-${documento.claveProyecto}-${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
-  // ✅ GENERAR DOCUMENTO FINAL EN EXCEL
+  // ✅ GENERAR DOCUMENTO FINAL EN EXCEL (Método existente)
   generarExcelDocumentoFinal(documento: DocumentoFinal): void {
     // Crear workbook
     const workbook = utils.book_new();
@@ -320,18 +408,18 @@ export class DocumentoFinalService {
       // Agregar productos
       partida.productos.forEach(producto => {
         partidaData.push([
-          producto.cantidad.toString(), // ✅ CORREGIDO: Convertir a string
+          producto.cantidad.toString(),
           producto.descripcion,
-          `$${producto.precioUnitario.toFixed(2)}`, // ✅ CORREGIDO: Formatear como string
-          `$${producto.total.toFixed(2)}` // ✅ CORREGIDO: Formatear como string
+          `$${producto.precioUnitario.toFixed(2)}`,
+          `$${producto.total.toFixed(2)}`
         ]);
       });
 
       // Agregar totales de partida
       partidaData.push([]);
-      partidaData.push(['', '', 'Subtotal:', `$${partida.subtotal.toFixed(2)}`]); // ✅ CORREGIDO
-      partidaData.push(['', '', 'IVA 16%:', `$${partida.iva.toFixed(2)}`]); // ✅ CORREGIDO
-      partidaData.push(['', '', 'TOTAL:', `$${partida.total.toFixed(2)}`]); // ✅ CORREGIDO
+      partidaData.push(['', '', 'Subtotal:', `$${partida.subtotal.toFixed(2)}`]);
+      partidaData.push(['', '', 'IVA 16%:', `$${partida.iva.toFixed(2)}`]);
+      partidaData.push(['', '', 'TOTAL:', `$${partida.total.toFixed(2)}`]);
 
       const partidaWorksheet = utils.aoa_to_sheet(partidaData);
       utils.book_append_sheet(workbook, partidaWorksheet, `Partida ${partida.partidaCodigo}`);
@@ -360,7 +448,7 @@ export class DocumentoFinalService {
     alert('📊 Documento final exportado exitosamente en formato Excel');
   }
 
-  // ✅ GENERAR EXCEL CON MÚLTIPLES DOCUMENTOS
+  // ✅ GENERAR EXCEL CON MÚLTIPLES DOCUMENTOS (Método existente)
   generarExcelMultiplesDocumentos(documentos: DocumentoFinal[]): void {
     if (documentos.length === 0) {
       alert('No hay documentos para exportar');
@@ -383,9 +471,9 @@ export class DocumentoFinalService {
         documento.claveProyecto,
         documento.docenteNombre,
         documento.tipoFondo,
-        `$${documento.montoAprobado.toFixed(2)}`, // ✅ CORREGIDO
-        `$${documento.total.toFixed(2)}`, // ✅ CORREGIDO
-        documento.partidas.length.toString() // ✅ CORREGIDO
+        `$${documento.montoAprobado.toFixed(2)}`,
+        `$${documento.total.toFixed(2)}`,
+        documento.partidas.length.toString()
       ]);
     });
 
@@ -394,7 +482,7 @@ export class DocumentoFinalService {
     const totalGeneral = documentos.reduce((sum, doc) => sum + doc.total, 0);
     
     resumenData.push([]);
-    resumenData.push(['TOTALES GENERALES', '', '', '', `$${totalMonto.toFixed(2)}`, `$${totalGeneral.toFixed(2)}`, '']); // ✅ CORREGIDO
+    resumenData.push(['TOTALES GENERALES', '', '', '', `$${totalMonto.toFixed(2)}`, `$${totalGeneral.toFixed(2)}`, '']);
 
     const resumenWorksheet = utils.aoa_to_sheet(resumenData);
     utils.book_append_sheet(workbook, resumenWorksheet, 'Resumen General');
@@ -406,7 +494,7 @@ export class DocumentoFinalService {
         ['Clave:', documento.claveProyecto],
         ['Docente:', documento.docenteNombre],
         ['Tipo Fondo:', documento.tipoFondo],
-        ['Monto Aprobado:', `$${documento.montoAprobado.toFixed(2)}`], // ✅ CORREGIDO
+        ['Monto Aprobado:', `$${documento.montoAprobado.toFixed(2)}`],
         [],
         ['PARTIDAS Y PRODUCTOS']
       ];
@@ -414,28 +502,28 @@ export class DocumentoFinalService {
       documento.partidas.forEach(partida => {
         docData.push([]);
         docData.push([`PARTIDA ${partida.partidaCodigo} - ${partida.partidaNombre}`]);
-        docData.push(['Monto Autorizado:', `$${partida.montoAutorizado.toFixed(2)}`]); // ✅ CORREGIDO
+        docData.push(['Monto Autorizado:', `$${partida.montoAutorizado.toFixed(2)}`]);
         docData.push(['Cantidad', 'Producto', 'Precio Unitario', 'Total']);
 
         partida.productos.forEach(producto => {
           docData.push([
-            producto.cantidad.toString(), // ✅ CORREGIDO
+            producto.cantidad.toString(),
             producto.descripcion,
-            `$${producto.precioUnitario.toFixed(2)}`, // ✅ CORREGIDO
-            `$${producto.total.toFixed(2)}` // ✅ CORREGIDO
+            `$${producto.precioUnitario.toFixed(2)}`,
+            `$${producto.total.toFixed(2)}`
           ]);
         });
 
-        docData.push(['', '', 'Subtotal:', `$${partida.subtotal.toFixed(2)}`]); // ✅ CORREGIDO
-        docData.push(['', '', 'IVA 16%:', `$${partida.iva.toFixed(2)}`]); // ✅ CORREGIDO
-        docData.push(['', '', 'TOTAL PARTIDA:', `$${partida.total.toFixed(2)}`]); // ✅ CORREGIDO
+        docData.push(['', '', 'Subtotal:', `$${partida.subtotal.toFixed(2)}`]);
+        docData.push(['', '', 'IVA 16%:', `$${partida.iva.toFixed(2)}`]);
+        docData.push(['', '', 'TOTAL PARTIDA:', `$${partida.total.toFixed(2)}`]);
       });
 
       docData.push([]);
       docData.push(['TOTALES GENERALES']);
-      docData.push(['Subtotal General:', `$${documento.subtotal.toFixed(2)}`]); // ✅ CORREGIDO
-      docData.push(['IVA General:', `$${documento.iva.toFixed(2)}`]); // ✅ CORREGIDO
-      docData.push(['TOTAL GENERAL:', `$${documento.total.toFixed(2)}`]); // ✅ CORREGIDO
+      docData.push(['Subtotal General:', `$${documento.subtotal.toFixed(2)}`]);
+      docData.push(['IVA General:', `$${documento.iva.toFixed(2)}`]);
+      docData.push(['TOTAL GENERAL:', `$${documento.total.toFixed(2)}`]);
 
       const docWorksheet = utils.aoa_to_sheet(docData);
       utils.book_append_sheet(workbook, docWorksheet, `Proyecto ${docIndex + 1}`);

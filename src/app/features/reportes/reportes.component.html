@@ -1,3 +1,4 @@
+<!-- src/app/components/reportes/reportes.component.html -->
 <div class="reportes-container">
   <!-- HEADER CON BOTÓN DE REGRESO -->
   <div class="header">
@@ -13,10 +14,10 @@
           <span *ngIf="authService.isDocente()">Mis Documentos Finales</span>
         </h1>
         <p *ngIf="authService.isAdmin() || authService.isRevisor()">
-          Lista completa de proyectos aprobados en el sistema
+          Lista completa de proyectos aprobados con información de cotizaciones
         </p>
         <p *ngIf="authService.isDocente()">
-          Documentos finales de tus proyectos aprobados
+          Documentos finales de tus proyectos aprobados generados desde tus cotizaciones
         </p>
       </div>
     </div>
@@ -35,18 +36,52 @@
     <button class="btn-retry" (click)="cargarDatos()">Reintentar</button>
   </div>
 
-  <!-- ✅ NUEVA SECCIÓN: DOCUMENTOS FINALES -->
+  <!-- ✅ SECCIÓN: DOCUMENTOS FINALES (PARA TODOS LOS ROLES) -->
   <div *ngIf="!loading && !error && documentosFinales.length > 0 && !documentoSeleccionado" class="documentos-section">
     <div class="section-header">
       <h2><i class="fas fa-file-contract"></i> Documentos Finales por Proyecto</h2>
-      <p>Documentos oficiales por partida presupuestal</p>
+      <p>Documentos oficiales generados desde las cotizaciones por partida presupuestal</p>
     </div>
 
     <!-- Botones de exportación para documentos -->
     <div class="export-buttons mb-4">
-      <button class="btn-excel" (click)="generarDocumentosFinalesExcel()">
+      <button class="btn-excel" (click)="generarDocumentosFinalesExcel()" [disabled]="documentosFinales.length === 0">
         <i class="fas fa-file-excel"></i> Exportar Todos a Excel
       </button>
+      <button class="btn-regresar-inline" (click)="regresarAlDashboard()">
+        <i class="fas fa-home"></i> Dashboard
+      </button>
+    </div>
+
+    <!-- Resumen de Documentos -->
+    <div class="resumen-documentos mb-4">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-file-contract"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ documentosFinales.length }}</h3>
+          <p>Documentos Generados</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ getTotalDocumentosConPartidas() }}</h3>
+          <p>Con Partidas</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+          <h3>${{ getTotalDocumentos().toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</h3>
+          <p>Total General</p>
+        </div>
+      </div>
     </div>
 
     <!-- Lista de documentos finales -->
@@ -55,24 +90,39 @@
         <div class="documento-header">
           <h3>{{ documento.nombreProyecto }}</h3>
           <span class="clave-proyecto">{{ documento.claveProyecto }}</span>
+          <span class="estado-documento" [class]="documento.partidas.length > 0 ? 'activo' : 'inactivo'">
+            {{ documento.partidas.length > 0 ? '✅ CON PARTIDAS' : '⏳ SIN PARTIDAS' }}
+          </span>
         </div>
         
         <div class="documento-info">
           <div class="info-item">
-            <strong>Tipo de Fondo:</strong>
+            <strong><i class="fas fa-user-graduate"></i> Docente:</strong>
+            <span>{{ documento.docenteNombre }}</span>
+          </div>
+          <div class="info-item">
+            <strong><i class="fas fa-money-bill-wave"></i> Tipo de Fondo:</strong>
             <span [class]="documento.tipoFondo.toLowerCase()">{{ documento.tipoFondo }}</span>
           </div>
           <div class="info-item">
-            <strong>Vigencia:</strong>
+            <strong><i class="fas fa-calendar"></i> Vigencia:</strong>
             <span>{{ documento.vigenciaProyecto }}</span>
           </div>
           <div class="info-item">
-            <strong>Partidas:</strong>
-            <span>{{ documento.partidas.length }}</span>
+            <strong><i class="fas fa-layer-group"></i> Partidas:</strong>
+            <span class="badge-partidas">{{ documento.partidas.length }}</span>
           </div>
           <div class="info-item">
-            <strong>Monto Aprobado:</strong>
+            <strong><i class="fas fa-cube"></i> Productos:</strong>
+            <span class="badge-productos">{{ getTotalProductos(documento) }}</span>
+          </div>
+          <div class="info-item">
+            <strong><i class="fas fa-hand-holding-usd"></i> Monto Aprobado:</strong>
             <span class="monto">${{ documento.montoAprobado.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+          </div>
+          <div class="info-item">
+            <strong><i class="fas fa-file-invoice-dollar"></i> Total Documento:</strong>
+            <span class="monto-total">${{ documento.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
           </div>
         </div>
 
@@ -80,10 +130,10 @@
           <button class="btn-ver" (click)="seleccionarDocumento(documento)">
             <i class="fas fa-eye"></i> Ver Detalles
           </button>
-          <button class="btn-pdf" (click)="generarDocumentoFinalPDF(documento)">
+          <button class="btn-pdf" (click)="generarDocumentoFinalPDF(documento)" [disabled]="documento.partidas.length === 0">
             <i class="fas fa-file-pdf"></i> PDF
           </button>
-          <button class="btn-excel" (click)="generarDocumentoFinalExcel(documento)">
+          <button class="btn-excel" (click)="generarDocumentoFinalExcel(documento)" [disabled]="documento.partidas.length === 0">
             <i class="fas fa-file-excel"></i> Excel
           </button>
         </div>
@@ -91,7 +141,7 @@
     </div>
   </div>
 
-  <!-- ✅ NUEVA SECCIÓN: DETALLE DE DOCUMENTO FINAL -->
+  <!-- ✅ SECCIÓN: DETALLE DE DOCUMENTO FINAL -->
   <div *ngIf="documentoSeleccionado" class="documento-detalle">
     <div class="documento-header-detalle">
       <button class="btn-regresar" (click)="regresarAListaDocumentos()">
@@ -99,10 +149,10 @@
       </button>
       <h2>Documento Final - {{ documentoSeleccionado.nombreProyecto }}</h2>
       <div class="acciones-documento">
-        <button class="btn-pdf" (click)="generarDocumentoFinalPDF(documentoSeleccionado!)">
+        <button class="btn-pdf" (click)="generarDocumentoFinalPDF(documentoSeleccionado!)" [disabled]="documentoSeleccionado.partidas.length === 0">
           <i class="fas fa-file-pdf"></i> Descargar PDF
         </button>
-        <button class="btn-excel" (click)="generarDocumentoFinalExcel(documentoSeleccionado!)">
+        <button class="btn-excel" (click)="generarDocumentoFinalExcel(documentoSeleccionado!)" [disabled]="documentoSeleccionado.partidas.length === 0">
           <i class="fas fa-file-excel"></i> Descargar Excel
         </button>
       </div>
@@ -112,113 +162,176 @@
     <div class="documento-info-detalle">
       <div class="info-grid">
         <div class="info-item">
-          <strong>Tipo de Convocatoria:</strong>
+          <strong><i class="fas fa-bullhorn"></i> Tipo de Convocatoria:</strong>
           <span>{{ documentoSeleccionado.tipoConvocatoria }}</span>
         </div>
         <div class="info-item">
-          <strong>Clave de Proyecto:</strong>
-          <span>{{ documentoSeleccionado.claveProyecto }}</span>
+          <strong><i class="fas fa-key"></i> Clave de Proyecto:</strong>
+          <span class="clave-destacada">{{ documentoSeleccionado.claveProyecto }}</span>
         </div>
         <div class="info-item">
-          <strong>Vigencia:</strong>
+          <strong><i class="fas fa-calendar-alt"></i> Vigencia:</strong>
           <span>{{ documentoSeleccionado.vigenciaProyecto }}</span>
         </div>
         <div class="info-item">
-          <strong>Tipo de Fondo:</strong>
+          <strong><i class="fas fa-money-bill-wave"></i> Tipo de Fondo:</strong>
           <span [class]="documentoSeleccionado.tipoFondo.toLowerCase()">{{ documentoSeleccionado.tipoFondo }}</span>
+        </div>
+        <div class="info-item">
+          <strong><i class="fas fa-user-graduate"></i> Docente Responsable:</strong>
+          <span>{{ documentoSeleccionado.docenteNombre }}</span>
+        </div>
+        <div class="info-item">
+          <strong><i class="fas fa-calendar-day"></i> Fecha de Generación:</strong>
+          <span>{{ documentoSeleccionado.fechaGeneracion | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado del Documento -->
+    <div class="estado-documento-detalle" [class]="documentoSeleccionado.partidas.length > 0 ? 'con-partidas' : 'sin-partidas'">
+      <div class="estado-content">
+        <i class="fas" [class]="documentoSeleccionado.partidas.length > 0 ? 'fa-check-circle' : 'fa-exclamation-triangle'"></i>
+        <div class="estado-info">
+          <h4>{{ documentoSeleccionado.partidas.length > 0 ? 'Documento Completo' : 'Documento Pendiente' }}</h4>
+          <p>
+            {{ documentoSeleccionado.partidas.length > 0 ? 
+               'Este documento contiene ' + documentoSeleccionado.partidas.length + ' partida(s) con información de cotizaciones reales.' : 
+               'Este proyecto no tiene cotizaciones registradas. El documento se generará automáticamente cuando se creen cotizaciones.' }}
+          </p>
         </div>
       </div>
     </div>
 
     <!-- Partidas del documento -->
-    <div *ngFor="let partida of documentoSeleccionado.partidas" class="partida-detalle">
-      <div class="partida-header">
-        <h3>Partida {{ partida.partidaCodigo }} - {{ partida.partidaNombre }}</h3>
-        <span class="monto-autorizado">Monto Autorizado: ${{ partida.montoAutorizado.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
-      </div>
-      
-      <div class="partida-descripcion">
-        <p>{{ partida.partidaDescripcion }}</p>
+    <div *ngIf="documentoSeleccionado.partidas.length > 0">
+      <div *ngFor="let partida of documentoSeleccionado.partidas; let i = index" class="partida-detalle">
+        <div class="partida-header">
+          <h3>
+            <i class="fas fa-list-ol"></i> 
+            Partida {{ partida.partidaCodigo }} - {{ partida.partidaNombre }}
+            <span class="numero-partida">#{{ i + 1 }}</span>
+          </h3>
+          <span class="monto-autorizado">
+            <i class="fas fa-dollar-sign"></i>
+            Monto Autorizado: ${{ partida.montoAutorizado.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}
+          </span>
+        </div>
+        
+        <div class="partida-descripcion">
+          <p>{{ partida.partidaDescripcion }}</p>
+        </div>
+
+        <!-- Tabla de productos -->
+        <div class="productos-table">
+          <div class="table-header">
+            <h4><i class="fas fa-cubes"></i> Productos y Servicios</h4>
+            <span class="total-productos">{{ partida.productos.length }} producto(s)</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th width="5%">No.</th>
+                <th width="10%">Cantidad</th>
+                <th width="50%">Descripción de Productos</th>
+                <th width="15%">Precio Unitario</th>
+                <th width="15%">Total</th>
+                <th width="5%"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let producto of partida.productos; let i = index" class="producto-row">
+                <td class="text-center">{{ i + 1 }}</td>
+                <td class="text-center">{{ producto.cantidad }}</td>
+                <td>{{ producto.descripcion }}</td>
+                <td class="text-right">${{ producto.precioUnitario.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</td>
+                <td class="text-right">${{ producto.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</td>
+                <td class="text-center">
+                  <span class="badge-item" *ngIf="producto.cantidad > 1">{{ producto.cantidad }} unidades</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="subtotal-row">
+                <td colspan="3"></td>
+                <td class="text-right"><strong>Subtotal</strong></td>
+                <td class="text-right"><strong>${{ partida.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</strong></td>
+                <td></td>
+              </tr>
+              <tr class="iva-row">
+                <td colspan="3"></td>
+                <td class="text-right"><strong>IVA 16%</strong></td>
+                <td class="text-right"><strong>${{ partida.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</strong></td>
+                <td></td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="3"></td>
+                <td class="text-right"><strong>Total Partida</strong></td>
+                <td class="text-right"><strong>${{ partida.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
 
-      <!-- Tabla de productos -->
-      <div class="productos-table">
-        <table>
-          <thead>
-            <tr>
-              <th width="10%">No.</th>
-              <th width="10%">Cantidad</th>
-              <th width="50%">Descripción de Productos</th>
-              <th width="15%">Precio Unitario</th>
-              <th width="15%">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let producto of partida.productos; let i = index">
-              <td>{{ i + 1 }}</td>
-              <td>{{ producto.cantidad }}</td>
-              <td>{{ producto.descripcion }}</td>
-              <td>${{ producto.precioUnitario.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</td>
-              <td>${{ producto.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="3"></td>
-              <td><strong>Subtotal</strong></td>
-              <td><strong>${{ partida.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</strong></td>
-            </tr>
-            <tr>
-              <td colspan="3"></td>
-              <td><strong>IVA 16%</strong></td>
-              <td><strong>${{ partida.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</strong></td>
-            </tr>
-            <tr>
-              <td colspan="3"></td>
-              <td><strong>Total</strong></td>
-              <td><strong>${{ partida.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</strong></td>
-            </tr>
-          </tfoot>
-        </table>
+      <!-- Totales generales y firmas -->
+      <div class="documento-totales">
+        <div class="totales-grid">
+          <div class="total-item subtotal">
+            <strong>Subtotal General:</strong>
+            <span>${{ documentoSeleccionado.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+          </div>
+          <div class="total-item iva">
+            <strong>IVA General (16%):</strong>
+            <span>${{ documentoSeleccionado.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+          </div>
+          <div class="total-item total-general">
+            <strong>Total General:</strong>
+            <span>${{ documentoSeleccionado.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+          </div>
+          <div class="total-item monto-aprobado">
+            <strong>Monto Aprobado:</strong>
+            <span>${{ documentoSeleccionado.montoAprobado.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+          </div>
+        </div>
+
+        <div class="firmas-section">
+          <div class="firma">
+            <div class="linea-firma"></div>
+            <p><strong>{{ documentoSeleccionado.docenteNombre }}</strong></p>
+            <p>LÍDER DE PROYECTO</p>
+            <p class="fecha-firma">Fecha: ________________</p>
+          </div>
+          <div class="firma">
+            <div class="linea-firma"></div>
+            <p><strong>SUBDIRECTOR ACADEMICO DEL ITESCAM</strong></p>
+            <p>Vo.Bo.</p>
+            <p class="fecha-firma">Fecha: ________________</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Totales generales y firmas -->
-    <div class="documento-totales">
-      <div class="totales-grid">
-        <div class="total-item">
-          <strong>Subtotal General:</strong>
-          <span>${{ documentoSeleccionado.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
-        </div>
-        <div class="total-item">
-          <strong>IVA General:</strong>
-          <span>${{ documentoSeleccionado.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
-        </div>
-        <div class="total-item">
-          <strong>Total General:</strong>
-          <span>${{ documentoSeleccionado.total.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
-        </div>
-        <div class="total-item">
-          <strong>Monto Aprobado:</strong>
-          <span>${{ documentoSeleccionado.montoAprobado.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
-        </div>
-      </div>
-
-      <div class="firmas-section">
-        <div class="firma">
-          <div class="linea-firma"></div>
-          <p><strong>{{ documentoSeleccionado.docenteNombre }}</strong></p>
-          <p>LÍDER DE PROYECTO</p>
-        </div>
-        <div class="firma">
-          <div class="linea-firma"></div>
-          <p><strong>SUBDIRECTOR ACADEMICO DEL ITESCAM</strong></p>
+    <!-- Mensaje cuando no hay partidas -->
+    <div *ngIf="documentoSeleccionado.partidas.length === 0" class="no-partidas">
+      <div class="no-partidas-content">
+        <i class="fas fa-clipboard-list fa-3x"></i>
+        <h3>No hay partidas registradas</h3>
+        <p>Este proyecto no tiene cotizaciones aprobadas. El documento final se generará automáticamente cuando se creen y aprueben cotizaciones.</p>
+        <div class="no-partidas-actions">
+          <button class="btn-ver" *ngIf="authService.isDocente()" [routerLink]="['/cotizaciones']">
+            <i class="fas fa-plus-circle"></i> Crear Cotizaciones
+          </button>
+          <button class="btn-regresar-inline" (click)="regresarAListaDocumentos()">
+            <i class="fas fa-arrow-left"></i> Volver a Documentos
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- CONTENIDO PARA ADMIN/REVISOR -->
+  <!-- CONTENIDO PARA ADMIN/REVISOR (CUANDO NO HAY DOCUMENTOS FINALES) -->
   <div *ngIf="(authService.isAdmin() || authService.isRevisor()) && !loading && !error && !documentoSeleccionado && documentosFinales.length === 0" class="admin-content">
     
     <!-- BOTONES DE EXPORTACIÓN -->
@@ -234,10 +347,10 @@
       </button>
     </div>
 
-    <!-- RESUMEN GENERAL -->
+    <!-- RESUMEN GENERAL MEJORADO -->
     <div class="resumen-general">
       <div class="stat-card">
-        <div class="stat-icon">
+        <div class="stat-icon proyectos">
           <i class="fas fa-folder-open"></i>
         </div>
         <div class="stat-info">
@@ -246,7 +359,16 @@
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">
+        <div class="stat-icon cotizaciones">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ getProyectosConCotizaciones() }}</h3>
+          <p>Con Cotizaciones</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon presupuesto">
           <i class="fas fa-dollar-sign"></i>
         </div>
         <div class="stat-info">
@@ -254,57 +376,90 @@
           <p>Presupuesto Total</p>
         </div>
       </div>
+      <div class="stat-card">
+        <div class="stat-icon total-cotizaciones">
+          <i class="fas fa-receipt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>${{ getTotalCotizaciones().toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</h3>
+          <p>Total Cotizaciones</p>
+        </div>
+      </div>
     </div>
 
-    <!-- LISTA DIRECTA DE PROYECTOS -->
+    <!-- LISTA DIRECTA DE PROYECTOS MEJORADA -->
     <div class="proyectos-lista">
       <div *ngFor="let proyecto of proyectosUnicos" class="proyecto-card-directo">
         <div class="proyecto-header-directo">
           <h3>{{ proyecto.proyectoNombre }}</h3>
-          <span class="estado-badge aprobado">Aprobado</span>
+          <div class="estados-header">
+            <span class="estado-badge aprobado">Aprobado</span>
+            <span class="estado-cotizaciones" [class]="proyecto.tieneCotizaciones ? 'con-cotizaciones' : 'sin-cotizaciones'">
+              {{ proyecto.tieneCotizaciones ? '✅ CON COTIZACIONES' : '❌ SIN COTIZACIONES' }}
+            </span>
+          </div>
         </div>
         
         <div class="proyecto-info-directo">
           <div class="info-grid">
             <div class="info-item">
-              <strong>Docente:</strong>
+              <strong><i class="fas fa-user-graduate"></i> Docente:</strong>
               <span>{{ proyecto.docenteNombre }}</span>
             </div>
             <div class="info-item">
-              <strong>Partida:</strong>
+              <strong><i class="fas fa-list-ol"></i> Partida:</strong>
               <span>{{ proyecto.partidaCodigo }} - {{ proyecto.partidaNombre }}</span>
             </div>
             <div class="info-item">
-              <strong>Presupuesto Total:</strong>
+              <strong><i class="fas fa-file-invoice-dollar"></i> Estado Cotizaciones:</strong>
+              <span [class]="proyecto.tieneCotizaciones ? 'text-success' : 'text-warning'">
+                {{ proyecto.tieneCotizaciones ? '✅ Con Cotizaciones' : '❌ Sin Cotizaciones' }}
+              </span>
+            </div>
+            <div class="info-item">
+              <strong><i class="fas fa-receipt"></i> Total Cotizaciones:</strong>
+              <span class="monto-cotizaciones">${{ proyecto.totalCotizaciones.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+            <div class="info-item">
+              <strong><i class="fas fa-money-bill-wave"></i> Presupuesto Total:</strong>
               <span class="monto">${{ proyecto.presupuestoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
             </div>
             <div class="info-item">
-              <strong>Federal:</strong>
+              <strong><i class="fas fa-flag-usa"></i> Federal:</strong>
               <span class="monto">${{ proyecto.presupuestoFederal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
             </div>
             <div class="info-item">
-              <strong>Estatal:</strong>
+              <strong><i class="fas fa-flag"></i> Estatal:</strong>
               <span class="monto">${{ proyecto.presupuestoEstatal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
             </div>
           </div>
         </div>
         
         <div class="proyecto-status-directo">
-          <i class="fas fa-check-circle"></i>
-          <span>Listo para realizar cotizaciones</span>
+          <i class="fas" [class]="proyecto.tieneCotizaciones ? 'fa-check-circle text-success' : 'fa-exclamation-triangle text-warning'"></i>
+          <span>
+            {{ proyecto.tieneCotizaciones ? 
+               'Listo para generar documento final' : 
+               'Esperando cotizaciones del docente' }}
+          </span>
         </div>
       </div>
 
-      <!-- SIN DATOS -->
+      <!-- SIN DATOS MEJORADO -->
       <div *ngIf="proyectosUnicos.length === 0" class="no-data">
         <i class="fas fa-inbox"></i>
         <h3>No hay proyectos aprobados</h3>
         <p>No se encontraron proyectos con estado APROBADO en el sistema</p>
+        <div class="no-data-actions">
+          <button class="btn-regresar-inline" (click)="regresarAlDashboard()">
+            <i class="fas fa-home"></i> Volver al Dashboard
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- CONTENIDO PARA DOCENTE -->
+  <!-- CONTENIDO PARA DOCENTE (CUANDO NO HAY DOCUMENTOS FINALES) -->
   <div *ngIf="authService.isDocente() && !loading && !error && !documentoSeleccionado && documentosFinales.length === 0" class="docente-content">
     
     <!-- BOTONES DEL DOCUMENTO FINAL -->
@@ -332,36 +487,64 @@
         <div class="documento-info">
           <h2>Mis Documentos Finales</h2>
           <p>ITESCAM - Sistema de Finanzas</p>
+          <small>Generado desde cotizaciones aprobadas</small>
         </div>
       </div>
 
       <div class="documento-body">
         <!-- INFORMACIÓN DEL DOCENTE -->
         <div class="docente-info">
-          <h3>{{ documentoFinalDocente.docenteNombre }}</h3>
-          <p>Fecha de generación: {{ documentoFinalDocente.fechaGeneracion | date:'dd/MM/yyyy HH:mm' }}</p>
+          <h3><i class="fas fa-user-graduate"></i> {{ documentoFinalDocente.docenteNombre }}</h3>
+          <p><i class="fas fa-calendar-day"></i> Fecha de generación: {{ documentoFinalDocente.fechaGeneracion | date:'dd/MM/yyyy HH:mm' }}</p>
+          <div class="docente-stats">
+            <span class="stat-badge">
+              <strong>{{ documentoFinalDocente.proyectos.length }}</strong> Proyectos
+            </span>
+            <span class="stat-badge">
+              <strong>${{ documentoFinalDocente.totalGeneral.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</strong> Total
+            </span>
+          </div>
         </div>
 
         <!-- PROYECTOS APROBADOS -->
         <div *ngIf="documentoFinalDocente.proyectos.length > 0" class="proyectos-documento">
-          <div *ngFor="let proyecto of documentoFinalDocente.proyectos" class="proyecto-documento">
+          <h4><i class="fas fa-list-ul"></i> Proyectos Aprobados</h4>
+          <div *ngFor="let proyecto of documentoFinalDocente.proyectos; let i = index" class="proyecto-documento">
             <div class="proyecto-header">
-              <h4>{{ proyecto.nombre }}</h4>
+              <h4>
+                <span class="proyecto-numero">#{{ i + 1 }}</span>
+                {{ proyecto.nombre }}
+              </h4>
               <span class="total">${{ proyecto.presupuestoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</span>
             </div>
             
             <div class="proyecto-detalles">
-              <p><strong>Descripción:</strong> {{ proyecto.descripcion }}</p>
-              <p><strong>Edición:</strong> {{ proyecto.edicion }}</p>
-              <p><strong>Presupuesto Federal:</strong> ${{ proyecto.presupuestoFederal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</p>
-              <p><strong>Presupuesto Estatal:</strong> ${{ proyecto.presupuestoEstatal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</p>
+              <p><strong><i class="fas fa-align-left"></i> Descripción:</strong> {{ proyecto.descripcion }}</p>
+              <p><strong><i class="fas fa-calendar-alt"></i> Edición:</strong> {{ proyecto.edicion }}</p>
+              <p><strong><i class="fas fa-flag-usa"></i> Presupuesto Federal:</strong> ${{ proyecto.presupuestoFederal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</p>
+              <p><strong><i class="fas fa-flag"></i> Presupuesto Estatal:</strong> ${{ proyecto.presupuestoEstatal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</p>
+              <p><strong><i class="fas fa-layer-group"></i> Partidas:</strong> {{ proyecto.partidas?.length || 0 }}</p>
+              <p><strong><i class="fas fa-cube"></i> Productos:</strong> {{ getTotalProductosProyecto(proyecto) }}</p>
+            </div>
+
+            <!-- Estado del proyecto -->
+            <div class="proyecto-estado" [class]="proyecto.partidas?.length > 0 ? 'completo' : 'pendiente'">
+              <i class="fas" [class]="proyecto.partidas?.length > 0 ? 'fa-check-circle' : 'fa-clock'"></i>
+              <span>
+                {{ proyecto.partidas?.length > 0 ? 
+                   'Documento completo con ' + proyecto.partidas.length + ' partida(s)' : 
+                   'Esperando cotizaciones' }}
+              </span>
             </div>
           </div>
         </div>
 
         <!-- TOTAL GENERAL -->
         <div class="documento-total">
-          <h3>Presupuesto Total Aprobado: ${{ documentoFinalDocente.totalGeneral.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}</h3>
+          <h3>
+            <i class="fas fa-chart-bar"></i>
+            Presupuesto Total Aprobado: ${{ documentoFinalDocente.totalGeneral.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}
+          </h3>
         </div>
 
         <!-- SIN PROYECTOS -->
@@ -369,12 +552,17 @@
           <i class="fas fa-folder-open"></i>
           <h4>No tienes proyectos aprobados</h4>
           <p>Los documentos finales aparecerán aquí una vez que tus proyectos y cotizaciones sean aprobados</p>
+          <div class="no-proyectos-actions">
+            <button class="btn-ver" [routerLink]="['/proyectos']">
+              <i class="fas fa-plus-circle"></i> Crear Proyectos
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="documento-footer">
         <p>ITESCAM - Sistema de Gestión de Finanzas</p>
-        <small>Este documento lista tus proyectos aprobados para gestión de recursos</small>
+        <small>Documento generado automáticamente desde el sistema de cotizaciones</small>
       </div>
     </div>
   </div>
@@ -386,6 +574,12 @@
       <h3>No hay documentos finales disponibles</h3>
       <p>Los documentos finales aparecerán aquí una vez que tus proyectos y cotizaciones sean aprobados</p>
       <div class="no-documentos-actions">
+        <button class="btn-ver" *ngIf="authService.isDocente()" [routerLink]="['/proyectos']">
+          <i class="fas fa-plus-circle"></i> Crear Proyectos
+        </button>
+        <button class="btn-ver" *ngIf="authService.isDocente()" [routerLink]="['/cotizaciones']">
+          <i class="fas fa-shopping-cart"></i> Gestionar Cotizaciones
+        </button>
         <button class="btn-regresar-inline" (click)="regresarAlDashboard()">
           <i class="fas fa-home"></i> Volver al Dashboard
         </button>

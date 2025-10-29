@@ -1,3 +1,4 @@
+// src/app/components/reportes/reportes.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +17,8 @@ interface ProyectoReporte {
   presupuestoEstatal: number;
   partidaCodigo: string;
   partidaNombre: string;
+  tieneCotizaciones: boolean;
+  totalCotizaciones: number;
 }
 
 @Component({
@@ -57,42 +60,37 @@ export class ReportesComponent implements OnInit {
     this.error = null;
 
     if (this.authService.isAdmin() || this.authService.isRevisor()) {
+      this.cargarDocumentosFinalesReales();
       this.cargarReportesAdmin();
-      this.cargarDocumentosFinalesAdmin();
     } else if (this.authService.isDocente()) {
-      this.cargarDocumentoFinalDocente();
-      this.cargarDocumentosFinalesDocente();
+      this.cargarDocumentosFinalesRealesDocente();
     } else {
       this.loading = false;
     }
   }
 
-  private cargarDocumentosFinalesAdmin(): void {
+  // ✅ NUEVO MÉTODO: Cargar documentos finales reales para admin
+  private cargarDocumentosFinalesReales(): void {
     this.documentoFinalService.getDocumentosFinalesAdmin().subscribe({
       next: (documentos: DocumentoFinal[]) => {
         this.documentosFinales = documentos;
+        this.loading = false;
       },
       error: (error: any) => {
         console.error('Error al cargar documentos finales:', error);
+        this.error = 'Error al cargar documentos finales';
+        this.loading = false;
       }
     });
   }
 
-  private cargarDocumentosFinalesDocente(): void {
-    this.documentoFinalService.getDocumentosFinalesAdmin().subscribe({
-      next: (documentos: DocumentoFinal[]) => {
-        this.documentosFinales = documentos;
-      },
-      error: (error: any) => {
-        console.error('Error al cargar documentos finales:', error);
-      }
-    });
-  }
-
-  private cargarDocumentoFinalDocente(): void {
+  // ✅ NUEVO MÉTODO: Cargar documentos finales reales para docente
+  private cargarDocumentosFinalesRealesDocente(): void {
     this.documentoFinalService.getDocumentoFinalDocente().subscribe({
-      next: (documento: DocumentoFinalDocente) => {
-        this.documentoFinalDocente = documento;
+      next: (documentoDocente: DocumentoFinalDocente) => {
+        this.documentoFinalDocente = documentoDocente;
+        // Los documentos finales del docente ahora están en documentoDocente.proyectos
+        this.documentosFinales = documentoDocente.proyectos as DocumentoFinal[];
         this.loading = false;
       },
       error: (error: any) => {
@@ -244,5 +242,35 @@ export class ReportesComponent implements OnInit {
 
   getTotalProyectos(): number {
     return this.proyectosUnicos.length;
+  }
+
+  // ✅ NUEVO MÉTODO: Obtener proyectos con cotizaciones
+  getProyectosConCotizaciones(): number {
+    return this.proyectosUnicos.filter(p => p.tieneCotizaciones).length;
+  }
+
+  // ✅ NUEVO MÉTODO: Obtener total de cotizaciones
+  getTotalCotizaciones(): number {
+    return this.proyectosUnicos.reduce((total, proyecto) => total + proyecto.totalCotizaciones, 0);
+  }
+
+  // ✅ MÉTODOS AUXILIARES PARA EL HTML - AGREGADOS
+  getTotalDocumentosConPartidas(): number {
+    return this.documentosFinales.filter(doc => doc.partidas && doc.partidas.length > 0).length;
+  }
+
+  getTotalDocumentos(): number {
+    return this.documentosFinales.reduce((total, doc) => total + (doc.total || 0), 0);
+  }
+
+  getTotalProductos(documento: DocumentoFinal): number {
+    if (!documento.partidas) return 0;
+    return documento.partidas.reduce((total, partida) => total + (partida.productos ? partida.productos.length : 0), 0);
+  }
+
+  getTotalProductosProyecto(proyecto: any): number {
+    if (!proyecto.partidas) return 0;
+    return proyecto.partidas.reduce((total: number, partida: any) => 
+      total + (partida.productos ? partida.productos.length : 0), 0);
   }
 }

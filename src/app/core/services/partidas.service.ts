@@ -61,7 +61,8 @@ export class PartidasService {
           id: this.generateId(),
           ...partida,
           saldoDisponible: partida.importeAsignado, // ✅ Saldo inicial igual al importe asignado
-          createdAt: new Date()
+          createdAt: new Date(),
+          updatedAt: new Date()
         };
 
         partidas.push(nuevaPartida);
@@ -94,7 +95,8 @@ export class PartidasService {
     if (index !== -1) {
       partidas[index] = { 
         ...partidas[index], 
-        ...partida
+        ...partida,
+        updatedAt: new Date()
       };
       this.savePartidasToStorage(partidas);
       
@@ -135,7 +137,7 @@ export class PartidasService {
     });
   }
 
-  // ✅ NUEVO MÉTODO: Actualizar saldo después de crear cotización
+  // ✅ MÉTODO: Actualizar saldo después de crear cotización
   actualizarSaldoPartida(partidaId: string, montoUtilizado: number): Observable<ApiResponse<PartidaPresupuestal>> {
     const partidas = this.getPartidasFromStorage();
     const index = partidas.findIndex(p => p.id === partidaId);
@@ -145,6 +147,7 @@ export class PartidasService {
       
       if (nuevoSaldo >= 0) {
         partidas[index].saldoDisponible = nuevoSaldo;
+        partidas[index].updatedAt = new Date();
         this.savePartidasToStorage(partidas);
         
         return of({
@@ -166,7 +169,7 @@ export class PartidasService {
     });
   }
 
-  // ✅ NUEVO MÉTODO: Obtener partida por código y proyecto
+  // ✅ MÉTODO: Obtener partida por código y proyecto
   getPartidaByCodigo(proyectoId: string, codigo: string): Observable<ApiResponse<PartidaPresupuestal>> {
     const partidas = this.getPartidasFromStorage();
     const partida = partidas.find(p => p.proyectoId === proyectoId && p.codigo === codigo);
@@ -178,7 +181,7 @@ export class PartidasService {
     });
   }
 
-  // ✅ NUEVO MÉTODO: Eliminar partidas de un proyecto (para cuando se elimine el proyecto)
+  // ✅ MÉTODO: Eliminar partidas de un proyecto (para cuando se elimine el proyecto)
   eliminarPartidasDeProyecto(proyectoId: string): Observable<ApiResponse<void>> {
     const partidas = this.getPartidasFromStorage();
     const partidasFiltradas = partidas.filter(p => p.proyectoId !== proyectoId);
@@ -194,6 +197,89 @@ export class PartidasService {
     return of({
       success: false,
       message: 'No se encontraron partidas para eliminar'
+    });
+  }
+
+  // ✅ MÉTODO CORREGIDO: Eliminar partidas por proyecto (para actualización)
+  deletePartidasByProyecto(proyectoId: string): Observable<ApiResponse<void>> {
+    try {
+      const partidas = this.getPartidasFromStorage();
+      const partidasFiltradas = partidas.filter(p => p.proyectoId !== proyectoId);
+      
+      // Si se eliminaron partidas, guardar los cambios
+      if (partidasFiltradas.length < partidas.length) {
+        this.savePartidasToStorage(partidasFiltradas);
+        return of({
+          success: true,
+          message: 'Partidas eliminadas exitosamente'
+        }).pipe(delay(500));
+      } else {
+        // No había partidas para eliminar, pero se considera éxito
+        return of({
+          success: true,
+          message: 'No se encontraron partidas para eliminar'
+        });
+      }
+    } catch (error) {
+      return of({
+        success: false,
+        message: 'Error al eliminar partidas'
+      });
+    }
+  }
+
+  // ✅ MÉTODO NUEVO: Eliminar partida específica
+  deletePartida(id: string): Observable<ApiResponse<void>> {
+    const partidas = this.getPartidasFromStorage();
+    const partidasFiltradas = partidas.filter(p => p.id !== id);
+    
+    if (partidasFiltradas.length < partidas.length) {
+      this.savePartidasToStorage(partidasFiltradas);
+      return of({
+        success: true,
+        message: 'Partida eliminada exitosamente'
+      });
+    }
+    
+    return of({
+      success: false,
+      message: 'Partida no encontrada'
+    });
+  }
+
+  // ✅ MÉTODO NUEVO: Obtener todas las partidas (para admin)
+  getAllPartidas(): Observable<ApiResponse<PartidaPresupuestal[]>> {
+    const partidas = this.getPartidasFromStorage();
+    return of({
+      success: true,
+      data: partidas,
+      message: 'Partidas obtenidas exitosamente'
+    });
+  }
+
+  // ✅ MÉTODO NUEVO: Obtener resumen de partidas por proyecto
+  getResumenPartidasByProyecto(proyectoId: string): Observable<ApiResponse<{
+    totalAsignado: number;
+    totalUtilizado: number;
+    saldoTotal: number;
+    partidas: PartidaPresupuestal[];
+  }>> {
+    const partidas = this.getPartidasFromStorage();
+    const partidasProyecto = partidas.filter(p => p.proyectoId === proyectoId);
+    
+    const totalAsignado = partidasProyecto.reduce((sum, partida) => sum + partida.importeAsignado, 0);
+    const totalUtilizado = partidasProyecto.reduce((sum, partida) => sum + (partida.importeAsignado - partida.saldoDisponible), 0);
+    const saldoTotal = partidasProyecto.reduce((sum, partida) => sum + partida.saldoDisponible, 0);
+    
+    return of({
+      success: true,
+      data: {
+        totalAsignado,
+        totalUtilizado,
+        saldoTotal,
+        partidas: partidasProyecto
+      },
+      message: 'Resumen de partidas obtenido exitosamente'
     });
   }
 }

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { forkJoin } from 'rxjs'; // ✅ AGREGAR ESTE IMPORT
+import { forkJoin } from 'rxjs';
 import { Proyecto, CreateProyectoRequest } from '../../core/models/proyecto.model';
 import { PartidaPresupuestal } from '../../core/models/partida.model';
 import { ProyectosService } from '../../core/services/proyectos.service';
@@ -22,10 +22,12 @@ export class ProyectoFormComponent implements OnInit {
   loading = false;
   error: string | null = null;
   partidasDisponibles: PartidaPresupuestal[] = [];
+  
   esEdicion = false;
+  esVista = false;
   proyectoId: string | null = null;
+  proyecto: Proyecto | null = null;
 
-  // Partidas dinámicas desde el servicio de artículos
   partidasReales: {codigo: string, nombre: string, descripcion: string}[] = [];
 
   constructor(
@@ -42,23 +44,63 @@ export class ProyectoFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.proyectoId = this.route.snapshot.paramMap.get('id');
-    this.esEdicion = !!this.proyectoId;
     
-    // Cargar partidas reales del sistema
+    const currentRoute = this.router.url;
+    
+    if (currentRoute.includes('/editar/')) {
+      this.esEdicion = true;
+      this.esVista = false;
+    } else if (currentRoute.includes('/proyectos/') && this.proyectoId && !currentRoute.includes('/editar/')) {
+      this.esVista = true;
+      this.esEdicion = false;
+    } else {
+      this.esEdicion = false;
+      this.esVista = false;
+    }
+    
     this.cargarPartidasReales();
     
-    if (this.esEdicion) {
-      this.cargarProyectoParaEditar();
+    if (this.esEdicion || this.esVista) {
+      this.cargarProyecto();
     } else {
       this.agregarPartidaInicial();
     }
+  }
+
+  cargarProyecto(): void {
+    if (!this.proyectoId) {
+      this.error = 'ID de proyecto no válido';
+      return;
+    }
+    
+    this.loading = true;
+    this.proyectosService.getProyectoById(this.proyectoId).subscribe({
+      next: (response) => {
+        this.loading = false;
+        if (response.success && response.data) {
+          this.proyecto = response.data;
+          this.cargarDatosEnFormulario(response.data);
+          
+          if (this.esVista) {
+            this.proyectoForm.disable();
+          }
+        } else {
+          this.error = 'Proyecto no encontrado';
+          this.router.navigate(['/proyectos']);
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        this.error = 'Error al cargar proyecto';
+        console.error('Error:', error);
+      }
+    });
   }
 
   cargarPartidasReales(): void {
     this.articulosService.getPartidas().subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          // Mapear las partidas con sus nombres descriptivos
           this.partidasReales = response.data.map(codigo => ({
             codigo: codigo,
             nombre: this.articulosService.getNombrePartida(codigo),
@@ -68,7 +110,6 @@ export class ProyectoFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al cargar partidas:', error);
-        // En caso de error, usar partidas básicas como fallback
         this.partidasReales = this.getPartidasBasicas();
       }
     });
@@ -195,28 +236,6 @@ export class ProyectoFormComponent implements OnInit {
     return true;
   }
 
-  cargarProyectoParaEditar(): void {
-    if (!this.proyectoId) return;
-    
-    this.loading = true;
-    this.proyectosService.getProyectoById(this.proyectoId).subscribe({
-      next: (response) => {
-        this.loading = false;
-        if (response.success && response.data) {
-          this.cargarDatosEnFormulario(response.data);
-        } else {
-          this.error = 'Proyecto no encontrado';
-          this.router.navigate(['/proyectos']);
-        }
-      },
-      error: (error) => {
-        this.loading = false;
-        this.error = 'Error al cargar proyecto para editar';
-        console.error('Error:', error);
-      }
-    });
-  }
-
   cargarDatosEnFormulario(proyecto: Proyecto): void {
     this.proyectoForm.patchValue({
       nombre: proyecto.nombre,
@@ -227,21 +246,17 @@ export class ProyectoFormComponent implements OnInit {
       presupuestoEstatal: proyecto.presupuestoEstatal
     });
 
-    // ✅ CARGAR PARTIDAS EXISTENTES DEL PROYECTO
     this.cargarPartidasExistentes(proyecto.id);
   }
 
-  // ✅ NUEVO MÉTODO: Cargar partidas existentes del proyecto
   private cargarPartidasExistentes(proyectoId: string): void {
     this.partidasService.getPartidasByProyecto(proyectoId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          // Limpiar el array de partidas
           while (this.partidasFormArray.length !== 0) {
             this.partidasFormArray.removeAt(0);
           }
           
-          // Agregar las partidas existentes
           response.data.forEach(partida => {
             const partidaGroup = this.crearPartidaFormGroup();
             partidaGroup.patchValue({
@@ -253,7 +268,6 @@ export class ProyectoFormComponent implements OnInit {
             this.partidasFormArray.push(partidaGroup);
           });
           
-          // Si no hay partidas, agregar una inicial
           if (this.partidasFormArray.length === 0) {
             this.agregarPartidaInicial();
           }
@@ -267,6 +281,10 @@ export class ProyectoFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.esVista) {
+      return;
+    }
+
     if (this.proyectoForm.invalid) {
       this.marcarControlesComoSucios();
       this.error = 'Por favor, completa todos los campos requeridos correctamente';
@@ -280,7 +298,6 @@ export class ProyectoFormComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    // ✅ DATOS DEL PROYECTO
     const proyectoData: CreateProyectoRequest = {
       nombre: this.proyectoForm.value.nombre,
       descripcion: this.proyectoForm.value.descripcion,
@@ -290,7 +307,6 @@ export class ProyectoFormComponent implements OnInit {
       edicion: this.proyectoForm.value.edicion
     };
 
-    // ✅ DATOS DE LAS PARTIDAS
     const partidasData = this.partidasFormArray.controls.map(control => ({
       codigo: control.get('codigo')?.value,
       nombre: control.get('nombre')?.value,
@@ -299,31 +315,12 @@ export class ProyectoFormComponent implements OnInit {
     }));
 
     if (this.esEdicion && this.proyectoId) {
-      // Modo edición - Actualizar proyecto
-      this.proyectosService.updateProyecto(this.proyectoId, proyectoData).subscribe({
-        next: (response) => {
-          this.loading = false;
-          if (response.success) {
-            alert('✅ Proyecto actualizado exitosamente');
-            this.router.navigate(['/proyectos', this.proyectoId]);
-          } else {
-            this.error = response.message || 'Error al actualizar el proyecto';
-          }
-        },
-        error: (error) => {
-          this.loading = false;
-          this.error = 'Error al actualizar el proyecto';
-          console.error('Error:', error);
-        }
-      });
+      this.actualizarProyectoCompleto(this.proyectoId, proyectoData, partidasData);
     } else {
-      // Modo creación - Crear proyecto y luego sus partidas
       this.proyectosService.createProyecto(proyectoData).subscribe({
         next: (response) => {
           if (response.success && response.data) {
             const proyectoId = response.data.id;
-            
-            // ✅ CREAR PARTIDAS PARA EL PROYECTO
             this.crearPartidasParaProyecto(proyectoId, partidasData);
           } else {
             this.loading = false;
@@ -339,7 +336,42 @@ export class ProyectoFormComponent implements OnInit {
     }
   }
 
-  // ✅ NUEVO MÉTODO: Crear partidas para el proyecto
+  private actualizarProyectoCompleto(proyectoId: string, proyectoData: CreateProyectoRequest, partidasData: any[]): void {
+    this.proyectosService.updateProyecto(proyectoId, proyectoData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.actualizarPartidasDelProyecto(proyectoId, partidasData);
+        } else {
+          this.loading = false;
+          this.error = response.message || 'Error al actualizar el proyecto';
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        this.error = 'Error al actualizar el proyecto';
+        console.error('Error:', error);
+      }
+    });
+  }
+
+  private actualizarPartidasDelProyecto(proyectoId: string, partidasData: any[]): void {
+    this.partidasService.deletePartidasByProyecto(proyectoId).subscribe({
+      next: (deleteResponse) => {
+        if (deleteResponse.success) {
+          this.crearPartidasParaProyecto(proyectoId, partidasData);
+        } else {
+          this.loading = false;
+          this.error = 'Error al actualizar las partidas del proyecto';
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        this.error = 'Error al actualizar las partidas del proyecto';
+        console.error('Error:', error);
+      }
+    });
+  }
+
   private crearPartidasParaProyecto(proyectoId: string, partidasData: any[]): void {
     const partidasRequests = partidasData.map(partida => 
       this.partidasService.createPartida({
@@ -348,23 +380,28 @@ export class ProyectoFormComponent implements OnInit {
       })
     );
 
-    // Ejecutar todas las creaciones de partidas
     forkJoin(partidasRequests).subscribe({
       next: (responses) => {
         this.loading = false;
         const todasExitosas = responses.every(r => r.success);
         
         if (todasExitosas) {
-          alert('✅ Proyecto creado exitosamente con todas las partidas. Será enviado a revisión.');
-          this.router.navigate(['/proyectos']);
+          if (this.esEdicion) {
+            alert('✅ Proyecto actualizado exitosamente');
+            // ✅ CORREGIDO: Redirigir al listado de proyectos
+            this.router.navigate(['/proyectos']);
+          } else {
+            alert('✅ Proyecto creado exitosamente con todas las partidas. Será enviado a revisión.');
+            this.router.navigate(['/proyectos']);
+          }
         } else {
-          alert('⚠️ Proyecto creado, pero algunas partidas no se pudieron guardar correctamente.');
+          alert('⚠️ Proyecto ' + (this.esEdicion ? 'actualizado' : 'creado') + ', pero algunas partidas no se pudieron guardar correctamente.');
           this.router.navigate(['/proyectos']);
         }
       },
       error: (error) => {
         this.loading = false;
-        alert('⚠️ Proyecto creado, pero hubo un error al guardar las partidas.');
+        alert('⚠️ Proyecto ' + (this.esEdicion ? 'actualizado' : 'creado') + ', pero hubo un error al guardar las partidas.');
         this.router.navigate(['/proyectos']);
         console.error('Error creando partidas:', error);
       }
@@ -372,7 +409,98 @@ export class ProyectoFormComponent implements OnInit {
   }
 
   get tituloFormulario(): string {
-    return this.esEdicion ? '✏️ Editar Proyecto' : '🚀 Crear Nuevo Proyecto';
+    if (this.esVista) {
+      return '👁️ Ver Proyecto';
+    } else if (this.esEdicion) {
+      return '✏️ Editar Proyecto';
+    } else {
+      return '🚀 Crear Nuevo Proyecto';
+    }
+  }
+
+  getNombreDocente(): string {
+    if (!this.proyecto || !this.proyecto.docente) {
+      return 'N/A';
+    }
+    return this.proyecto.docente.nombre || 'N/A';
+  }
+
+  getFechaCreacion(): string {
+    if (!this.proyecto || !this.proyecto.createdAt) {
+      return 'N/A';
+    }
+    
+    if (typeof this.proyecto.createdAt === 'string') {
+      return new Date(this.proyecto.createdAt).toLocaleDateString('es-MX');
+    }
+    
+    return this.proyecto.createdAt.toLocaleDateString('es-MX');
+  }
+
+  irAEdicion(): void {
+    if (this.proyecto && this.puedeEditar()) {
+      this.router.navigate(['/proyectos/editar', this.proyecto.id]);
+    }
+  }
+
+  puedeEditar(): boolean {
+    return this.authService.isDocente() && this.proyecto?.estado === 'BORRADOR';
+  }
+
+  esAdmin(): boolean {
+    return this.authService.isAdmin() || this.authService.isRevisor();
+  }
+
+  aprobarProyecto(): void {
+    if (this.proyecto && confirm(`¿Estás seguro de aprobar el proyecto "${this.proyecto.nombre}"?`)) {
+      this.proyectosService.aprobarProyecto(this.proyecto.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            alert('✅ Proyecto aprobado exitosamente');
+            this.router.navigate(['/proyectos']);
+          } else {
+            alert('❌ Error al aprobar el proyecto: ' + response.message);
+          }
+        },
+        error: (error) => {
+          alert('❌ Error al aprobar el proyecto');
+          console.error('Error:', error);
+        }
+      });
+    }
+  }
+
+  rechazarProyecto(): void {
+    if (this.proyecto && confirm(`¿Estás seguro de rechazar el proyecto "${this.proyecto.nombre}"?`)) {
+      this.proyectosService.rechazarProyecto(this.proyecto.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            alert('✅ Proyecto rechazado exitosamente');
+            this.router.navigate(['/proyectos']);
+          } else {
+            alert('❌ Error al rechazar el proyecto: ' + response.message);
+          }
+        },
+        error: (error) => {
+          alert('❌ Error al rechazar el proyecto');
+          console.error('Error:', error);
+        }
+      });
+    }
+  }
+
+  cancelar(): void {
+    if (this.esVista) {
+      this.router.navigate(['/proyectos']);
+    } else if (this.proyectoForm.dirty) {
+      if (confirm('¿Estás seguro de cancelar? Se perderán los datos no guardados.')) {
+        this.router.navigate(this.esEdicion && this.proyectoId ? 
+          ['/proyectos', this.proyectoId] : ['/proyectos']);
+      }
+    } else {
+      this.router.navigate(this.esEdicion && this.proyectoId ? 
+        ['/proyectos', this.proyectoId] : ['/proyectos']);
+    }
   }
 
   marcarControlesComoSucios(): void {
@@ -385,13 +513,29 @@ export class ProyectoFormComponent implements OnInit {
     });
   }
 
-  cancelar(): void {
-    if (confirm('¿Estás seguro de cancelar? Se perderán los datos no guardados.')) {
-      if (this.esEdicion && this.proyectoId) {
-        this.router.navigate(['/proyectos', this.proyectoId]);
-      } else {
-        this.router.navigate(['/proyectos']);
-      }
+  getEstadoBadgeClass(): string {
+    if (!this.proyecto) return 'bg-secondary';
+    
+    switch (this.proyecto.estado) {
+      case 'APROBADO': return 'bg-success';
+      case 'EN_REVISION': return 'bg-warning';
+      case 'RECHAZADO': return 'bg-danger';
+      default: return 'bg-secondary';
     }
+  }
+
+  getEstadoText(): string {
+    if (!this.proyecto) return 'Desconocido';
+    
+    switch (this.proyecto.estado) {
+      case 'APROBADO': return 'Aprobado';
+      case 'EN_REVISION': return 'En Revisión';
+      case 'RECHAZADO': return 'Rechazado';
+      default: return 'Borrador';
+    }
+  }
+
+  isProyectoLoaded(): boolean {
+    return this.proyecto !== null;
   }
 }

@@ -1,13 +1,17 @@
 <div class="container-fluid">
-  <!-- Header -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <!-- Header Mejorado -->
+  <nav class="navbar navbar-expand-lg navbar-dark mb-4" 
+       [class]="esVista ? 'navbar-dark bg-info' : (esEdicion ? 'navbar-dark bg-warning' : 'navbar-dark bg-primary')">
     <div class="container">
-      <a class="navbar-brand" [routerLink]="esEdicion && proyectoId ? ['/proyectos', proyectoId] : ['/proyectos']">
+      <a class="navbar-brand" [routerLink]="['/proyectos']">
         <i class="fas fa-arrow-left me-2"></i>
-        {{ esEdicion ? 'Volver al Detalle' : 'Volver a Proyectos' }}
+        Volver a Proyectos
       </a>
       <div class="d-flex align-items-center">
-        <span class="text-light me-3">{{ esEdicion ? '✏️ Editar Proyecto' : '📝 Crear Nuevo Proyecto' }}</span>
+        <span class="text-light me-3">{{ tituloFormulario }}</span>
+        <span *ngIf="esVista && isProyectoLoaded()" class="badge estado-badge" [class]="getEstadoBadgeClass()">
+          {{ getEstadoText() }}
+        </span>
       </div>
     </div>
   </nav>
@@ -17,12 +21,16 @@
       <div class="col-lg-10">
         <!-- Card Principal -->
         <div class="card">
-          <div class="card-header">
+          <div class="card-header" [class]="esVista ? 'bg-info text-white' : ''">
             <h4 class="mb-0">{{ tituloFormulario }}</h4>
-            <p class="text-muted mb-0">
-              {{ esEdicion ? 
-                 'Modifica la información del proyecto existente' : 
-                 'Completa la información básica y asigna el presupuesto por partidas' }}
+            <p class="mb-0" [class]="esVista ? 'text-light' : 'text-muted'">
+              <span *ngIf="esVista && isProyectoLoaded()">
+                Proyecto creado por: <strong>{{ getNombreDocente() }}</strong> | 
+                Fecha: <strong>{{ getFechaCreacion() }}</strong>
+              </span>
+              <span *ngIf="!esVista">
+                {{ esEdicion ? 'Modifica la información del proyecto existente' : 'Completa la información básica y asigna el presupuesto por partidas' }}
+              </span>
             </p>
           </div>
 
@@ -42,12 +50,10 @@
                       class="form-control"
                       placeholder="Ej: Desarrollo de Material Biodegradable"
                       [class.is-invalid]="proyectoForm.get('nombre')?.invalid && proyectoForm.get('nombre')?.touched"
+                      [readonly]="esVista"
                     >
                     <div class="invalid-feedback" *ngIf="proyectoForm.get('nombre')?.errors?.['required'] && proyectoForm.get('nombre')?.touched">
                       El nombre del proyecto es requerido
-                    </div>
-                    <div class="invalid-feedback" *ngIf="proyectoForm.get('nombre')?.errors?.['minlength'] && proyectoForm.get('nombre')?.touched">
-                      El nombre debe tener al menos 5 caracteres
                     </div>
                   </div>
 
@@ -60,19 +66,17 @@
                       rows="3"
                       placeholder="Describe los objetivos, metodología y expected results del proyecto..."
                       [class.is-invalid]="proyectoForm.get('descripcion')?.invalid && proyectoForm.get('descripcion')?.touched"
+                      [readonly]="esVista"
                     ></textarea>
                     <div class="invalid-feedback" *ngIf="proyectoForm.get('descripcion')?.errors?.['required'] && proyectoForm.get('descripcion')?.touched">
                       La descripción es requerida
-                    </div>
-                    <div class="invalid-feedback" *ngIf="proyectoForm.get('descripcion')?.errors?.['minlength'] && proyectoForm.get('descripcion')?.touched">
-                      La descripción debe tener al menos 10 caracteres
                     </div>
                   </div>
 
                   <!-- Edición y Presupuesto -->
                   <div class="col-md-4">
                     <label class="form-label">Edición *</label>
-                    <select formControlName="edicion" class="form-select">
+                    <select formControlName="edicion" class="form-select" [disabled]="esVista">
                       <option value="2025">2025</option>
                       <option value="2024">2024</option>
                       <option value="2023">2023</option>
@@ -89,13 +93,8 @@
                         class="form-control"
                         (change)="onPresupuestoTotalChange()"
                         [class.is-invalid]="proyectoForm.get('presupuestoTotal')?.invalid && proyectoForm.get('presupuestoTotal')?.touched"
+                        [readonly]="esVista"
                       >
-                    </div>
-                    <div class="invalid-feedback" *ngIf="proyectoForm.get('presupuestoTotal')?.errors?.['required'] && proyectoForm.get('presupuestoTotal')?.touched">
-                      El presupuesto total es requerido
-                    </div>
-                    <div class="invalid-feedback" *ngIf="proyectoForm.get('presupuestoTotal')?.errors?.['min'] && proyectoForm.get('presupuestoTotal')?.touched">
-                      El presupuesto mínimo es $1,000
                     </div>
                   </div>
 
@@ -104,11 +103,11 @@
                     <div class="budget-distribution p-3 bg-light rounded">
                       <div class="d-flex justify-content-between small">
                         <span>Federal (50%):</span>
-                        <strong>${{ proyectoForm.get('presupuestoFederal')?.value | number:'1.2-2' }}</strong>
+                        <strong>${{ (proyectoForm.get('presupuestoFederal')?.value || 0) | number:'1.2-2' }}</strong>
                       </div>
                       <div class="d-flex justify-content-between small">
                         <span>Estatal (50%):</span>
-                        <strong>${{ proyectoForm.get('presupuestoEstatal')?.value | number:'1.2-2' }}</strong>
+                        <strong>${{ (proyectoForm.get('presupuestoEstatal')?.value || 0) | number:'1.2-2' }}</strong>
                       </div>
                     </div>
                   </div>
@@ -119,7 +118,12 @@
               <div class="form-section mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <h5 class="section-title mb-0">💰 Asignación de Partidas Presupuestales</h5>
-                  <button type="button" class="btn btn-success btn-sm" (click)="agregarPartida()">
+                  <button 
+                    *ngIf="!esVista"
+                    type="button" 
+                    class="btn btn-success btn-sm" 
+                    (click)="agregarPartida()"
+                  >
                     ➕ Agregar Partida
                   </button>
                 </div>
@@ -133,7 +137,7 @@
                   <div class="row text-center">
                     <div class="col-md-4">
                       <strong>Presupuesto Total</strong><br>
-                      <span class="h5 text-primary">${{ proyectoForm.get('presupuestoTotal')?.value | number:'1.2-2' }}</span>
+                      <span class="h5 text-primary">${{ (proyectoForm.get('presupuestoTotal')?.value || 0) | number:'1.2-2' }}</span>
                     </div>
                     <div class="col-md-4">
                       <strong>Total Asignado</strong><br>
@@ -148,7 +152,7 @@
                       </span>
                     </div>
                   </div>
-                  <div class="progress mt-2" *ngIf="proyectoForm.get('presupuestoTotal')?.value > 0">
+                  <div class="progress mt-2" *ngIf="(proyectoForm.get('presupuestoTotal')?.value || 0) > 0">
                     <div 
                       class="progress-bar" 
                       [class]="getPresupuestoUtilizado() <= 100 ? 'bg-success' : 'bg-danger'"
@@ -176,18 +180,16 @@
                             (change)="onPartidaSeleccionada($event, i)"
                             class="form-select"
                             [class.is-invalid]="partida.get('codigo')?.invalid && partida.get('codigo')?.touched"
+                            [disabled]="esVista"
                           >
                             <option value="">Selecciona una partida</option>
-                            <option *ngFor="let partida of partidasReales" [value]="partida.codigo">
-                              {{ partida.codigo }} - {{ partida.nombre }}
+                            <option *ngFor="let partidaOption of partidasReales" [value]="partidaOption.codigo">
+                              {{ partidaOption.codigo }} - {{ partidaOption.nombre }}
                             </option>
                           </select>
-                          <div class="invalid-feedback" *ngIf="partida.get('codigo')?.errors?.['required'] && partida.get('codigo')?.touched">
-                            Selecciona un código de partida
-                          </div>
                         </div>
 
-                        <!-- Nombre y Descripción (automáticos) -->
+                        <!-- Nombre y Descripción -->
                         <div class="col-md-4">
                           <label class="form-label">Nombre de Partida</label>
                           <input 
@@ -195,7 +197,6 @@
                             formControlName="nombre"
                             class="form-control"
                             readonly
-                            [class.is-invalid]="partida.get('nombre')?.invalid && partida.get('nombre')?.touched"
                           >
                         </div>
 
@@ -208,18 +209,13 @@
                               formControlName="importeAsignado"
                               class="form-control"
                               [class.is-invalid]="partida.get('importeAsignado')?.invalid && partida.get('importeAsignado')?.touched"
+                              [readonly]="esVista"
                             >
-                          </div>
-                          <div class="invalid-feedback" *ngIf="partida.get('importeAsignado')?.errors?.['required'] && partida.get('importeAsignado')?.touched">
-                            El importe es requerido
-                          </div>
-                          <div class="invalid-feedback" *ngIf="partida.get('importeAsignado')?.errors?.['min'] && partida.get('importeAsignado')?.touched">
-                            El importe mínimo es $1
                           </div>
                         </div>
 
                         <!-- Acciones -->
-                        <div class="col-md-2 d-flex align-items-end">
+                        <div class="col-md-2 d-flex align-items-end" *ngIf="!esVista">
                           <button 
                             type="button" 
                             class="btn btn-outline-danger w-100"
@@ -246,7 +242,7 @@
                 </div>
 
                 <!-- Mensaje de ayuda -->
-                <div class="alert alert-info">
+                <div class="alert alert-info" *ngIf="!esVista">
                   <small>
                     💡 <strong>Consejo:</strong> Asegúrate de que la suma de todas las partidas sea exactamente igual al presupuesto total. 
                     Las partidas deben coincidir con el clasificador por objeto de gasto oficial del sistema.
@@ -259,20 +255,39 @@
                 ❌ {{ error }}
               </div>
 
-              <!-- Botones de Acción -->
-              <div class="d-flex gap-2 justify-content-end">
-                <button type="button" class="btn btn-secondary" (click)="cancelar()">
-                  ❌ Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  class="btn btn-primary"
-                  (click)="onSubmit()"
-                  [disabled]="loading"
-                >
-                  <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-                  {{ loading ? (esEdicion ? 'Actualizando...' : 'Creando...') : (esEdicion ? '✅ Actualizar Proyecto' : '✅ Crear Proyecto') }}
-                </button>
+              <!-- ✅ BOTONES DE ACCIÓN MEJORADOS -->
+              <div class="d-flex gap-2 justify-content-between">
+                <div>
+                  <!-- Botones para Admin en modo vista -->
+                  <div *ngIf="esVista && esAdmin() && proyecto?.estado === 'EN_REVISION'" class="d-flex gap-2">
+                    <button type="button" class="btn btn-success" (click)="aprobarProyecto()">
+                      ✅ Aprobar Proyecto
+                    </button>
+                    <button type="button" class="btn btn-danger" (click)="rechazarProyecto()">
+                      ❌ Rechazar Proyecto
+                    </button>
+                  </div>
+
+                  <!-- Botón para ir a edición en modo vista (solo docente en borrador) -->
+                  
+                </div>
+
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-secondary" (click)="cancelar()">
+                    {{ esVista ? '← Volver' : '❌ Cancelar' }}
+                  </button>
+                  
+                  <button 
+                    *ngIf="!esVista"
+                    type="submit" 
+                    class="btn btn-primary"
+                    (click)="onSubmit()"
+                    [disabled]="loading"
+                  >
+                    <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ loading ? (esEdicion ? 'Actualizando...' : 'Creando...') : (esEdicion ? '✅ Actualizar Proyecto' : '✅ Crear Proyecto') }}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

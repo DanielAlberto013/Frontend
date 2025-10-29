@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ✅ AGREGAR ESTA LÍNEA
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { Proyecto } from '../../core/models/proyecto.model';
 import { ProyectosService } from '../../core/services/proyectos.service';
 import { AuthService } from '../../auth/auth';
@@ -15,6 +16,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-proyectos-list',
@@ -22,7 +24,7 @@ import { MatMenuModule } from '@angular/material/menu';
   imports: [
     CommonModule, 
     RouterModule,
-    FormsModule, // ✅ AGREGAR ESTA LÍNEA
+    FormsModule,
     // Angular Material modules
     MatToolbarModule,
     MatButtonModule,
@@ -31,12 +33,13 @@ import { MatMenuModule } from '@angular/material/menu';
     MatDividerModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    MatMenuModule
+    MatMenuModule,
+    MatSnackBarModule
   ],
   templateUrl: './proyectos-list.component.html',
   styleUrls: ['./proyectos-list.component.css']
 })
-export class ProyectosListComponent implements OnInit {
+export class ProyectosListComponent implements OnInit, OnDestroy {
   proyectos: Proyecto[] = [];
   proyectosFiltrados: Proyecto[] = [];
   loading = true;
@@ -46,44 +49,47 @@ export class ProyectosListComponent implements OnInit {
   filtroEstado: string = '';
   searchTerm: string = '';
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private proyectosService: ProyectosService,
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.cargarProyectos();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   cargarProyectos(): void {
     this.loading = true;
+    this.error = null;
     
-    if (this.authService.isDocente()) {
-      // Docente ve solo sus proyectos
-      this.proyectosService.getMisProyectos().subscribe({
+    const proyectosObservable = this.authService.isDocente() 
+      ? this.proyectosService.getMisProyectos() 
+      : this.proyectosService.getProyectos();
+
+    proyectosObservable
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
         next: (response) => {
           this.procesarProyectos(response);
         },
         error: (error) => {
-          this.error = 'Error al cargar tus proyectos';
+          this.error = this.authService.isDocente() 
+            ? 'Error al cargar tus proyectos' 
+            : 'Error al cargar proyectos';
           this.loading = false;
           console.error('Error:', error);
+          this.mostrarError(this.error);
         }
       });
-    } else {
-      // Admin y revisor ven todos los proyectos
-      this.proyectosService.getProyectos().subscribe({
-        next: (response) => {
-          this.procesarProyectos(response);
-        },
-        error: (error) => {
-          this.error = 'Error al cargar proyectos';
-          this.loading = false;
-          console.error('Error:', error);
-        }
-      });
-    }
   }
 
   private procesarProyectos(response: any): void {
@@ -92,19 +98,26 @@ export class ProyectosListComponent implements OnInit {
       this.aplicarFiltros();
     } else {
       this.error = 'No se pudieron cargar los proyectos';
+      this.mostrarError(this.error);
     }
     this.loading = false;
   }
 
-  // ✅ NUEVO: Aplicar filtros para admin
+  // ✅ Aplicar filtros para admin
   aplicarFiltros(): void {
     this.proyectosFiltrados = this.proyectos.filter(proyecto => {
       const coincideEstado = !this.filtroEstado || proyecto.estado === this.filtroEstado;
-      const coincideBusqueda = !this.searchTerm || 
-        proyecto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        proyecto.docente.nombre.toLowerCase().includes(this.searchTerm.toLowerCase());
       
-      return coincideEstado && coincideBusqueda;
+      if (!this.searchTerm) {
+        return coincideEstado;
+      }
+
+      const term = this.searchTerm.toLowerCase();
+      const coincideNombre = proyecto.nombre.toLowerCase().includes(term);
+      const coincideDocente = proyecto.docente?.nombre?.toLowerCase().includes(term);
+      const coincideDescripcion = proyecto.descripcion?.toLowerCase().includes(term);
+      
+      return coincideEstado && (coincideNombre || coincideDocente || coincideDescripcion);
     });
   }
 
@@ -144,122 +157,166 @@ export class ProyectosListComponent implements OnInit {
     return this.proyectos.filter(p => p.estado === estado).length;
   }
 
+  getTotalProyectos(): number {
+    return this.proyectos.length;
+  }
+
+  getProyectosMostrados(): number {
+    return this.proyectosFiltrados.length;
+  }
+
   crearNuevoProyecto(): void {
     this.router.navigate(['/proyectos/nuevo']);
   }
 
   verDetalle(proyecto: Proyecto): void {
+    // ✅ CORREGIDO: Solo verificación básica de autenticación
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+    
+    // ✅ Redirigir correctamente a la vista
     this.router.navigate(['/proyectos', proyecto.id]);
   }
 
   editarProyecto(proyecto: Proyecto): void {
+    // ✅ VERIFICAR que el usuario esté autenticado y pueda editar
+    console.log('🔍 Intentando editar proyecto:', proyecto);
+    console.log('🔍 Usuario autenticado:', this.authService.isLoggedIn());
+    console.log('🔍 Es docente:', this.authService.isDocente());
+    console.log('🔍 Estado del proyecto:', proyecto.estado);
+    console.log('🔍 Puede editar:', this.puedeEditar(proyecto));
+
+    if (!this.authService.isLoggedIn()) {
+      console.log('❌ Usuario no autenticado, redirigiendo a login');
+      this.mostrarError('Debes iniciar sesión para editar proyectos');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    if (!this.puedeEditar(proyecto)) {
+      console.log('❌ No tiene permisos para editar este proyecto');
+      this.mostrarError('No puedes editar este proyecto. Solo los proyectos en estado "Borrador" pueden ser editados.');
+      return;
+    }
+
+    console.log('✅ Redirigiendo a edición del proyecto:', proyecto.id);
     this.router.navigate(['/proyectos/editar', proyecto.id]);
   }
 
-  // 🔥 NUEVO: Enviar proyecto a revisión (docente)
+  // ✅ Enviar proyecto a revisión (docente)
   enviarARevision(proyecto: Proyecto): void {
     const confirmacion = confirm(`¿Estás seguro de enviar el proyecto "${proyecto.nombre}" a revisión?\n\nUna vez enviado, no podrás editarlo hasta que sea revisado.`);
     
     if (confirmacion) {
-      this.proyectosService.enviarARevision(proyecto.id).subscribe({
-        next: (response) => {
-          if (response.success) {
-            alert('✅ Proyecto enviado a revisión exitosamente');
-            this.cargarProyectos();
-          } else {
-            alert('❌ Error al enviar el proyecto: ' + response.message);
+      this.proyectosService.enviarARevision(proyecto.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.mostrarExito('Proyecto enviado a revisión exitosamente');
+              this.cargarProyectos();
+            } else {
+              this.mostrarError('Error al enviar el proyecto: ' + response.message);
+            }
+          },
+          error: (error) => {
+            this.mostrarError('Error al enviar el proyecto');
+            console.error('Error:', error);
           }
-        },
-        error: (error) => {
-          alert('❌ Error al enviar el proyecto');
-          console.error('Error:', error);
-        }
-      });
+        });
     }
   }
 
-  // 🔥 NUEVO: Eliminar proyecto
+  // ✅ Eliminar proyecto
   eliminarProyecto(proyecto: Proyecto): void {
     const confirmacion = confirm(`¿Estás seguro de que quieres eliminar el proyecto "${proyecto.nombre}"?\n\nEsta acción no se puede deshacer.`);
     
     if (confirmacion) {
-      this.proyectosService.deleteProyecto(proyecto.id).subscribe({
-        next: (response) => {
-          if (response.success) {
-            alert('✅ Proyecto eliminado exitosamente');
-            this.cargarProyectos();
-          } else {
-            alert('❌ Error al eliminar el proyecto: ' + response.message);
+      this.proyectosService.deleteProyecto(proyecto.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.mostrarExito('Proyecto eliminado exitosamente');
+              this.cargarProyectos();
+            } else {
+              this.mostrarError('Error al eliminar el proyecto: ' + response.message);
+            }
+          },
+          error: (error) => {
+            this.mostrarError('Error al eliminar el proyecto');
+            console.error('Error:', error);
           }
-        },
-        error: (error) => {
-          alert('❌ Error al eliminar el proyecto');
-          console.error('Error:', error);
-        }
-      });
+        });
     }
   }
 
-  // 🔥 NUEVO: Aprobar proyecto (admin/revisor)
+  // ✅ Aprobar proyecto (admin/revisor)
   aprobarProyecto(proyecto: Proyecto): void {
     const confirmacion = confirm(`¿Estás seguro de aprobar el proyecto "${proyecto.nombre}"?\n\nUna vez aprobado, el docente podrá realizar cotizaciones.`);
     
     if (confirmacion) {
-      this.proyectosService.aprobarProyecto(proyecto.id).subscribe({
-        next: (response) => {
-          if (response.success) {
-            alert('✅ Proyecto aprobado exitosamente');
-            this.cargarProyectos();
-          } else {
-            alert('❌ Error al aprobar el proyecto: ' + response.message);
+      this.proyectosService.aprobarProyecto(proyecto.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.mostrarExito('Proyecto aprobado exitosamente');
+              this.cargarProyectos();
+            } else {
+              this.mostrarError('Error al aprobar el proyecto: ' + response.message);
+            }
+          },
+          error: (error) => {
+            this.mostrarError('Error al aprobar el proyecto');
+            console.error('Error:', error);
           }
-        },
-        error: (error) => {
-          alert('❌ Error al aprobar el proyecto');
-          console.error('Error:', error);
-        }
-      });
+        });
     }
   }
 
-  // 🔥 NUEVO: Rechazar proyecto (admin/revisor)
+  // ✅ Rechazar proyecto (admin/revisor)
   rechazarProyecto(proyecto: Proyecto): void {
     const confirmacion = confirm(`¿Estás seguro de rechazar el proyecto "${proyecto.nombre}"?\n\nEl docente deberá contactarte para más información.`);
     
     if (confirmacion) {
-      this.proyectosService.rechazarProyecto(proyecto.id).subscribe({
-        next: (response) => {
-          if (response.success) {
-            alert('✅ Proyecto rechazado exitosamente');
-            this.cargarProyectos();
-          } else {
-            alert('❌ Error al rechazar el proyecto: ' + response.message);
+      this.proyectosService.rechazarProyecto(proyecto.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.mostrarExito('Proyecto rechazado exitosamente');
+              this.cargarProyectos();
+            } else {
+              this.mostrarError('Error al rechazar el proyecto: ' + response.message);
+            }
+          },
+          error: (error) => {
+            this.mostrarError('Error al rechazar el proyecto');
+            console.error('Error:', error);
           }
-        },
-        error: (error) => {
-          alert('❌ Error al rechazar el proyecto');
-          console.error('Error:', error);
-        }
-      });
+        });
     }
   }
 
-  // 🔥 NUEVO: Verificar si se puede editar (solo borradores)
+  // ✅ Verificar si se puede editar (solo borradores)
   puedeEditar(proyecto: Proyecto): boolean {
-    return proyecto.estado === 'BORRADOR';
+    return this.authService.isDocente() && proyecto.estado === 'BORRADOR';
   }
 
-  // 🔥 NUEVO: Verificar si se puede enviar a revisión (solo borradores)
+  // ✅ Verificar si se puede enviar a revisión (solo borradores)
   puedeEnviarARevision(proyecto: Proyecto): boolean {
-    return proyecto.estado === 'BORRADOR';
+    return this.authService.isDocente() && proyecto.estado === 'BORRADOR';
   }
 
-  // 🔥 NUEVO: Verificar si se puede usar en cotizaciones (solo aprobados)
+  // ✅ Verificar si se puede usar en cotizaciones (solo aprobados)
   puedeUsarEnCotizaciones(proyecto: Proyecto): boolean {
     return proyecto.estado === 'APROBADO';
   }
 
-  // 🔥 NUEVO: Obtener mensaje informativo según el estado
+  // ✅ Obtener mensaje informativo según el estado
   getMensajeEstado(proyecto: Proyecto): string {
     switch (proyecto.estado) {
       case 'BORRADOR':
@@ -275,7 +332,7 @@ export class ProyectosListComponent implements OnInit {
     }
   }
 
-  // 🔥 NUEVO: Obtener clase CSS para el mensaje de estado
+  // ✅ Obtener clase CSS para el mensaje de estado
   getMensajeEstadoClass(proyecto: Proyecto): string {
     switch (proyecto.estado) {
       case 'BORRADOR': return 'mensaje-borrador';
@@ -286,8 +343,50 @@ export class ProyectosListComponent implements OnInit {
     }
   }
 
-  // 🔥 NUEVO: Verificar si es admin
+  // ✅ Verificar si es admin
   esAdmin(): boolean {
     return this.authService.isAdmin() || this.authService.isRevisor();
+  }
+
+  // ✅ Métodos auxiliares para notificaciones
+  private mostrarExito(mensaje: string): void {
+    this.snackBar.open(mensaje, 'Cerrar', {
+      duration: 5000,
+      panelClass: ['snackbar-success']
+    });
+  }
+
+  private mostrarError(mensaje: string): void {
+    this.snackBar.open(mensaje, 'Cerrar', {
+      duration: 5000,
+      panelClass: ['snackbar-error']
+    });
+  }
+
+  // ✅ Método para obtener icono según estado
+  getEstadoIcon(estado: string): string {
+    switch (estado) {
+      case 'APROBADO': return 'check_circle';
+      case 'EN_REVISION': return 'schedule';
+      case 'RECHAZADO': return 'cancel';
+      default: return 'edit';
+    }
+  }
+
+  // ✅ Método para formatear fecha
+  formatearFecha(fecha: Date | string): string {
+    if (!fecha) return 'N/A';
+    
+    const date = typeof fecha === 'string' ? new Date(fecha) : fecha;
+    return date.toLocaleDateString('es-MX');
+  }
+
+  // ✅ Método para obtener información del docente de forma segura
+  getNombreDocente(proyecto: Proyecto): string {
+    return proyecto.docente?.nombre || 'N/A';
+  }
+
+  getEmailDocente(proyecto: Proyecto): string {
+    return proyecto.docente?.email || 'N/A';
   }
 }

@@ -8,6 +8,7 @@ export interface PartidaPresupuestal {
      proyectoId: string;
      saldoDisponible: number;
      createdAt: Date;
+     updatedAt?: Date;
    }
    
    export interface CreatePartidaRequest {
