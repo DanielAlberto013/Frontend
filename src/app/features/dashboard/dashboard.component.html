@@ -123,17 +123,18 @@
         </div>
       </div>
 
+      <!-- ✅ MÓDULO ACTUALIZADO -->
       <div class="module-card" routerLink="/reportes" [class]="'module-warning'">
         <div class="card-background"></div>
         <div class="card-content">
           <div class="card-icon">
-            <i class="fas fa-chart-bar"></i>
+            <i class="fas fa-file-contract"></i>
           </div>
           <div class="card-text">
             <h3 *ngIf="authService.isAdmin() || authService.isRevisor()">Reportes</h3>
-            <h3 *ngIf="authService.isDocente()">Crear Ticket</h3>
+            <h3 *ngIf="authService.isDocente()">Documentos Finales</h3>
             <p *ngIf="authService.isAdmin() || authService.isRevisor()">Genera reportes y estadísticas</p>
-            <p *ngIf="authService.isDocente()">Genera tickets de tus cotizaciones aprobadas</p>
+            <p *ngIf="authService.isDocente()">Genera documentos finales de proyectos</p>
           </div>
           <div class="card-arrow">
             <i class="fas fa-arrow-right"></i>

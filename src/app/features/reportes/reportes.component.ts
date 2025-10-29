@@ -1,10 +1,11 @@
-// src/app/features/reportes/reportes.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth';
-import { ReportesService, ReportePorPartida, TicketDocente } from '../../core/services/reportes.service';
+import { ReportesService, ReportePorPartida } from '../../core/services/reportes.service';
+import { DocumentoFinalService } from '../../core/services/documento-final.service';
+import { DocumentoFinal, DocumentoFinalDocente } from '../../core/models/documento-final.model';
 
 interface ProyectoReporte {
   proyectoId: string;
@@ -30,8 +31,12 @@ export class ReportesComponent implements OnInit {
   proyectosUnicos: ProyectoReporte[] = [];
   
   // Datos para docente
-  ticketDocente: TicketDocente | null = null;
+  documentoFinalDocente: DocumentoFinalDocente | null = null;
   
+  // Documentos finales
+  documentosFinales: DocumentoFinal[] = [];
+  documentoSeleccionado: DocumentoFinal | null = null;
+
   // Estados
   loading = true;
   error: string | null = null;
@@ -39,6 +44,7 @@ export class ReportesComponent implements OnInit {
   constructor(
     public authService: AuthService,
     private reportesService: ReportesService,
+    private documentoFinalService: DocumentoFinalService,
     private router: Router
   ) {}
 
@@ -52,11 +58,49 @@ export class ReportesComponent implements OnInit {
 
     if (this.authService.isAdmin() || this.authService.isRevisor()) {
       this.cargarReportesAdmin();
+      this.cargarDocumentosFinalesAdmin();
     } else if (this.authService.isDocente()) {
-      this.cargarTicketDocente();
+      this.cargarDocumentoFinalDocente();
+      this.cargarDocumentosFinalesDocente();
     } else {
       this.loading = false;
     }
+  }
+
+  private cargarDocumentosFinalesAdmin(): void {
+    this.documentoFinalService.getDocumentosFinalesAdmin().subscribe({
+      next: (documentos: DocumentoFinal[]) => {
+        this.documentosFinales = documentos;
+      },
+      error: (error: any) => {
+        console.error('Error al cargar documentos finales:', error);
+      }
+    });
+  }
+
+  private cargarDocumentosFinalesDocente(): void {
+    this.documentoFinalService.getDocumentosFinalesAdmin().subscribe({
+      next: (documentos: DocumentoFinal[]) => {
+        this.documentosFinales = documentos;
+      },
+      error: (error: any) => {
+        console.error('Error al cargar documentos finales:', error);
+      }
+    });
+  }
+
+  private cargarDocumentoFinalDocente(): void {
+    this.documentoFinalService.getDocumentoFinalDocente().subscribe({
+      next: (documento: DocumentoFinalDocente) => {
+        this.documentoFinalDocente = documento;
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.error = 'Error al cargar el documento final';
+        this.loading = false;
+        console.error('Error:', error);
+      }
+    });
   }
 
   private cargarReportesAdmin(): void {
@@ -92,21 +136,82 @@ export class ReportesComponent implements OnInit {
     return Array.from(proyectosMap.values());
   }
 
-  private cargarTicketDocente(): void {
-    this.reportesService.getTicketDocente().subscribe({
-      next: (ticket: TicketDocente) => {
-        this.ticketDocente = ticket;
-        this.loading = false;
-      },
-      error: (error: any) => {
-        this.error = 'Error al cargar el ticket';
-        this.loading = false;
-        console.error('Error:', error);
-      }
-    });
+  // ✅ MÉTODO: Generar documento final en PDF
+  generarDocumentoFinalPDF(documento: DocumentoFinal): void {
+    this.documentoFinalService.generarPDFDocumentoFinal(documento);
   }
 
-  // ✅ NUEVO MÉTODO: Regresar al dashboard
+  // ✅ MÉTODO: Generar documento final en Excel
+  generarDocumentoFinalExcel(documento: DocumentoFinal): void {
+    this.documentoFinalService.generarExcelDocumentoFinal(documento);
+  }
+
+  // ✅ MÉTODO: Generar documento del docente en PDF
+  generarDocumentoDocentePDF(): void {
+    if (this.documentoFinalDocente) {
+      // Crear un documento final básico para el docente
+      const documentoBasico: DocumentoFinal = {
+        tipoConvocatoria: 'Convocatoria 2025: PROYECTOS DE INVESTIGACIÓN CIENTÍFICA, DESARROLLO TECNOLÓGICO E INNOVACIÓN',
+        nombreProyecto: 'Resumen de Proyectos Aprobados',
+        claveProyecto: 'DOC-' + new Date().getFullYear(),
+        vigenciaProyecto: '01 de enero al 31 de diciembre de 2025',
+        tipoFondo: 'FEDERAL',
+        partidas: [],
+        docenteNombre: this.documentoFinalDocente.docenteNombre,
+        fechaGeneracion: new Date(),
+        subtotal: this.documentoFinalDocente.totalGeneral,
+        iva: this.documentoFinalDocente.totalGeneral * 0.16,
+        total: this.documentoFinalDocente.totalGeneral * 1.16,
+        montoAprobado: this.documentoFinalDocente.totalGeneral
+      };
+      
+      this.documentoFinalService.generarPDFDocumentoFinal(documentoBasico);
+    }
+  }
+
+  // ✅ MÉTODO: Generar documento del docente en Excel
+  generarDocumentoDocenteExcel(): void {
+    if (this.documentoFinalDocente) {
+      // Crear un documento final básico para el docente
+      const documentoBasico: DocumentoFinal = {
+        tipoConvocatoria: 'Convocatoria 2025: PROYECTOS DE INVESTIGACIÓN CIENTÍFICA, DESARROLLO TECNOLÓGICO E INNOVACIÓN',
+        nombreProyecto: 'Resumen de Proyectos Aprobados',
+        claveProyecto: 'DOC-' + new Date().getFullYear(),
+        vigenciaProyecto: '01 de enero al 31 de diciembre de 2025',
+        tipoFondo: 'FEDERAL',
+        partidas: [],
+        docenteNombre: this.documentoFinalDocente.docenteNombre,
+        fechaGeneracion: new Date(),
+        subtotal: this.documentoFinalDocente.totalGeneral,
+        iva: this.documentoFinalDocente.totalGeneral * 0.16,
+        total: this.documentoFinalDocente.totalGeneral * 1.16,
+        montoAprobado: this.documentoFinalDocente.totalGeneral
+      };
+      
+      this.documentoFinalService.generarExcelDocumentoFinal(documentoBasico);
+    }
+  }
+
+  // ✅ MÉTODO: Generar todos los documentos finales en Excel
+  generarDocumentosFinalesExcel(): void {
+    if (this.documentosFinales.length > 0) {
+      this.documentoFinalService.generarExcelMultiplesDocumentos(this.documentosFinales);
+    } else {
+      alert('No hay documentos finales para exportar');
+    }
+  }
+
+  // ✅ MÉTODO: Seleccionar documento para ver detalles
+  seleccionarDocumento(documento: DocumentoFinal): void {
+    this.documentoSeleccionado = documento;
+  }
+
+  // ✅ MÉTODO: Regresar a la lista de documentos
+  regresarAListaDocumentos(): void {
+    this.documentoSeleccionado = null;
+  }
+
+  // Métodos existentes...
   regresarAlDashboard(): void {
     this.router.navigate(['/dashboard']);
   }
@@ -127,15 +232,7 @@ export class ReportesComponent implements OnInit {
     }
   }
 
-  generarTicketPDF(): void {
-    if (this.ticketDocente) {
-      this.reportesService.generarTicketPDF(this.ticketDocente);
-    } else {
-      alert('No hay datos para generar el ticket');
-    }
-  }
-
-  imprimirTicket(): void {
+  imprimirDocumento(): void {
     setTimeout(() => {
       window.print();
     }, 500);
