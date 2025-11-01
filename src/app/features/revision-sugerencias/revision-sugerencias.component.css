@@ -1,0 +1,425 @@
+.container-fluid {
+     background: linear-gradient(135deg, #fff9e6 0%, #ffeaa7 100%);
+     min-height: 100vh;
+   }
+   
+   .card {
+     border: none;
+     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+     border-radius: 20px;
+     overflow: hidden;
+     transition: all 0.3s ease;
+     background: rgba(255, 255, 255, 0.95);
+     backdrop-filter: blur(10px);
+   }
+   
+   .card:hover {
+     transform: translateY(-3px);
+     box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+   }
+   
+   .card-header {
+     border-bottom: 4px solid rgba(255, 255, 255, 0.4);
+     border-radius: 20px 20px 0 0 !important;
+     padding: 1.5rem 2rem;
+     background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+   }
+   
+   .card-header h4 {
+     font-weight: 800;
+     letter-spacing: -0.5px;
+     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   }
+   
+   .card-body {
+     padding: 2rem;
+   }
+   
+   /* Cards de sugerencias */
+   .sugerencias-list .card {
+     border: 2px solid #ffc107;
+     border-radius: 16px;
+     transition: all 0.3s ease;
+     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+   }
+   
+   .sugerencias-list .card:hover {
+     transform: translateY(-5px) scale(1.02);
+     box-shadow: 0 12px 30px rgba(255, 193, 7, 0.3);
+     border-color: #fd7e14;
+   }
+   
+   .sugerencias-list .card-header {
+     background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+     border-radius: 14px 14px 0 0 !important;
+     padding: 1rem 1.25rem;
+   }
+   
+   .sugerencias-list .card-header h6 {
+     font-weight: 700;
+     color: #212529;
+     margin: 0;
+     font-size: 0.95rem;
+   }
+   
+   .sugerencias-list .card-body {
+     padding: 1.25rem;
+   }
+   
+   .sugerencias-list .card-title {
+     color: #2c3e50;
+     font-weight: 700;
+     font-size: 1.1rem;
+     margin-bottom: 1rem;
+     line-height: 1.4;
+   }
+   
+   .sugerencias-list .card-text {
+     color: #495057;
+     font-size: 0.9rem;
+     line-height: 1.5;
+   }
+   
+   .sugerencias-list .card-text strong {
+     color: #2c3e50;
+   }
+   
+   .sugerencias-list .card-footer {
+     background: transparent;
+     border-top: 1px solid #e9ecef;
+     padding: 1rem 1.25rem;
+   }
+   
+   /* Botones */
+   .btn {
+     border-radius: 12px;
+     padding: 12px 24px;
+     font-weight: 600;
+     transition: all 0.3s ease;
+     font-size: 14px;
+     border: 2px solid transparent;
+   }
+   
+   .btn-light {
+     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+     color: #495057;
+     border-color: #dee2e6;
+   }
+   
+   .btn-light:hover {
+     background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+   }
+   
+   .btn-outline-primary {
+     background: transparent;
+     color: #007bff;
+     border-color: #007bff;
+   }
+   
+   .btn-outline-primary:hover {
+     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+     color: white;
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+   }
+   
+   .btn-success {
+     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+     border-color: #28a745;
+   }
+   
+   .btn-success:hover {
+     background: linear-gradient(135deg, #218838 0%, #1e9e8a 100%);
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+   }
+   
+   .btn-danger {
+     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+     border-color: #dc3545;
+   }
+   
+   .btn-danger:hover {
+     background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+   }
+   
+   .btn-secondary {
+     background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+     border-color: #6c757d;
+   }
+   
+   .btn-secondary:hover {
+     background: linear-gradient(135deg, #5a6268 0%, #545b62 100%);
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+   }
+   
+   .btn:disabled {
+     transform: none;
+     box-shadow: none;
+     opacity: 0.6;
+   }
+   
+   /* Badge */
+   .badge {
+     font-size: 0.75em;
+     padding: 0.5em 0.75em;
+     border-radius: 10px;
+     font-weight: 700;
+   }
+   
+   .bg-danger {
+     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+   }
+   
+   /* Estados vacíos y loading */
+   .empty-state {
+     padding: 3rem 1rem;
+     text-align: center;
+   }
+   
+   .empty-state i {
+     opacity: 0.7;
+   }
+   
+   .loading-state {
+     text-align: center;
+     padding: 3rem 1rem;
+   }
+   
+   .spinner-border {
+     width: 3rem;
+     height: 3rem;
+     border-width: 0.3em;
+     color: #ffc107;
+   }
+   
+   /* Alertas */
+   .alert {
+     border-radius: 14px;
+     border: none;
+     padding: 1.25rem 1.5rem;
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+     font-weight: 600;
+   }
+   
+   .alert-danger {
+     background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+     color: #721c24;
+     border-left: 5px solid #dc3545;
+   }
+   
+   /* Modal */
+   .modal-backdrop {
+     background: rgba(0, 0, 0, 0.6);
+     backdrop-filter: blur(5px);
+   }
+   
+   .modal-content {
+     border: none;
+     border-radius: 20px;
+     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+     overflow: hidden;
+   }
+   
+   .modal-header {
+     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+     border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+     padding: 1.5rem 2rem;
+   }
+   
+   .modal-header .modal-title {
+     font-weight: 700;
+     font-size: 1.3rem;
+   }
+   
+   .modal-body {
+     padding: 2rem;
+     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+   }
+   
+   .modal-footer {
+     border-top: 2px solid #dee2e6;
+     padding: 1.5rem 2rem;
+     background: white;
+   }
+   
+   /* Form elements en modal */
+   .form-label {
+     font-weight: 700;
+     color: #2c3e50;
+     margin-bottom: 8px;
+     font-size: 1rem;
+   }
+   
+   .form-control, .form-select, .form-textarea {
+     border: 2px solid #e9ecef;
+     border-radius: 12px;
+     padding: 12px 16px;
+     transition: all 0.3s ease;
+     font-size: 15px;
+     background-color: white;
+   }
+   
+   .form-control:focus, .form-select:focus, .form-textarea:focus {
+     border-color: #007bff;
+     box-shadow: 0 0 0 0.3rem rgba(0, 123, 255, 0.15);
+     transform: translateY(-1px);
+   }
+   
+   .form-textarea {
+     resize: vertical;
+     min-height: 100px;
+   }
+   
+   .form-text {
+     color: #6c757d;
+     font-size: 0.85rem;
+     margin-top: 6px;
+     font-style: italic;
+   }
+   
+   /* Responsive */
+   @media (max-width: 768px) {
+     .container-fluid {
+       padding: 10px;
+     }
+     
+     .card-body {
+       padding: 1.5rem;
+     }
+     
+     .sugerencias-list .col-md-6 {
+       margin-bottom: 1rem;
+     }
+     
+     .modal-dialog {
+       margin: 1rem;
+     }
+     
+     .modal-body, .modal-header, .modal-footer {
+       padding: 1.25rem;
+     }
+     
+     .btn {
+       width: 100%;
+       margin-bottom: 10px;
+     }
+     
+     .modal-footer .btn {
+       margin-bottom: 8px;
+     }
+     
+     .modal-footer .btn:last-child {
+       margin-bottom: 0;
+     }
+   }
+   
+   @media (max-width: 576px) {
+     .card-header {
+       padding: 1rem 1.25rem;
+     }
+     
+     .card-header h4 {
+       font-size: 1.3rem;
+     }
+     
+     .sugerencias-list .card-body {
+       padding: 1rem;
+     }
+   }
+   
+   /* Animaciones */
+   @keyframes slideIn {
+     from {
+       opacity: 0;
+       transform: translateY(20px);
+     }
+     to {
+       opacity: 1;
+       transform: translateY(0);
+     }
+   }
+   
+   @keyframes fadeIn {
+     from {
+       opacity: 0;
+     }
+     to {
+       opacity: 1;
+     }
+   }
+   
+   .card {
+     animation: slideIn 0.5s ease-out;
+   }
+   
+   .sugerencias-list .card {
+     animation: slideIn 0.6s ease-out;
+   }
+   
+   .modal-content {
+     animation: slideIn 0.4s ease-out;
+   }
+   
+   .modal-backdrop {
+     animation: fadeIn 0.3s ease-out;
+   }
+   
+   /* Efectos de hover mejorados */
+   .sugerencias-list .card:hover .card-title {
+     color: #fd7e14;
+     transition: color 0.3s ease;
+   }
+   
+   .btn:hover:not(:disabled) {
+     transform: translateY(-2px);
+   }
+   
+   /* Personalización del scroll para modal */
+   .modal-body::-webkit-scrollbar {
+     width: 6px;
+   }
+   
+   .modal-body::-webkit-scrollbar-track {
+     background: #f1f1f1;
+     border-radius: 10px;
+   }
+   
+   .modal-body::-webkit-scrollbar-thumb {
+     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+     border-radius: 10px;
+   }
+   
+   .modal-body::-webkit-scrollbar-thumb:hover {
+     background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+   }
+   
+   /* Estilos para texto en cards */
+   .text-muted {
+     color: #6c757d !important;
+     font-size: 0.85rem;
+   }
+   
+   .small {
+     font-size: 0.8rem;
+   }
+   
+   /* Mejoras visuales para badges */
+   .badge {
+     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   }
+   
+   /* Efectos de sombra suaves */
+   .card, .modal-content, .alert {
+     backdrop-filter: blur(10px);
+   }
+   
+   /* Transiciones suaves para todos los elementos interactivos */
+   * {
+     transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+   }

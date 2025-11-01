@@ -54,6 +54,9 @@ export class CatalogoComponent implements OnInit {
   searchTerm: string = '';
   partidaFilter: string = '';
 
+  // 🔥 NUEVO: Contador de sugerencias pendientes
+  cantidadSugerenciasPendientes = 0;
+
   constructor(
     private articulosService: ArticulosService,
     public authService: AuthService,
@@ -99,6 +102,9 @@ export class CatalogoComponent implements OnInit {
         if (response.success && response.data) {
           this.articulos = response.data;
           this.aplicarFiltros();
+          
+          // 🔥 NUEVO: Cargar sugerencias pendientes para admin
+          this.cargarSugerenciasPendientes();
         } else {
           this.error = 'No se pudieron cargar los artículos';
         }
@@ -110,6 +116,22 @@ export class CatalogoComponent implements OnInit {
         console.error('Error:', error);
       }
     });
+  }
+
+  // 🔥 NUEVO: Cargar sugerencias pendientes
+  private cargarSugerenciasPendientes(): void {
+    if (this.authService.isAdmin() || this.authService.isRevisor()) {
+      this.articulosService.getSugerenciasPendientes().subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.cantidadSugerenciasPendientes = response.data.length;
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar sugerencias pendientes:', error);
+        }
+      });
+    }
   }
 
   // 🔥 NUEVO: Obtener nombre descriptivo de partida
@@ -155,6 +177,16 @@ export class CatalogoComponent implements OnInit {
         }
       });
     }
+  }
+
+  // 🔥 NUEVO: Método para sugerir artículo
+  sugerirArticulo(): void {
+    this.router.navigate(['/sugerencia/nueva']);
+  }
+
+  // 🔥 NUEVO: Método para revisar sugerencias
+  revisarSugerencias(): void {
+    this.router.navigate(['/revision-sugerencias']);
   }
 
   // Métodos actualizados para navegación

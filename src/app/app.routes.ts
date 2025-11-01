@@ -54,5 +54,14 @@ export const appRoutes: Routes = [
     path: 'cotizaciones', 
     loadComponent: () => import('./features/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
   },
+  // 🔥 NUEVAS RUTAS PARA SUGERENCIAS
+  { 
+    path: 'sugerencia/nueva', 
+    loadComponent: () => import('./features/sugerencia-articulo-form/sugerencia-articulo-form.component').then(m => m.SugerenciaArticuloFormComponent)
+  },
+  { 
+    path: 'revision-sugerencias', 
+    loadComponent: () => import('./features/revision-sugerencias/revision-sugerencias.component').then(m => m.RevisionSugerenciasComponent)
+  },
   { path: '**', redirectTo: '/auth/login' }
 ];
