@@ -1,11 +1,11 @@
-.sticky-top {
-  position: sticky;
-  z-index: 100;
-}
+/* ===== ESTILOS CORREGIDOS PARA ARTÍCULOS DEL CATÁLOGO ===== */
 
 .articulo-card {
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   border: 1px solid #e9ecef;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .articulo-card:hover {
@@ -13,236 +13,176 @@
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.articulo-info {
+.articulo-card .card-body {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.precio {
-  font-weight: bold;
-  color: #28a745;
-}
-
-.carrito-item {
-  background: white;
-  transition: border-color 0.2s ease-in-out;
-}
-
-.carrito-item:hover {
-  border-color: #007bff;
-}
-
-.carrito-total {
-  border: 2px solid #e9ecef;
-}
-
-.budget-info {
-  border-left: 4px solid #007bff;
-}
-
-.search-box {
-  min-width: 250px;
-}
-
-/* ✅ CORREGIDO: Asegurar que las columnas se muestren correctamente */
-.container-fluid {
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto;
-}
-
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  margin-right: -15px;
-  margin-left: -15px;
-}
-
-.col-md-8 {
-  flex: 0 0 66.666667%;
-  max-width: 66.666667%;
-  padding-right: 15px;
-  padding-left: 15px;
-}
-
-.col-md-4 {
-  flex: 0 0 33.333333%;
-  max-width: 33.333333%;
-  padding-right: 15px;
-  padding-left: 15px;
-}
-
-/* ✅ NUEVO: Asegurar que el contenido sea visible */
-.card {
-  background-color: #fff;
-  border: 1px solid rgba(0,0,0,.125);
-  border-radius: 0.375rem;
-  margin-bottom: 1rem;
-}
-
-.card-body {
-  flex: 1 1 auto;
+  flex-direction: column;
+  flex-grow: 1;
   padding: 1.25rem;
 }
 
-/* ✅ NUEVO: Estilos para asegurar visibilidad del catálogo */
-.catalogo-section {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+.articulo-card .card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d3748;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  min-height: 2.8rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* ✅ NUEVO: Forzar display de elementos importantes */
-[class*="col-"] {
-  display: block !important;
-}
-
-/* ✅ NUEVO: Asegurar que no haya elementos ocultos */
-.card:not(.sticky-top) {
-  position: static !important;
-}
-
-/* ✅ NUEVO: Estilos para botones deshabilitados */
-.btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.btn-secondary:disabled {
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
-/* ✅ NUEVO: Estilos para indicadores de presupuesto */
-.alert-success {
-  border-left: 4px solid #28a745;
-}
-
-.alert-warning {
-  border-left: 4px solid #ffc107;
-}
-
-.alert-danger {
-  border-left: 4px solid #dc3545;
-}
-
-.alert-info {
-  border-left: 4px solid #17a2b8;
-}
-
-/* ✅ NUEVO: Estilos para botones de cantidad */
-.carrito-item .btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  height: 32px;
-}
-
-.carrito-item .form-control-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  height: 32px;
-}
-
-.carrito-item .row {
-  align-items: center;
-}
-
-/* ✅ NUEVO: Estilos específicos para botones de cantidad */
-.btn-outline-warning:hover {
-  background-color: #ffc107;
-  border-color: #ffc107;
-  color: #000;
-}
-
-.btn-outline-success:hover {
-  background-color: #28a745;
-  border-color: #28a745;
-  color: #fff;
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: #fff;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .search-box {
-    min-width: auto;
-    margin-top: 10px;
-  }
-  
-  .articulo-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-  }
-  
-  .carrito-item .row > div {
-    margin-bottom: 5px;
-  }
-  
-  .col-md-8, .col-md-4 {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
-}
-
-/* Mejoras visuales */
-.card-header {
-  background: white;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.form-select:disabled {
-  background-color: #f8f9fa;
-  opacity: 0.7;
-}
-
-/* Animaciones suaves */
-.spinner-border {
-  animation-duration: 0.75s;
-}
-
-.alert {
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ✅ NUEVO: Mejoras para los botones de cantidad */
-.carrito-item .btn-group-cantidad {
+/* ✅ ESTILOS CORREGIDOS PARA LA INFORMACIÓN DEL ARTÍCULO */
+.articulo-info {
   display: flex;
-  gap: 5px;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+  margin-bottom: 1rem;
 }
 
-.carrito-item .btn-cantidad {
-  flex: 1;
-  min-width: 35px;
+/* Badge de partida - ahora ocupa toda la línea */
+.articulo-info .badge {
+  width: 100%;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ✅ NUEVO: Debug - Asegurar que todo sea visible */
-* {
-  box-sizing: border-box;
+/* Precio - ahora en línea separada y mejor alineado */
+.precio {
+  font-weight: 700;
+  color: #059669;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 0.5rem;
+  background: #f0fdf4;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  margin-top: 0.5rem;
 }
 
-body {
-  overflow-x: hidden;
+/* Botón de agregar - posición fija en la parte inferior */
+.articulo-card .btn {
+  margin-top: auto;
+  padding: 0.75rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
-/* ✅ NUEVO: Estilos de debug para identificar problemas */
-.debug-border {
-  border: 1px solid red !important;
+/* Mensaje de presupuesto */
+.articulo-card .text-danger {
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 0.25rem;
+  padding: 0.25rem;
+  background: #fef2f2;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
 }
 
-.debug-bg {
-  background-color: rgba(255,0,0,0.1) !important;
+/* ===== MEJORAS ESPECÍFICAS PARA LA DISTRIBUCIÓN ===== */
+
+/* Asegurar que todas las cards tengan la misma altura */
+.col-md-6.col-lg-4 {
+  display: flex;
+}
+
+.articulo-card {
+  width: 100%;
+}
+
+/* Grid responsivo mejorado */
+.documentos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* Estilos para el badge de partida cuando es muy largo */
+.articulo-info .badge[title] {
+  cursor: help;
+  position: relative;
+}
+
+/* Tooltip para partidas largas */
+.articulo-info .badge:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+/* ===== RESPONSIVE MEJORADO ===== */
+@media (max-width: 768px) {
+  .documentos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .articulo-card .card-title {
+    font-size: 0.9rem;
+    min-height: auto;
+  }
+  
+  .precio {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .documentos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .articulo-info .badge {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.5rem;
+  }
+}
+
+/* ===== ESTILOS PARA EL BOTÓN DESHABILITADO ===== */
+.btn-secondary:disabled {
+  background-color: #9ca3af;
+  border-color: #9ca3af;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+}
+
+/* ===== ANIMACIONES MEJORADAS ===== */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.articulo-card {
+  animation: slideInUp 0.3s ease-out;
 }
