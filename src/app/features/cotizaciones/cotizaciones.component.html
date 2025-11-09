@@ -105,6 +105,31 @@
               <div *ngIf="partidaSeleccionada" class="col-12">
                 <div class="budget-info p-3 bg-light rounded">
                   <h6>💰 Información de Presupuesto - {{ partidaSeleccionada.codigo }}</h6>
+                  
+                  <!-- ✅ NUEVA SECCIÓN: Cálculo de IVA incluido -->
+                  <div class="iva-calculation mb-3 p-3 bg-white rounded border">
+                    <h6 class="text-primary mb-3">📊 Presupuesto con IVA Incluido</h6>
+                    <div class="row text-center">
+                      <div class="col-md-4">
+                        <strong>Total Permitido:</strong><br>
+                        <span class="h6 text-success">${{ saldoDisponible | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="col-md-4">
+                        <strong>IVA (16%):</strong><br>
+                        <span class="h6 text-info">${{ calcularIVAIncluido() | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="col-md-4">
+                        <strong>Subtotal Máximo:</strong><br>
+                        <span class="h6 text-warning">${{ calcularSubtotalMaximo() | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+                    <div class="mt-2">
+                      <small class="text-muted">
+                        💡 El presupuesto incluye IVA. Tu subtotal no debe exceder ${{ calcularSubtotalMaximo() | number:'1.2-2' }}
+                      </small>
+                    </div>
+                  </div>
+
                   <div class="row">
                     <div class="col-md-4">
                       <strong>Saldo Disponible:</strong><br>
@@ -142,6 +167,15 @@
                         <small>💰 Presupuesto agotado</small>
                       </div>
                     </div>
+                  </div>
+
+                  <!-- ✅ NUEVO: Indicador de subtotal máximo -->
+                  <div *ngIf="haExcedidoSubtotalMaximo" class="alert alert-danger mt-2">
+                    <strong>🚫 EXCEDE SUBTOTAL MÁXIMO</strong><br>
+                    <small>
+                      Tu carrito excede el subtotal máximo permitido de ${{ calcularSubtotalMaximo() | number:'1.2-2' }}<br>
+                      Ajusta tu carrito para incluir el IVA dentro del presupuesto.
+                    </small>
                   </div>
                 </div>
               </div>
@@ -327,6 +361,23 @@
 
               <!-- Resumen del Carrito -->
               <div class="carrito-total p-3 bg-light rounded">
+                <!-- ✅ NUEVO: Resumen con IVA -->
+                <div class="iva-summary mb-3 p-2 bg-white rounded border">
+                  <h6 class="mb-2">📊 Resumen con IVA</h6>
+                  <div class="d-flex justify-content-between small">
+                    <span>Subtotal:</span>
+                    <span>${{ totalCarrito | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between small">
+                    <span>IVA (16%):</span>
+                    <span>${{ (totalCarrito * 0.16) | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <strong>Total con IVA:</strong>
+                    <strong>${{ (totalCarrito * 1.16) | number:'1.2-2' }}</strong>
+                  </div>
+                </div>
+
                 <div class="d-flex justify-content-between mb-2">
                   <strong>Total Carrito:</strong>
                   <span [class]="haExcedidoPresupuesto ? 'text-danger' : 'text-primary'">
@@ -346,9 +397,22 @@
                   </span>
                 </div>
 
+                <!-- ✅ NUEVO: Indicador de subtotal máximo -->
+                <div class="d-flex justify-content-between mt-2">
+                  <span>Subtotal Máximo:</span>
+                  <span [class]="haExcedidoSubtotalMaximo ? 'text-danger' : 'text-success'">
+                    ${{ calcularSubtotalMaximo() | number:'1.2-2' }}
+                  </span>
+                </div>
+
                 <!-- Advertencia de presupuesto -->
                 <div *ngIf="haExcedidoPresupuesto" class="alert alert-warning mt-2 mb-0">
                   ⚠️ Ajusta tu carrito para no exceder el presupuesto
+                </div>
+
+                <!-- Advertencia de subtotal máximo -->
+                <div *ngIf="haExcedidoSubtotalMaximo" class="alert alert-danger mt-2 mb-0">
+                  🚫 Tu carrito excede el subtotal máximo permitido
                 </div>
 
                 <!-- Indicador de presupuesto agotado -->
@@ -359,11 +423,11 @@
                 <!-- Botón Generar Cotización -->
                 <button 
                   (click)="generarCotizacion()"
-                  [disabled]="!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto"
+                  [disabled]="!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto || haExcedidoSubtotalMaximo"
                   class="btn w-100 mt-3"
-                  [class]="(!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto) ? 'btn-secondary' : 'btn-primary'"
+                  [class]="(!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto || haExcedidoSubtotalMaximo) ? 'btn-secondary' : 'btn-primary'"
                 >
-                  {{ haExcedidoPresupuesto ? '⚠️ Ajusta Presupuesto' : '📄 Generar PreCotizaciones' }}
+                  {{ (haExcedidoPresupuesto || haExcedidoSubtotalMaximo) ? '⚠️ Ajusta Presupuesto' : '📄 Generar PreCotizaciones' }}
                 </button>
               </div>
             </div>

@@ -167,6 +167,33 @@ export class CotizacionesComponent implements OnInit {
     return this.articulosService.getNombrePartida(codigo);
   }
 
+  // ✅ NUEVOS MÉTODOS PARA CÁLCULO DE IVA INCLUIDO
+
+  // Calcular el IVA incluido en el presupuesto
+  calcularIVAIncluido(): number {
+    if (!this.partidaSeleccionada) return 0;
+    
+    // Fórmula: IVA = Total * (0.16 / 1.16)
+    const total = this.saldoDisponible;
+    const iva = total * (0.16 / 1.16);
+    return iva;
+  }
+
+  // Calcular el subtotal máximo permitido (sin IVA)
+  calcularSubtotalMaximo(): number {
+    if (!this.partidaSeleccionada) return 0;
+    
+    // Fórmula: Subtotal = Total / 1.16
+    const total = this.saldoDisponible;
+    const subtotal = total / 1.16;
+    return subtotal;
+  }
+
+  // Verificar si el carrito excede el subtotal máximo
+  get haExcedidoSubtotalMaximo(): boolean {
+    return this.totalCarrito > this.calcularSubtotalMaximo();
+  }
+
   puedeAgregarArticulo(articulo: Articulo): boolean {
     if (!this.partidaSeleccionada) return false;
     
@@ -181,7 +208,12 @@ export class CotizacionesComponent implements OnInit {
       costoAdicional = itemExistente.precioUnitario;
     }
     
-    return this.totalCarrito + costoAdicional <= this.saldoDisponible;
+    // ✅ VERIFICAR TANTO EL PRESUPUESTO TOTAL COMO EL SUBTOTAL MÁXIMO
+    const nuevoTotal = this.totalCarrito + costoAdicional;
+    const presupuestoValido = nuevoTotal <= this.saldoDisponible;
+    const subtotalValido = nuevoTotal <= this.calcularSubtotalMaximo();
+    
+    return presupuestoValido && subtotalValido;
   }
 
   agregarAlCarrito(articulo: Articulo): void {
@@ -205,9 +237,18 @@ export class CotizacionesComponent implements OnInit {
       nuevoTotal = this.totalCarrito + subtotalItem;
     }
 
+    // ✅ VERIFICAR PRESUPUESTO TOTAL
     if (nuevoTotal > this.saldoDisponible) {
       const saldoRestante = this.saldoDisponible - this.totalCarrito;
       alert(`🚫 PRESUPUESTO INSUFICIENTE\n\nNo puedes agregar "${articulo.nombre}"\n\n💰 Saldo disponible en ${this.partidaSeleccionada.codigo}: $${this.saldoDisponible}\n🛒 Total actual del carrito: $${this.totalCarrito}\n💵 Saldo restante: $${saldoRestante}\n\nEste artículo costaría: $${subtotalItem}\n\n⚠️ Ajusta tu carrito o selecciona artículos más económicos.`);
+      return;
+    }
+
+    // ✅ VERIFICAR SUBTOTAL MÁXIMO (IVA INCLUIDO)
+    const subtotalMaximo = this.calcularSubtotalMaximo();
+    if (nuevoTotal > subtotalMaximo) {
+      const espacioDisponible = subtotalMaximo - this.totalCarrito;
+      alert(`🚫 EXCEDE EL SUBTOTAL MÁXIMO\n\nNo puedes agregar "${articulo.nombre}"\n\n📊 Subtotal máximo permitido (sin IVA): $${subtotalMaximo.toFixed(2)}\n🛒 Subtotal actual del carrito: $${this.totalCarrito}\n💵 Espacio disponible: $${espacioDisponible.toFixed(2)}\n\nEste artículo costaría: $${subtotalItem}\n\n💡 Recuerda: El IVA (16%) está incluido en tu presupuesto total de $${this.saldoDisponible}`);
       return;
     }
 
@@ -251,7 +292,11 @@ export class CotizacionesComponent implements OnInit {
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
     
-    return nuevoTotal <= this.saldoDisponible;
+    // ✅ VERIFICAR TANTO EL PRESUPUESTO TOTAL COMO EL SUBTOTAL MÁXIMO
+    const presupuestoValido = nuevoTotal <= this.saldoDisponible;
+    const subtotalValido = nuevoTotal <= this.calcularSubtotalMaximo();
+    
+    return presupuestoValido && subtotalValido;
   }
 
   eliminarDelCarrito(item: CotizacionItem): void {
@@ -269,11 +314,22 @@ export class CotizacionesComponent implements OnInit {
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
 
+    // ✅ VERIFICAR PRESUPUESTO TOTAL
     if (nuevoTotal > this.saldoDisponible) {
       const saldoRestante = this.saldoDisponible - totalSinEsteItem;
       const maximoPermitido = Math.floor(saldoRestante / item.precioUnitario);
       
       alert(`❌ No puedes aumentar la cantidad. Excederías el presupuesto disponible.\n\nSaldo disponible: $${this.saldoDisponible}\nMáximo permitido: ${maximoPermitido} unidades\nNuevo total: $${nuevoTotal}`);
+      return;
+    }
+
+    // ✅ VERIFICAR SUBTOTAL MÁXIMO
+    const subtotalMaximo = this.calcularSubtotalMaximo();
+    if (nuevoTotal > subtotalMaximo) {
+      const espacioDisponible = subtotalMaximo - totalSinEsteItem;
+      const maximoPermitido = Math.floor(espacioDisponible / item.precioUnitario);
+      
+      alert(`❌ No puedes aumentar la cantidad. Excederías el subtotal máximo permitido.\n\nSubtotal máximo: $${subtotalMaximo.toFixed(2)}\nMáximo permitido: ${maximoPermitido} unidades\nNuevo subtotal: $${nuevoTotal.toFixed(2)}`);
       return;
     }
 
@@ -289,8 +345,16 @@ export class CotizacionesComponent implements OnInit {
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
 
+    // ✅ VERIFICAR PRESUPUESTO TOTAL
     if (nuevoTotal > this.saldoDisponible) {
       alert(`❌ No puedes aumentar el precio. Excederías el presupuesto disponible.\n\nSaldo disponible: $${this.saldoDisponible}\nNuevo total: $${nuevoTotal}`);
+      return;
+    }
+
+    // ✅ VERIFICAR SUBTOTAL MÁXIMO
+    const subtotalMaximo = this.calcularSubtotalMaximo();
+    if (nuevoTotal > subtotalMaximo) {
+      alert(`❌ No puedes aumentar el precio. Excederías el subtotal máximo permitido.\n\nSubtotal máximo: $${subtotalMaximo.toFixed(2)}\nNuevo subtotal: $${nuevoTotal.toFixed(2)}`);
       return;
     }
 
@@ -359,7 +423,14 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
-    const confirmacion = confirm(`¿Estás seguro de crear la cotización?\n\n📋 Resumen:\n• Proyecto: ${this.proyectoSeleccionado.nombre}\n• Partida: ${this.partidaSeleccionada.codigo}\n• Total: $${this.totalCarrito.toFixed(2)}\n• Artículos: ${this.carrito.length}\n\nEsta acción no se puede deshacer.`);
+    // ✅ VERIFICAR SUBTOTAL MÁXIMO
+    const subtotalMaximo = this.calcularSubtotalMaximo();
+    if (this.totalCarrito > subtotalMaximo) {
+      alert(`🚫 EXCEDE EL SUBTOTAL MÁXIMO\n\nTu carrito excede el subtotal máximo permitido.\n\n📊 Subtotal máximo permitido (sin IVA): $${subtotalMaximo.toFixed(2)}\n🛒 Subtotal actual del carrito: $${this.totalCarrito.toFixed(2)}\n\n💡 Recuerda: El IVA (16%) está incluido en tu presupuesto total de $${this.saldoDisponible}\n\nAjusta tu carrito para no exceder el límite.`);
+      return;
+    }
+
+    const confirmacion = confirm(`¿Estás seguro de crear la cotización?\n\n📋 Resumen:\n• Proyecto: ${this.proyectoSeleccionado.nombre}\n• Partida: ${this.partidaSeleccionada.codigo}\n• Subtotal: $${this.totalCarrito.toFixed(2)}\n• IVA (16%): $${(this.totalCarrito * 0.16).toFixed(2)}\n• Total: $${(this.totalCarrito * 1.16).toFixed(2)}\n• Artículos: ${this.carrito.length}\n\nEsta acción no se puede deshacer.`);
     
     if (!confirmacion) {
       return;

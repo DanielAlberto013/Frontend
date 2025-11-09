@@ -25,17 +25,17 @@ export class DocumentoFinalService {
   private descripcionesPartidas: { [key: string]: string } = {
     '21101': 'MATERIALES, ÚTILES Y EQUIPOS MENORES DE OFICINA. Asignaciones destinadas a la adquisición de materiales, artículos diversos y equipos menores propios para el uso de las oficinas tales como: papelería, formas, libretas, carpetas y cualquier tipo de papel, vasos y servilletas desechables, limpia-tipos; útiles de escritorio como engrapadoras, perforadoras manuales, sacapuntas; artículos de dibujo, correspondencia y archivo; cestos de basura y otros productos similares. Incluye la adquisición de artículos de envoltura, sacos y valijas, entre otros.',
     '21201': 'Materiales y útiles de impresión y reproducción. Asignaciones destinadas a la adquisición de materiales utilizados en la impresión, reproducción y encuadernación, tales como: fijadores, tintas, pastas para encuadernación, logotipos, acetatos, arillo para engargolar, cartuchos de tóner para fax, cartuchos de tóner para fotocopiadoras, cilindro para fotocopiadora, papel (bond para mimeógrafos, heliográficos, revelador, cartoncillo, fax, etc.), rollos fotográficos, sedas, entintadoras, tintas para serigrafía, tóner para reloj checador, entre otros, y demás materiales y útiles para el mismo fin.',
-    '21401': 'Materiales, útiles y equipos menores de tecnologías de la información y comunicaciones. Asignaciones destinadas a la adquisición insumos y equipos menores utilizados en el procesamiento, grabación e impresión de datos, como son: USB, CD, DVD, blu-ray, entre otros, así como los materiales para la limpieza y protección de los equipos, tales como: medios ópticos y magnéticos, adaptadores para equipo de cómputo, administradores de cables, apuntadores, cables para transmisión de datos, protectores de vídeo, fundas, solventes, cartuchos de tinta, cintas y tóner para impresoras, así como recargas de cartuchos y tóner para impresora, entre otros.',
+    '21401': 'Materiales, útiles y equipos menores de tecnologías de la información y comunicaciones. Asignaciones destinadas a la adquisición insumos y equipos menores utilizados en el procesamiento, grabación e impresión de datos, como son: USB, CD, DVD, blu-ray, entre otros, así como los materiales para la limpieza y protección de los equipos, tales como: medios ópticos y magnéticos, adaptadores para equipo de cómputo, administradores de cables, apuntadores, cables para transmision de datos, protectores de vídeo, fundas, solventes, cartuchos de tinta, cintas y tóner para impresoras, así como recargas de cartuchos y tóner para impresora, entre otros.',
     '23101': 'Productos alimenticios, agropecuarios y forestales adquiridos como materia prima. Asignaciones destinadas a la adquisición de productos alimenticios como materias primas en estado natural, transformadas o semi-transformadas, de naturaleza vegetal y animal que se utilizan en los procesos productivos, diferentes a las contenidas en las demás partidas de este Clasificador.',
     '23701': 'Productos de cuero, piel, plástico y hule adquiridos como materia prima. Asignaciones destinadas a la adquisición de cuero, piel, plástico y hule como materias primas en estado natural, transformadas o semi-transformadas, que se utilizan en los procesos productivos, diferentes a las contenidas en las demás partidas de este Clasificador.',
-    '24601': 'Material eléctrico y electrónico. Asignaciones destinadas a la adquisición de todo tipo de material eléctrico y electrónico, tales como: cables, interruptores, tubos fluorescentes, focos, aislantes, electrodos, transistores, alambres, lámpara, baterías o pilas, entre otros, que requieran las líneas de transmisión telegráfica, telefónica y de telecomunicaciones, sean aéreas, subterráneas o submarinas; igualmente para la adquisición de materiales necesarios en las instalaciones radiofónicas, radiotelegráficas, entre otras.',
+    '24601': 'Material eléctrico y electrónico. Asignaciones destinadas a la adquisición de todo tipo de material eléctrico y electrónico, tales como: cables, interruptores, tubos fluorescentes, focos, aislantes, electrodos, transistores, alambres, lámpara, baterías o pilas, entre otros, que requieran las líneas de transmision telegráfica, telefónica y de telecomunicaciones, sean aéreas, subterráneas o submarinas; igualmente para la adquisición de materiales necesarios en las instalaciones radiofónicas, radiotelegráficas, entre otras.',
     '25101': 'Productos químicos básicos. Asignaciones destinadas a la adquisición de productos químicos básicos: petroquímicos como benceno, tolueno, xileno, etileno, propileno, estireno a partir del gas natural, del gas licuado del petróleo y de destilados y otras fracciones posteriores a la refinación del petróleo; reactivos, fluoruros, fosfatos, nitratos, óxidos, alquinos, marcadores genéticos, entre otros.',
     '25201': 'Fertilizantes, pesticidas y otros agroquímicos. Asignaciones destinadas a la adquisición de este tipo de productos cuyo estado de fabricación se encuentre terminado, tales como: fertilizantes complejos e inorgánicos, fertilizantes nitrogenados, fosfatados, biológicos procesados o de otro tipo, mezclas, fungicidas, herbicidas, plaguicidas, raticidas, antigerminantes, reguladores del crecimiento de las plantas y nutrientes de suelos, entre otros. Incluye los abonos que se comercializan en estado natural.',
     '25501': 'Materiales, accesorios y suministros de laboratorio. Asignaciones destinadas a la adquisición de toda clase de materiales y suministros utilizados en los laboratorios médicos, químicos, de investigación, fotográficos, cinematográficos, audio-visión, entre otros, tales como: cilindros graduados, matraces, probetas, mecheros, campanas de cultivo, cápsulas de porcelana, embudos de vidrio o de polietileno, tubos de cultivo, vidrio de cobalto, tanques de revelado, materiales para radiografía, electrocardiografía, medicina nuclear; artículos para el revelado e impresión de fotografías. Esta partida incluye animales para experimentación.',
     '29101': 'Herramientas menores. Asignaciones destinadas a la adquisición de herramientas auxiliares de trabajo, utilizadas en carpintería, silvicultura, horticultura, ganadería, agricultura y otras industrias, tales como: desarmadores, martillos, llaves para tuercas, carretillas de mano, cuchillos, navajas, tijeras de mano, sierras de mano, alicates, hojas para seguetas, micrómetros, cintas métricas, pinzas, prensas, berbiquíes, garlopas, taladros, zapapicos, escaleras, detectores de metales manuales y demás bienes de consumo similares.',
-    '29401': 'Refacciones y accesorios menores para equipo de cómputo y telecomunicaciones. Asignaciones destinadas a la adquisición de componentes y dispositivos internos o externos que se integran al equipo de cómputo y/o telecomunicaciones, con el objeto de conservar o recuperar su funcionalidad y que son de difícil control de inventarios, tales como: tarjetas electrónicas, unidades de discos internos (Duros, CD, DVD y Blueray), batería para laptop, puertos USB, puertos HDMI, circuitos, bocinas, pantallas, ratones, teclados, cámaras, entre otros.',
-    '33601': 'Servicios de apoyo administrativo, traducción, fotocopiado e impresión. Asignaciones destinadas a cubrir el costo de la contratación de servicios de fotocopiado y preparación de documentos; digitalización de documentos oficiales, fax, engargolado, enmicado, encuadernación, corte de papel, recepción de correspondencia y otros afines. Incluye servicios de apoyo secretarial, servicios de estenografía en los tribunales, transcripción simultánea de diálogos para la televisión, reuniones y conferencias; servicios comerciales no previstos en las demás partidas anteriores. Incluye servicios de impresión de documentos oficiales necesarios tales como: pasaportes, certificados especiales, títulos de crédito, formas fiscales y formas valoradas, y demás documentos para la identificación, trámites oficiales y servicios a la población; servicios de impresión y elaboración de material informativo, tales como: padrones de beneficiarios, reglas de operación, programas sectoriales, regionales, especiales; informes de labores, manuales de organización, de procedimientos y de servicios al público; decretos, convenios, acuerdos, instructivos, proyectos editoriales (libros, revistas y gacetas periódicas), folletos, trípticos, dípticos, carteles, mantas, rótulos, y demás servicios de impresión y elaboración de material informativo. Incluye gastos como: avisos, precisiones, convocatorias, edictos, bases, licitaciones, concursos y aclaraciones, y demás información en medios masivos. Excluye las inserciones derivadas de campañas publicitarias y de comunicación social, las cuales se deberán registrar en las partidas correspondientes al concepto 3600 Servicios de Comunicación Social y Publicidad.',
-    '35301': 'Instalación, reparación y mantenimiento de equipo de cómputo y tecnologías de la información. Asignaciones destinadas a cubrir los gastos por servicios que se contraten con terceros para la instalación, reparación y mantenimiento de equipos de cómputo y tecnologías de la información, tales como: computadoras, impresoras, dispositivos de seguridad, reguladores, fuentes de potencia ininterrumpida, servidores de información, drones, entre otros, así como el mantenimiento en general. Incluye el pago de deducibles de seguros.'
+    '29401': 'Refacciones y accesorios menores para equipo de cómputo y telecomunicaciones. Asignaciones destinadas a la adquisición de componentes y dispositivos internos o externos que se integran al equipo de cómputo y/o telecomunicaciones, con el objeto de conservar o recuperar su funcionalidad y que son de difícil control de inventarios, tels como: tarjetas electrónicas, unidades de discos internos (Duros, CD, DVD y Blueray), batería para laptop, puertos USB, puertos HDMI, circuitos, bocinas, pantallas, ratones, teclados, cámaras, entre otros.',
+    '33601': 'Servicios de apoyo administrativo, traducción, fotocopiado e impresión. Asignaciones destinadas a cubrir el costo de la contratación de servicios de fotocopiado y preparación de documentos; digitalización de documentos oficiales, fax, engargolado, enmicado, encuadernación, corte de papel, recepción de correspondencia y otros afines. Incluye servicios de apoyo secretarial, servicios de estenografía en los tribunales, transcripción simultánea de diálogos para la televisión, reuniones y conferencias; servicios comerciales no previstos en las demás partidas anteriores. Incluye servicios de impresión de documentos oficiales necesarios tales como: pasaportes, certificados especiales, títulos de crédito, formas fiscales y formas valoradas, y demás documentos para la identificación, trámites oficiales y servicios a la población; servicios de impresión y elaboración de material informativo, tels como: padrones de beneficiarios, reglas de operación, programas sectoriales, regionales, especiales; informes de labores, manuales de organización, de procedimientos y de servicios al público; decretos, convenios, acuerdos, instructivos, proyectos editoriales (libros, revistas y gacetas periódicas), folletos, trípticos, dípticos, carteles, mantas, rótulos, y demás servicios de impresión y elaboración de material informativo. Incluye gastos como: avisos, precisiones, convocatorias, edictos, bases, licitaciones, concursos y aclaraciones, y demás información en medios masivos. Excluye las inserciones derivadas de campañas publicitarias y de comunicación social, las cuales se deberán registrar en las partidas correspondientes al concepto 3600 Servicios de Comunicación Social y Publicidad.',
+    '35301': 'Instalación, reparación y mantenimiento de equipo de cómputo y tecnologías de la información. Asignaciones destinadas a cubrir los gastos por servicios que se contraten con terceros para la instalación, reparación y mantenimiento de equipos de cómputo y tecnologías de la información, tels como: computadoras, impresoras, dispositivos de seguridad, reguladores, fuentes de potencia ininterrumpida, servidores de información, drones, entre otros, así como el mantenimiento en general. Incluye el pago de deducibles de seguros.'
   };
 
   constructor(
@@ -46,80 +46,80 @@ export class DocumentoFinalService {
     private authService: AuthService
   ) {}
 
-  // ✅ NUEVO MÉTODO: Obtener documento final desde cotizaciones reales
+  // ✅ MÉTODO MEJORADO: Obtener documento final desde cotizaciones reales con partidas
   getDocumentoFinalDesdeCotizaciones(proyectoId: string): Observable<DocumentoFinal> {
-    return this.cotizacionesService.getCotizacionesByProyecto(proyectoId).pipe(
-      switchMap(cotizacionesResponse => {
-        if (!cotizacionesResponse.success || !cotizacionesResponse.data || cotizacionesResponse.data.length === 0) {
+    return forkJoin({
+      cotizaciones: this.cotizacionesService.getCotizacionesByProyecto(proyectoId),
+      proyecto: this.proyectosService.getProyectoById(proyectoId),
+      partidas: this.partidasService.getPartidasByProyecto(proyectoId)
+    }).pipe(
+      map(({ cotizaciones, proyecto, partidas }) => {
+        if (!cotizaciones.success || !cotizaciones.data || cotizaciones.data.length === 0) {
           // Si no hay cotizaciones, retornar documento vacío
-          return this.proyectosService.getProyectoById(proyectoId).pipe(
-            map(proyectoResponse => {
-              if (proyectoResponse.success && proyectoResponse.data) {
-                return this.crearDocumentoVacio(proyectoResponse.data);
-              }
-              throw new Error('Proyecto no encontrado');
-            })
-          );
+          if (proyecto.success && proyecto.data) {
+            return this.crearDocumentoVacio(proyecto.data);
+          }
+          throw new Error('Proyecto no encontrado');
         }
 
-        const cotizaciones = cotizacionesResponse.data;
-        
-        // Obtener el proyecto para información adicional
-        return this.proyectosService.getProyectoById(proyectoId).pipe(
-          map(proyectoResponse => {
-            if (!proyectoResponse.success || !proyectoResponse.data) {
-              throw new Error('Proyecto no encontrado');
-            }
+        const cotizacionesData = cotizaciones.data;
+        const proyectoData = proyecto.success ? proyecto.data : null;
+        // ✅ CORREGIDO: Asegurar que partidasData siempre sea un array
+        const partidasData = partidas.success && partidas.data ? partidas.data : [];
 
-            const proyecto = proyectoResponse.data;
-            return this.crearDocumentoDesdeCotizaciones(proyecto, cotizaciones);
-          })
-        );
+        if (!proyectoData) {
+          throw new Error('Proyecto no encontrado');
+        }
+
+        // ✅ Pasar las partidas reales del proyecto para obtener los montos originales
+        return this.crearDocumentoDesdeCotizaciones(proyectoData, cotizacionesData, partidasData);
       })
     );
   }
 
-  // ✅ NUEVO MÉTODO: Crear documento final desde cotizaciones reales
-  private crearDocumentoDesdeCotizaciones(proyecto: any, cotizaciones: any[]): DocumentoFinal {
+  // ✅ MÉTODO MEJORADO: Crear documento final desde cotizaciones reales con montos originales
+  private crearDocumentoDesdeCotizaciones(proyecto: any, cotizaciones: any[], partidasProyecto: any[]): DocumentoFinal {
     // Agrupar cotizaciones por partida
     const partidasMap = new Map<string, PartidaDocumento>();
     
-   // ✅ CORREGIDO: Verificar que cotizaciones existe
-  if (cotizaciones && cotizaciones.length > 0) {
-    cotizaciones.forEach(cotizacion => {
-      const partidaCodigo = cotizacion.partidaCodigo;
-      
-      if (!partidasMap.has(partidaCodigo)) {
-        partidasMap.set(partidaCodigo, {
-          partidaCodigo: partidaCodigo,
-          partidaNombre: cotizacion.nombrePartida || this.getNombrePartida(partidaCodigo),
-          partidaDescripcion: this.descripcionesPartidas[partidaCodigo] || `Partida presupuestal ${partidaCodigo}`,
-          montoAutorizado: cotizacion.saldoPartida || 0,
-          productos: [],
-          subtotal: 0,
-          iva: 0,
-          total: 0
-        });
-      }
-      
-      const partida = partidasMap.get(partidaCodigo)!;
-      
-      // ✅ CORREGIDO: Verificar que items existe
-      if (cotizacion.items && cotizacion.items.length > 0) {
-        // Agregar items de la cotización como productos
-        cotizacion.items.forEach((item: any) => {
-          partida.productos.push({
-            cantidad: item.cantidad || 0,
-            descripcion: item.articulo?.nombre || 'Artículo no especificado',
-            precioUnitario: item.precioUnitario || 0,
-            total: item.subtotal || 0
-          });
+    if (cotizaciones && cotizaciones.length > 0) {
+      cotizaciones.forEach(cotizacion => {
+        const partidaCodigo = cotizacion.partidaCodigo;
+        
+        if (!partidasMap.has(partidaCodigo)) {
+          // ✅ CORREGIDO: Obtener el monto original de la partida del proyecto
+          const montoOriginal = this.obtenerMontoOriginalPartida(partidasProyecto, partidaCodigo);
           
-          partida.subtotal += item.subtotal || 0;
-        });
-      }
-    });
-  }
+          partidasMap.set(partidaCodigo, {
+            partidaCodigo: partidaCodigo,
+            partidaNombre: cotizacion.nombrePartida || this.getNombrePartida(partidaCodigo),
+            partidaDescripcion: this.descripcionesPartidas[partidaCodigo] || `Partida presupuestal ${partidaCodigo}`,
+            // ✅ USAR EL MONTO ORIGINAL AUTORIZADO, NO EL SALDO RESTANTE
+            montoAutorizado: montoOriginal,
+            productos: [],
+            subtotal: 0,
+            iva: 0,
+            total: 0
+          });
+        }
+        
+        const partida = partidasMap.get(partidaCodigo)!;
+        
+        if (cotizacion.items && cotizacion.items.length > 0) {
+          // Agregar items de la cotización como productos
+          cotizacion.items.forEach((item: any) => {
+            partida.productos.push({
+              cantidad: item.cantidad || 0,
+              descripcion: item.articulo?.nombre || 'Artículo no especificado',
+              precioUnitario: item.precioUnitario || 0,
+              total: item.subtotal || 0
+            });
+            
+            partida.subtotal += item.subtotal || 0;
+          });
+        }
+      });
+    }
 
     // Calcular totales por partida
     const partidas = Array.from(partidasMap.values()).map(partida => {
@@ -150,7 +150,27 @@ export class DocumentoFinalService {
     };
   }
 
-  // ✅ NUEVO MÉTODO: Crear documento vacío (cuando no hay cotizaciones)
+  // ✅ NUEVO MÉTODO: Obtener monto original de la partida del proyecto
+  private obtenerMontoOriginalPartida(partidasProyecto: any[], partidaCodigo: string): number {
+    console.log('🔍 Buscando monto original para partida:', partidaCodigo);
+    console.log('📋 Partidas disponibles:', partidasProyecto);
+    
+    if (partidasProyecto && Array.isArray(partidasProyecto)) {
+      const partida = partidasProyecto.find((p: any) => p.codigo === partidaCodigo);
+      
+      if (partida) {
+        // ✅ Priorizar importeAsignado (monto original), luego otros campos como fallback
+        const monto = partida.importeAsignado || partida.montoInicial || partida.presupuestoInicial || partida.saldoDisponible || 0;
+        console.log(`✅ Partida encontrada: ${partidaCodigo}, Monto original: $${monto}`);
+        return monto;
+      }
+    }
+    
+    console.warn(`❌ No se encontró monto original para partida ${partidaCodigo}, usando 0 como valor por defecto`);
+    return 0;
+  }
+
+  // ✅ MÉTODO: Crear documento vacío (cuando no hay cotizaciones)
   private crearDocumentoVacio(proyecto: any): DocumentoFinal {
     return {
       tipoConvocatoria: 'Convocatoria 2025: PROYECTOS DE INVESTIGACIÓN CIENTÍFICA, DESARROLLO TECNOLÓGICO E INNOVACIÓN',
@@ -169,7 +189,7 @@ export class DocumentoFinalService {
     };
   }
 
-  // ✅ MODIFICAR: getDocumentosFinalesAdmin para usar datos reales
+  // ✅ MÉTODO MEJORADO: getDocumentosFinalesAdmin para usar datos reales con montos originales
   getDocumentosFinalesAdmin(): Observable<DocumentoFinal[]> {
     return this.proyectosService.getProyectosPorEstado('APROBADO').pipe(
       switchMap(proyectosResponse => {
@@ -189,7 +209,7 @@ export class DocumentoFinalService {
     );
   }
 
-  // ✅ MODIFICAR: getDocumentoFinalDocente para usar datos reales
+  // ✅ MÉTODO MEJORADO: getDocumentoFinalDocente para usar datos reales con montos originales
   getDocumentoFinalDocente(): Observable<DocumentoFinalDocente> {
     return this.proyectosService.getMisProyectos().pipe(
       switchMap(response => {
@@ -306,6 +326,11 @@ export class DocumentoFinalService {
       doc.text(descripcionLines, 20, yPosition);
       yPosition += (descripcionLines.length * 3) + 10;
 
+      // ✅ MOSTRAR MONTO AUTORIZADO CORRECTO
+      doc.setFont('helvetica', 'bold');
+      doc.text(`MONTO AUTORIZADO: $${partida.montoAutorizado.toFixed(2)}`, 20, yPosition);
+      yPosition += 7;
+
       // Tabla de productos
       const tableData = partida.productos.map(producto => [
         producto.cantidad.toString(),
@@ -399,6 +424,7 @@ export class DocumentoFinalService {
       const partidaData = [
         [`PARTIDA ${partida.partidaCodigo} - ${partida.partidaNombre}`],
         ['Descripción:', partida.partidaDescripcion],
+        // ✅ MOSTRAR MONTO AUTORIZADO CORRECTO
         ['Monto Autorizado:', `$${partida.montoAutorizado.toFixed(2)}`],
         [],
         ['DETALLE DE PRODUCTOS'],
@@ -502,6 +528,7 @@ export class DocumentoFinalService {
       documento.partidas.forEach(partida => {
         docData.push([]);
         docData.push([`PARTIDA ${partida.partidaCodigo} - ${partida.partidaNombre}`]);
+        // ✅ MOSTRAR MONTO AUTORIZADO CORRECTO
         docData.push(['Monto Autorizado:', `$${partida.montoAutorizado.toFixed(2)}`]);
         docData.push(['Cantidad', 'Producto', 'Precio Unitario', 'Total']);
 
