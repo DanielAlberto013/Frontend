@@ -32,6 +32,7 @@
     "@angular/router": "^20.3.0",
     "@auth0/angular-jwt": "^5.2.0",
     "bootstrap": "^5.3.8",
+    "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",

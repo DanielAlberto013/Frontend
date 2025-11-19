@@ -76,11 +76,18 @@
                   <!-- Edición y Presupuesto -->
                   <div class="col-md-4">
                     <label class="form-label">Edición *</label>
-                    <select formControlName="edicion" class="form-select" [disabled]="esVista">
-                      <option value="2025">2025</option>
-                      <option value="2024">2024</option>
-                      <option value="2023">2023</option>
-                    </select>
+                    <!-- ✅ SOLO CAMBIO: Cambiado de select a input -->
+                    <input 
+                      type="text" 
+                      formControlName="edicion"
+                      class="form-control"
+                      placeholder="Ej: 2025"
+                      [class.is-invalid]="proyectoForm.get('edicion')?.invalid && proyectoForm.get('edicion')?.touched"
+                      [readonly]="esVista"
+                    >
+                    <div class="invalid-feedback" *ngIf="proyectoForm.get('edicion')?.errors?.['required'] && proyectoForm.get('edicion')?.touched">
+                      La edición es requerida
+                    </div>
                   </div>
 
                   <div class="col-md-4">
@@ -267,9 +274,6 @@
                       ❌ Rechazar Proyecto
                     </button>
                   </div>
-
-                  <!-- Botón para ir a edición en modo vista (solo docente en borrador) -->
-                  
                 </div>
 
                 <div class="d-flex gap-2">

@@ -20,13 +20,14 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  access_token: string;
+  accessToken: string;  // ✅ CORREGIDO: accessToken en lugar de access_token
   user: User;
 }
 
-export interface ApiResponse<T> {
+// ✅ ACTUALIZA ApiResponse agregando la propiedad error
+export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   message?: string;
+  error?: any;
 }
-

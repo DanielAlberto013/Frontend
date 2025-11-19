@@ -4,17 +4,16 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth';
 
-// 🟢 Importaciones de Angular Material necesarias
+// 🟢 Importaciones de Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon'; // opcional si usas íconos
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  // 👇 Aquí se incluyen los módulos Angular + Material
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -54,9 +53,23 @@ export class LoginComponent {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: (response) => {
-        console.log('✅ Login exitoso:', response);
+        console.log('✅ Login exitoso - Respuesta completa:', response);
+        console.log('✅ Token recibido:', response.accessToken);
+        console.log('✅ User recibido:', response.user);
+        
         this.loading = false;
-        this.router.navigate(['/dashboard']);
+        
+        // Verificar que realmente se guardó
+        setTimeout(() => {
+          console.log('✅ Token en localStorage después de login:', localStorage.getItem('token'));
+          console.log('✅ User en localStorage después de login:', localStorage.getItem('currentUser'));
+          
+          // Debug del auth service
+          this.authService.debugAuth();
+          
+          // Redirigir al dashboard
+          this.router.navigate(['/dashboard']);
+        }, 200);
       },
       error: (error) => {
         console.log('❌ Error en login:', error);

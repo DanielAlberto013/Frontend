@@ -137,7 +137,7 @@ export class ProyectoFormComponent implements OnInit {
     return this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(5)]],
       descripcion: ['', [Validators.required, Validators.minLength(10)]],
-      edicion: ['2025', [Validators.required]],
+      edicion: ['2025', [Validators.required]], // ✅ SOLO CAMBIO: Sin pattern, solo required
       presupuestoTotal: [0, [Validators.required, Validators.min(1000)]],
       presupuestoFederal: [0, [Validators.required, Validators.min(0)]],
       presupuestoEstatal: [0, [Validators.required, Validators.min(0)]],
@@ -388,7 +388,6 @@ export class ProyectoFormComponent implements OnInit {
         if (todasExitosas) {
           if (this.esEdicion) {
             alert('✅ Proyecto actualizado exitosamente');
-            // ✅ CORREGIDO: Redirigir al listado de proyectos
             this.router.navigate(['/proyectos']);
           } else {
             alert('✅ Proyecto creado exitosamente con todas las partidas. Será enviado a revisión.');

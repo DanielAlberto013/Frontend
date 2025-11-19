@@ -20,14 +20,12 @@ export class AuthService {
       const user = localStorage.getItem('currentUser');
       const token = localStorage.getItem('token');
       
-      // Verificar que user no sea null, undefined o string vacío antes de parsear
       if (user && user !== 'undefined' && user !== 'null' && user.trim() !== '') {
         const parsedUser = JSON.parse(user);
         if (parsedUser && token) {
           this.currentUserSubject.next(parsedUser);
         }
       } else {
-        // Limpiar si hay datos inválidos
         this.clearInvalidStorage();
       }
     } catch (error) {
@@ -42,29 +40,45 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
-  // Login real con el backend
+  // ✅ MÉTODO: Verificar autenticación
+  isAuthenticated(): boolean {
+    return this.isLoggedIn();
+  }
+
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         tap(response => {
-          this.setUserAndToken(response.user, response.access_token);
+          console.log('🔐 Login response completo:', response);
+          console.log('🔐 accessToken recibido:', response.accessToken);
+          
+          // ✅ CORREGIDO: Usar accessToken en lugar de access_token
+          this.setUserAndToken(response.user, response.accessToken);
+          
+          // Verificar que se guardó
+          setTimeout(() => {
+            console.log('🔐 Token guardado en localStorage:', localStorage.getItem('token'));
+            console.log('🔐 User guardado en localStorage:', localStorage.getItem('currentUser'));
+          }, 100);
         })
       );
   }
 
-  // Registro real con el backend
   register(userData: RegisterRequest): Observable<AuthResponse> {
     const { confirmPassword, ...registerData } = userData;
     
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, registerData)
       .pipe(
         tap(response => {
-          this.setUserAndToken(response.user, response.access_token);
+          console.log('🔐 Register response completo:', response);
+          console.log('🔐 accessToken recibido:', response.accessToken);
+          
+          // ✅ CORREGIDO: Usar accessToken en lugar de access_token
+          this.setUserAndToken(response.user, response.accessToken);
         })
       );
   }
 
-  // Obtener información del usuario actual
   getCurrentUserInfo(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/auth/me`);
   }
@@ -109,6 +123,7 @@ export class AuthService {
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('token', token);
       this.currentUserSubject.next(user);
+      console.log('✅ Usuario y token guardados correctamente');
     } catch (error) {
       console.error('Error saving user to storage:', error);
     }
@@ -128,5 +143,14 @@ export class AuthService {
       currentPassword,
       newPassword
     });
+  }
+
+  // ✅ MÉTODO DEBUG: Verificar estado actual
+  debugAuth(): void {
+    console.log('🔐 DEBUG AUTH SERVICE:');
+    console.log('🔐 Token en localStorage:', this.getToken());
+    console.log('🔐 User en localStorage:', this.getCurrentUser());
+    console.log('🔐 ¿Está autenticado?:', this.isAuthenticated());
+    console.log('🔐 ¿Está logged in?:', this.isLoggedIn());
   }
 }

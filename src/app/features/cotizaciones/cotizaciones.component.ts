@@ -5,7 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { Articulo } from '../../core/models/articulo.model';
 import { Proyecto } from '../../core/models/proyecto.model';
 import { PartidaPresupuestal } from '../../core/models/partida.model';
-import { CotizacionItem } from '../../core/models/cotizacion.model';
+import { CotizacionItem, Cotizacion } from '../../core/models/cotizacion.model';
 import { ArticulosService } from '../../core/services/articulos.service';
 import { ProyectosService } from '../../core/services/proyectos.service';
 import { PartidasService } from '../../core/services/partidas.service';
@@ -24,6 +24,7 @@ export class CotizacionesComponent implements OnInit {
   articulos: Articulo[] = [];
   proyectos: Proyecto[] = [];
   partidas: PartidaPresupuestal[] = [];
+  cotizacionesExistentes: Cotizacion[] = [];
   
   // Selecciones del usuario
   proyectoSeleccionado: Proyecto | null = null;
@@ -118,6 +119,34 @@ export class CotizacionesComponent implements OnInit {
     });
   }
 
+  // ✅ NUEVO MÉTODO: Verificar si ya existe cotización para la partida seleccionada
+  get partidaTieneCotizacion(): boolean {
+    if (!this.proyectoSeleccionado || !this.partidaSeleccionada) {
+      return false;
+    }
+    
+    return this.cotizacionesExistentes.some(cotizacion => 
+      cotizacion.proyectoId === this.proyectoSeleccionado!.id && 
+      cotizacion.partidaCodigo === this.partidaSeleccionada!.codigo
+    );
+  }
+
+  // ✅ NUEVO MÉTODO: Obtener información de la cotización existente
+  get infoCotizacionExistente(): string {
+    if (!this.partidaTieneCotizacion) return '';
+    
+    const cotizacion = this.cotizacionesExistentes.find(c => 
+      c.proyectoId === this.proyectoSeleccionado!.id && 
+      c.partidaCodigo === this.partidaSeleccionada!.codigo
+    );
+    
+    if (cotizacion) {
+      return `Ya existe una cotización para esta partida (Estado: ${cotizacion.estado})`;
+    }
+    
+    return 'Ya existe una cotización para esta partida';
+  }
+
   onProyectoChangeSeleccionado(event: any): void {
     const proyectoId = event.target.value;
     const proyecto = this.proyectos.find(p => p.id === proyectoId);
@@ -139,6 +168,7 @@ export class CotizacionesComponent implements OnInit {
     this.partidaSeleccionada = null;
     this.carrito = [];
     this.cargarPartidasProyecto(proyecto.id);
+    this.cargarCotizacionesProyecto(proyecto.id); // ✅ Cargar cotizaciones del proyecto
   }
 
   private cargarPartidasProyecto(proyectoId: string): void {
@@ -158,16 +188,39 @@ export class CotizacionesComponent implements OnInit {
     });
   }
 
+  // ✅ NUEVO MÉTODO: Cargar cotizaciones del proyecto
+  private cargarCotizacionesProyecto(proyectoId: string): void {
+    this.cotizacionesService.getCotizacionesByProyecto(proyectoId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.cotizacionesExistentes = response.data;
+          console.log('Cotizaciones existentes cargadas:', this.cotizacionesExistentes);
+        } else {
+          this.cotizacionesExistentes = [];
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar cotizaciones:', error);
+        this.cotizacionesExistentes = [];
+      }
+    });
+  }
+
   onPartidaChange(partida: PartidaPresupuestal): void {
     this.partidaSeleccionada = partida;
     this.carrito = [];
+    
+    // ✅ Mostrar alerta si ya existe cotización para esta partida
+    if (this.partidaTieneCotizacion) {
+      setTimeout(() => {
+        alert(`⚠️ ATENCIÓN\n\nYa existe una cotización para la partida ${partida.codigo}.\n\nNo puedes crear una nueva cotización para esta partida.`);
+      }, 100);
+    }
   }
 
   getNombrePartida(codigo: string): string {
     return this.articulosService.getNombrePartida(codigo);
   }
-
-  // ✅ NUEVOS MÉTODOS PARA CÁLCULO DE IVA INCLUIDO
 
   // Calcular el IVA incluido en el presupuesto
   calcularIVAIncluido(): number {
@@ -219,6 +272,12 @@ export class CotizacionesComponent implements OnInit {
   agregarAlCarrito(articulo: Articulo): void {
     if (!this.partidaSeleccionada) {
       alert('Primero selecciona una partida presupuestal');
+      return;
+    }
+
+    // ✅ VERIFICAR SI YA EXISTE COTIZACIÓN PARA ESTA PARTIDA
+    if (this.partidaTieneCotizacion) {
+      alert(`❌ NO PUEDES AGREGAR ARTÍCULOS\n\nYa existe una cotización para la partida ${this.partidaSeleccionada.codigo}.\n\nNo puedes modificar o crear una nueva cotización para esta partida.`);
       return;
     }
 
@@ -413,6 +472,12 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
+    // ✅ VERIFICAR SI YA EXISTE COTIZACIÓN PARA ESTA PARTIDA
+    if (this.partidaTieneCotizacion) {
+      alert(`❌ NO PUEDES GENERAR COTIZACIÓN\n\nYa existe una cotización para la partida ${this.partidaSeleccionada.codigo}.\n\nNo puedes crear una nueva cotización para esta partida.`);
+      return;
+    }
+
     if (this.carrito.length === 0) {
       alert('Agrega artículos al carrito antes de generar la cotización');
       return;
@@ -430,7 +495,7 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
-    const confirmacion = confirm(`¿Estás seguro de crear la cotización?\n\n📋 Resumen:\n• Proyecto: ${this.proyectoSeleccionado.nombre}\n• Partida: ${this.partidaSeleccionada.codigo}\n• Subtotal: $${this.totalCarrito.toFixed(2)}\n• IVA (16%): $${(this.totalCarrito * 0.16).toFixed(2)}\n• Total: $${(this.totalCarrito * 1.16).toFixed(2)}\n• Artículos: ${this.carrito.length}\n\nEsta acción no se puede deshacer.`);
+    const confirmacion = confirm(`¿Estás seguro de crear la cotización?\n\n📋 Resumen:\n• Proyecto: ${this.proyectoSeleccionado.nombre}\n• Partida: ${this.partidaSeleccionada.codigo}\n• Subtotal: $${this.totalCarrito.toFixed(2)}\n• IVA (16%): $${(this.totalCarrito * 0.16).toFixed(2)}\n• Total: $${(this.totalCarrito * 1.16).toFixed(2)}\n• Artículos: ${this.carrito.length}\n\n⚠️ ATENCIÓN: Una vez generada, NO podrás crear otra cotización para esta partida.\n\n¿Continuar?`);
     
     if (!confirmacion) {
       return;
@@ -460,9 +525,12 @@ export class CotizacionesComponent implements OnInit {
               this.loading = false;
               if (saldoResponse.success) {
                 alert('✅ Cotización creada exitosamente y enviada a revisión\n\n💰 Saldo actualizado: $' + 
-                      (saldoResponse.data?.saldoDisponible || 0).toFixed(2));
+                      (saldoResponse.data?.saldoDisponible || 0).toFixed(2) +
+                      '\n\n⚠️ IMPORTANTE: Ya no podrás crear otra cotización para la partida ' + 
+                      this.partidaSeleccionada!.codigo);
                 this.carrito = [];
                 this.cargarPartidasProyecto(this.proyectoSeleccionado!.id);
+                this.cargarCotizacionesProyecto(this.proyectoSeleccionado!.id); // ✅ Recargar cotizaciones
               } else {
                 alert('⚠️ Cotización creada, pero no se pudo actualizar el saldo: ' + saldoResponse.message);
                 this.carrito = [];

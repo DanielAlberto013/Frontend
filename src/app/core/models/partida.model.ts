@@ -10,7 +10,7 @@ export interface PartidaPresupuestal {
      createdAt: Date;
      updatedAt?: Date;
    }
-   
+    
    export interface CreatePartidaRequest {
      codigo: string;
      nombre: string;

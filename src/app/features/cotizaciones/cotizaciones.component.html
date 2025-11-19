@@ -38,7 +38,7 @@
     <!-- Contenido Principal -->
     <div *ngIf="!loading && !error" class="row">
       
-      <!-- ✅ PANEL IZQUIERDO: Selección y Catálogo (ESTE ES EL QUE DEBERÍA VERSE) -->
+      <!-- ✅ PANEL IZQUIERDO: Selección y Catálogo -->
       <div class="col-md-8">
         
         <!-- Selección de Proyecto y Partida -->
@@ -106,7 +106,13 @@
                 <div class="budget-info p-3 bg-light rounded">
                   <h6>💰 Información de Presupuesto - {{ partidaSeleccionada.codigo }}</h6>
                   
-                  <!-- ✅ NUEVA SECCIÓN: Cálculo de IVA incluido -->
+                  <!-- ✅ NUEVA SECCIÓN: Advertencia de cotización existente -->
+                  <div *ngIf="partidaTieneCotizacion" class="alert alert-warning mb-3">
+                    <strong>⚠️ COTIZACIÓN EXISTENTE</strong><br>
+                    <small>{{ infoCotizacionExistente }}</small>
+                  </div>
+
+                  <!-- ✅ SECCIÓN: Cálculo de IVA incluido -->
                   <div class="iva-calculation mb-3 p-3 bg-white rounded border">
                     <h6 class="text-primary mb-3">📊 Presupuesto con IVA Incluido</h6>
                     <div class="row text-center">
@@ -169,7 +175,7 @@
                     </div>
                   </div>
 
-                  <!-- ✅ NUEVO: Indicador de subtotal máximo -->
+                  <!-- ✅ Indicador de subtotal máximo -->
                   <div *ngIf="haExcedidoSubtotalMaximo" class="alert alert-danger mt-2">
                     <strong>🚫 EXCEDE SUBTOTAL MÁXIMO</strong><br>
                     <small>
@@ -205,6 +211,12 @@
             </small>
           </div>
 
+          <!-- ✅ Advertencia de cotización existente en catálogo -->
+          <div *ngIf="partidaTieneCotizacion" class="alert alert-warning mx-3 mt-3">
+            <strong>⚠️ COTIZACIÓN BLOQUEADA</strong><br>
+            <small>No puedes agregar artículos porque ya existe una cotización para esta partida.</small>
+          </div>
+
           <div class="card-body">
             <!-- Lista de Artículos -->
             <div *ngIf="articulosFiltrados.length > 0" class="row g-3">
@@ -221,17 +233,24 @@
                     <button 
                       (click)="agregarAlCarrito(articulo)"
                       class="btn w-100 mt-2"
-                      [class]="puedeAgregarArticulo(articulo) ? 'btn-success' : 'btn-secondary'"
-                      [disabled]="!puedeAgregarArticulo(articulo)"
-                      title="{{ !puedeAgregarArticulo(articulo) ? 'No hay suficiente presupuesto para este artículo' : 'Agregar al carrito' }}"
+                      [class]="puedeAgregarArticulo(articulo) && !partidaTieneCotizacion ? 'btn-success' : 'btn-secondary'"
+                      [disabled]="!puedeAgregarArticulo(articulo) || partidaTieneCotizacion"
+                      title="{{ partidaTieneCotizacion ? 'Cotización bloqueada para esta partida' : (!puedeAgregarArticulo(articulo) ? 'No hay suficiente presupuesto para este artículo' : 'Agregar al carrito') }}"
                     >
-                      {{ puedeAgregarArticulo(articulo) ? '🛒 Agregar' : '🚫 Sin presupuesto' }}
+                      {{ partidaTieneCotizacion ? '🔒 Bloqueado' : (puedeAgregarArticulo(articulo) ? '🛒 Agregar' : '🚫 Sin presupuesto') }}
                     </button>
 
                     <!-- Mensaje de sin presupuesto -->
-                    <div *ngIf="!puedeAgregarArticulo(articulo)" class="mt-1">
+                    <div *ngIf="!puedeAgregarArticulo(articulo) && !partidaTieneCotizacion" class="mt-1">
                       <small class="text-danger">
                         💰 Necesitas ${{ (articulo.precioReferencia - saldoRestante) | number:'1.2-2' }} más
+                      </small>
+                    </div>
+
+                    <!-- Mensaje de cotización bloqueada -->
+                    <div *ngIf="partidaTieneCotizacion" class="mt-1">
+                      <small class="text-warning">
+                        🔒 Cotización existente
                       </small>
                     </div>
                   </div>
@@ -273,7 +292,7 @@
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">🛒 Carrito de Compras</h5>
             <button 
-              *ngIf="carrito.length > 0"
+              *ngIf="carrito.length > 0 && !partidaTieneCotizacion"
               (click)="limpiarCarrito()"
               class="btn btn-outline-danger btn-sm"
             >
@@ -287,18 +306,26 @@
               <small class="text-muted">Selecciona artículos del catálogo para agregarlos</small>
             </div>
 
+            <!-- ✅ Advertencia de cotización existente en carrito -->
+            <div *ngIf="partidaTieneCotizacion && carrito.length > 0" class="alert alert-warning mb-3">
+              <strong>⚠️ COTIZACIÓN EXISTENTE</strong><br>
+              <small>No puedes modificar el carrito porque ya existe una cotización para esta partida.</small>
+            </div>
+
             <!-- Items del Carrito -->
             <div *ngIf="carrito.length > 0" class="carrito-items">
               <div *ngFor="let item of carrito" class="carrito-item mb-3 p-3 border rounded">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <h6 class="mb-0">{{ item.articulo.nombre }}</h6>
                   <button 
+                    *ngIf="!partidaTieneCotizacion"
                     (click)="eliminarDelCarrito(item)"
                     class="btn btn-outline-danger btn-sm"
                     title="Eliminar todo el producto"
                   >
                     ❌
                   </button>
+                  <span *ngIf="partidaTieneCotizacion" class="badge bg-warning">🔒</span>
                 </div>
                 
                 <div class="row g-2 align-items-center">
@@ -307,8 +334,8 @@
                     <button 
                       (click)="disminuirCantidad(item)"
                       class="btn btn-outline-warning btn-sm w-100"
-                      [disabled]="item.cantidad <= 1"
-                      title="Disminuir cantidad"
+                      [disabled]="item.cantidad <= 1 || partidaTieneCotizacion"
+                      title="{{ partidaTieneCotizacion ? 'Cotización bloqueada' : 'Disminuir cantidad' }}"
                     >
                       ➖
                     </button>
@@ -323,6 +350,7 @@
                       (change)="actualizarCantidad(item, $any($event.target).valueAsNumber)"
                       min="1"
                       class="form-control form-control-sm"
+                      [disabled]="partidaTieneCotizacion"
                     >
                   </div>
                   
@@ -331,8 +359,8 @@
                     <button 
                       (click)="aumentarCantidad(item)"
                       class="btn btn-outline-success btn-sm w-100"
-                      [disabled]="!puedeAumentarCantidad(item)"
-                      title="Aumentar cantidad"
+                      [disabled]="!puedeAumentarCantidad(item) || partidaTieneCotizacion"
+                      title="{{ partidaTieneCotizacion ? 'Cotización bloqueada' : 'Aumentar cantidad' }}"
                     >
                       ➕
                     </button>
@@ -348,6 +376,7 @@
                       min="0"
                       step="0.01"
                       class="form-control form-control-sm"
+                      [disabled]="partidaTieneCotizacion"
                     >
                   </div>
                 </div>
@@ -361,7 +390,7 @@
 
               <!-- Resumen del Carrito -->
               <div class="carrito-total p-3 bg-light rounded">
-                <!-- ✅ NUEVO: Resumen con IVA -->
+                <!-- ✅ Resumen con IVA -->
                 <div class="iva-summary mb-3 p-2 bg-white rounded border">
                   <h6 class="mb-2">📊 Resumen con IVA</h6>
                   <div class="d-flex justify-content-between small">
@@ -397,7 +426,7 @@
                   </span>
                 </div>
 
-                <!-- ✅ NUEVO: Indicador de subtotal máximo -->
+                <!-- ✅ Indicador de subtotal máximo -->
                 <div class="d-flex justify-content-between mt-2">
                   <span>Subtotal Máximo:</span>
                   <span [class]="haExcedidoSubtotalMaximo ? 'text-danger' : 'text-success'">
@@ -420,15 +449,30 @@
                   ✅ Presupuesto completamente utilizado
                 </div>
 
+                <!-- ✅ Advertencia de cotización existente -->
+                <div *ngIf="partidaTieneCotizacion" class="alert alert-warning mt-2 mb-0">
+                  🔒 No puedes generar cotización - Ya existe una para esta partida
+                </div>
+
                 <!-- Botón Generar Cotización -->
                 <button 
                   (click)="generarCotizacion()"
-                  [disabled]="!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto || haExcedidoSubtotalMaximo"
+                  [disabled]="!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto || haExcedidoSubtotalMaximo || partidaTieneCotizacion"
                   class="btn w-100 mt-3"
-                  [class]="(!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto || haExcedidoSubtotalMaximo) ? 'btn-secondary' : 'btn-primary'"
+                  [class]="(!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto || haExcedidoSubtotalMaximo || partidaTieneCotizacion) ? 'btn-secondary' : 'btn-primary'"
                 >
-                  {{ (haExcedidoPresupuesto || haExcedidoSubtotalMaximo) ? '⚠️ Ajusta Presupuesto' : '📄 Generar PreCotizaciones' }}
+                  {{ partidaTieneCotizacion ? '🔒 Cotización Bloqueada' : 
+                     (haExcedidoPresupuesto || haExcedidoSubtotalMaximo) ? '⚠️ Ajusta Presupuesto' : 
+                     '📄 Generar PreCotizaciones' }}
                 </button>
+
+                <!-- ✅ Mensaje informativo sobre restricción -->
+                <div *ngIf="!partidaTieneCotizacion" class="alert alert-info mt-2 mb-0">
+                  <small>
+                    ⚠️ <strong>IMPORTANTE:</strong> Solo puedes generar UNA cotización por partida.<br>
+                    Una vez generada, no podrás crear otra para esta partida.
+                  </small>
+                </div>
               </div>
             </div>
           </div>

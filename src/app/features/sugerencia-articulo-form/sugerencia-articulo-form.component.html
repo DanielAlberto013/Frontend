@@ -1,132 +1,132 @@
 <div class="container-fluid py-4">
-     <div class="row justify-content-center">
-       <div class="col-md-8 col-lg-6">
-         <div class="card">
-           <div class="card-header bg-info">
-             <h4 class="mb-0 text-white">💡 Sugerir Nuevo Artículo</h4>
-           </div>
-           
-           <div class="card-body">
-             <form (ngSubmit)="onSubmit()" #sugerenciaForm="ngForm">
-               
-               <!-- Alerta de artículos existentes -->
-               <div *ngIf="articulosExistentes.length > 0" class="alert alert-warning">
-                 <h6>⚠️ Artículos Similares Encontrados</h6>
-                 <p class="mb-2">Se encontraron estos artículos con nombres similares:</p>
-                 <div *ngFor="let art of articulosExistentes" class="mb-2 p-2 border rounded bg-light">
-                   <p class="mb-1"><strong>Nombre:</strong> {{art.nombre}}</p>
-                   <p class="mb-1"><strong>Partida:</strong> {{art.partidaCodigo}}</p>
-                   <p class="mb-0"><strong>Precio:</strong> ${{art.precioReferencia | number:'1.2-2'}}</p>
-                 </div>
-                 <small class="text-danger">Verifica si el artículo que quieres sugerir ya existe.</small>
-               </div>
-   
-               <!-- Mensaje de éxito -->
-               <div *ngIf="success" class="alert alert-success">
-                 {{ success }}
-               </div>
-   
-               <!-- Error General -->
-               <div *ngIf="error" class="alert alert-danger">
-                 ❌ {{ error }}
-               </div>
-   
-               <!-- Campo Nombre -->
-               <div class="mb-3">
-                 <label for="nombre" class="form-label">
-                   <strong>Nombre del Artículo</strong> *
-                 </label>
-                 <input
-                   type="text"
-                   id="nombre"
-                   name="nombre"
-                   [(ngModel)]="articulo.nombre"
-                   (input)="verificarArticulosExistentes()"
-                   required
-                   minlength="3"
-                   class="form-control form-control-lg"
-                   placeholder="Ingresa el nombre del artículo que deseas sugerir"
-                   [class.is-invalid]="articulosExistentes.length > 0"
-                 >
-                 <div class="form-text">
-                   Buscará automáticamente artículos con nombres similares
-                 </div>
-                 <div *ngIf="articulosExistentes.length > 0" class="invalid-feedback">
-                   ⚠️ Ya existen artículos con nombres similares
-                 </div>
-               </div>
-   
-               <div class="row">
-                 <!-- Campo Precio -->
-                 <div class="col-md-6 mb-3">
-                   <label for="precio" class="form-label">
-                     <strong>Precio de Referencia</strong> *
-                   </label>
-                   <div class="input-group">
-                     <span class="input-group-text">$</span>
-                     <input
-                       type="number"
-                       id="precio"
-                       name="precioReferencia"
-                       [(ngModel)]="articulo.precioReferencia"
-                       required
-                       min="0"
-                       step="0.01"
-                       class="form-control"
-                       placeholder="0.00"
-                     >
-                   </div>
-                   <div class="form-text">
-                     Precio estimado para referencia en cotizaciones
-                   </div>
-                 </div>
-   
-                 <!-- Campo Partida -->
-                 <div class="col-md-6 mb-3">
-                   <label for="partida" class="form-label">
-                     <strong>Partida Presupuestal</strong> *
-                   </label>
-                   <select
-                     id="partida"
-                     name="partidaCodigo"
-                     [(ngModel)]="articulo.partidaCodigo"
-                     required
-                     class="form-select"
-                   >
-                     <option value="">Selecciona una partida...</option>
-                     <option *ngFor="let partida of partidas" [value]="partida.codigo">
-                       {{ partida.codigo }} - {{ partida.nombre }}
-                     </option>
-                   </select>
-                   <div class="form-text">
-                     Clasificación presupuestal del artículo
-                   </div>
-                 </div>
-               </div>
-   
-               <!-- Botones -->
-               <div class="d-flex gap-2 flex-wrap pt-3 border-top">
-                 <button
-                   type="submit"
-                   class="btn btn-success btn-lg"
-                   [disabled]="sugerenciaForm.invalid || loading"
-                 >
-                   <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-                   📤 Enviar Sugerencia
-                 </button>
-   
-                 <button
-                   type="button"
-                   class="btn btn-secondary btn-lg"
-                   (click)="cancelar()"
-                   [disabled]="loading"
-                 >
-                   ↩️ Cancelar
-                 </button>
-               </div>
-             </form>
-           </div>
-         </div>
-       </div>
-     </div>
-   </div>
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-header bg-info">
+          <h4 class="mb-0 text-white">💡 Sugerir Nuevo Artículo</h4>
+        </div>
+        
+        <div class="card-body">
+          <form (ngSubmit)="onSubmit()" #sugerenciaForm="ngForm">
+            
+            <!-- Alerta de artículos existentes -->
+            <div *ngIf="articulosExistentes.length > 0" class="alert alert-warning">
+              <h6>⚠️ Artículos Similares Encontrados</h6>
+              <p class="mb-2">Se encontraron estos artículos con nombres similares:</p>
+              <div *ngFor="let art of articulosExistentes" class="mb-2 p-2 border rounded bg-light">
+                <p class="mb-1"><strong>Nombre:</strong> {{art.nombre}}</p>
+                <p class="mb-1"><strong>Partida:</strong> {{art.partidaCodigo}}</p>
+                <p class="mb-0"><strong>Precio:</strong> ${{art.precioReferencia | number:'1.2-2'}}</p>
+              </div>
+              <small class="text-danger">Verifica si el artículo que quieres sugerir ya existe.</small>
+            </div>
+
+            <!-- Mensaje de éxito -->
+            <div *ngIf="success" class="alert alert-success">
+              {{ success }}
+            </div>
+
+            <!-- Error General -->
+            <div *ngIf="error" class="alert alert-danger">
+              ❌ {{ error }}
+            </div>
+
+            <!-- Campo Nombre -->
+            <div class="mb-3">
+              <label for="nombre" class="form-label">
+                <strong>Nombre del Artículo</strong> *
+              </label>
+              <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                [(ngModel)]="articulo.nombre"
+                (input)="verificarArticulosExistentes()"
+                required
+                minlength="3"
+                class="form-control form-control-lg"
+                placeholder="Ingresa el nombre del artículo que deseas sugerir"
+                [class.is-invalid]="articulosExistentes.length > 0"
+              >
+              <div class="form-text">
+                Buscará automáticamente artículos con nombres similares
+              </div>
+              <div *ngIf="articulosExistentes.length > 0" class="invalid-feedback">
+                ⚠️ Ya existen artículos con nombres similares
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Campo Precio -->
+              <div class="col-md-6 mb-3">
+                <label for="precio" class="form-label">
+                  <strong>Precio de Referencia</strong> *
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    id="precio"
+                    name="precioReferencia"
+                    [(ngModel)]="articulo.precioReferencia"
+                    required
+                    min="0"
+                    step="0.01"
+                    class="form-control"
+                    placeholder="0.00"
+                  >
+                </div>
+                <div class="form-text">
+                  Precio estimado para referencia en cotizaciones
+                </div>
+              </div>
+
+              <!-- Campo Partida -->
+              <div class="col-md-6 mb-3">
+                <label for="partida" class="form-label">
+                  <strong>Partida Presupuestal</strong> *
+                </label>
+                <select
+                  id="partida"
+                  name="partidaCodigo"
+                  [(ngModel)]="articulo.partidaCodigo"
+                  required
+                  class="form-select"
+                >
+                  <option value="">Selecciona una partida...</option>
+                  <option *ngFor="let partida of partidas" [value]="partida.codigo">
+                    {{ partida.codigo }} - {{ partida.nombre }}
+                  </option>
+                </select>
+                <div class="form-text">
+                  Clasificación presupuestal del artículo
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex gap-2 flex-wrap pt-3 border-top">
+              <button
+                type="submit"
+                class="btn btn-success btn-lg"
+                [disabled]="sugerenciaForm.invalid || loading"
+              >
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                📤 Enviar Sugerencia
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-secondary btn-lg"
+                (click)="cancelar()"
+                [disabled]="loading"
+              >
+                ↩️ Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

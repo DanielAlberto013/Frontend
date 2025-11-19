@@ -69,7 +69,7 @@ export class ReportesComponent implements OnInit {
     }
   }
 
-  // ✅ NUEVO MÉTODO: Cargar documentos finales reales para admin
+  // ✅ MÉTODO: Cargar documentos finales reales para admin
   private cargarDocumentosFinalesReales(): void {
     this.documentoFinalService.getDocumentosFinalesAdmin().subscribe({
       next: (documentos: DocumentoFinal[]) => {
@@ -84,7 +84,7 @@ export class ReportesComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO MÉTODO: Cargar documentos finales reales para docente
+  // ✅ MÉTODO: Cargar documentos finales reales para docente
   private cargarDocumentosFinalesRealesDocente(): void {
     this.documentoFinalService.getDocumentoFinalDocente().subscribe({
       next: (documentoDocente: DocumentoFinalDocente) => {
@@ -141,7 +141,10 @@ export class ReportesComponent implements OnInit {
 
   // ✅ MÉTODO: Generar documento final en Excel
   generarDocumentoFinalExcel(documento: DocumentoFinal): void {
-    this.documentoFinalService.generarExcelDocumentoFinal(documento);
+    this.documentoFinalService.generarExcelDocumentoFinal(documento).catch(error => {
+      console.error('Error al generar Excel:', error);
+      alert('❌ Error al generar el documento Excel');
+    });
   }
 
   // ✅ MÉTODO: Generar documento del docente en PDF
@@ -186,7 +189,10 @@ export class ReportesComponent implements OnInit {
         montoAprobado: this.documentoFinalDocente.totalGeneral
       };
       
-      this.documentoFinalService.generarExcelDocumentoFinal(documentoBasico);
+      this.documentoFinalService.generarExcelDocumentoFinal(documentoBasico).catch(error => {
+        console.error('Error al generar Excel del docente:', error);
+        alert('❌ Error al generar el documento Excel del docente');
+      });
     }
   }
 
@@ -244,12 +250,12 @@ export class ReportesComponent implements OnInit {
     return this.proyectosUnicos.length;
   }
 
-  // ✅ NUEVO MÉTODO: Obtener proyectos con cotizaciones
+  // ✅ MÉTODO: Obtener proyectos con cotizaciones
   getProyectosConCotizaciones(): number {
     return this.proyectosUnicos.filter(p => p.tieneCotizaciones).length;
   }
 
-  // ✅ NUEVO MÉTODO: Obtener total de cotizaciones
+  // ✅ MÉTODO: Obtener total de cotizaciones
   getTotalCotizaciones(): number {
     return this.proyectosUnicos.reduce((total, proyecto) => total + proyecto.totalCotizaciones, 0);
   }

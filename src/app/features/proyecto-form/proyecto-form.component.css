@@ -1,130 +1,19 @@
 .form-section {
-     padding: 1.5rem;
-     border: 1px solid #e9ecef;
-     border-radius: 0.5rem;
-     background: #f8f9fa;
-   }
-   
-   .section-title {
-     color: #2c3e50;
-     border-bottom: 2px solid #3498db;
-     padding-bottom: 0.5rem;
-     margin-bottom: 1.5rem;
-   }
-   
-   .partida-item {
-     border-left: 4px solid #3498db;
-     transition: all 0.3s ease;
-   }
-   
-   .partida-item:hover {
-     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-     transform: translateY(-2px);
-   }
-   
-   .budget-summary {
-     border: 2px solid #e9ecef;
-   }
-   
-   .budget-distribution {
-     border: 1px solid #dee2e6;
-   }
-   
-   .progress {
-     height: 8px;
-   }
-   
-   .progress-bar {
-     transition: width 0.3s ease;
-   }
-   
-   /* Estilos para formularios */
-   .form-control:read-only {
-     background-color: #f8f9fa;
-     opacity: 0.8;
-   }
-   
-   .invalid-feedback {
-     display: block;
-   }
-   
-   /* Responsive */
-   @media (max-width: 768px) {
-     .form-section {
-       padding: 1rem;
-     }
-     
-     .partida-item .card-body {
-       padding: 1rem;
-     }
-   }
-   
-   /* Animaciones */
-   .card {
-     transition: box-shadow 0.3s ease;
-   }
-   
-   .btn {
-     transition: all 0.2s ease;
-   }
-   
-   /* Mejoras visuales */
-   .input-group-text {
-     background-color: #e9ecef;
-     border-color: #ced4da;
-   }
-   
-   .alert {
-     border: none;
-     border-radius: 0.5rem;
-   }
-   
-   .bg-light {
-     background-color: #f8f9fa !important;
-   }
-   /* En proyecto-form.component.css */
-.estado-badge {
-  font-size: 0.8rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 15px;
-}
-.estado-badge {
-  font-size: 0.8rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 15px;
-  font-weight: 500;
-}
-
-/* Estilos para los diferentes modos */
-.modo-vista .form-control:read-only,
-.modo-vista .form-select:disabled {
-  background-color: #f8f9fa;
-  border-color: #e9ecef;
-  color: #6c757d;
-  cursor: not-allowed;
+  padding: 1.5rem;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  background: #f8f9fa;
 }
 
 .section-title {
-  color: #495057;
-  border-bottom: 2px solid #e9ecef;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
   padding-bottom: 0.5rem;
   margin-bottom: 1.5rem;
-  font-weight: 600;
-}
-
-.budget-distribution {
-  border-left: 4px solid #007bff;
-  background-color: #f8f9fa;
-}
-
-.budget-summary {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
 }
 
 .partida-item {
-  border-left: 4px solid #28a745;
+  border-left: 4px solid #3498db;
   transition: all 0.3s ease;
 }
 
@@ -133,61 +22,172 @@
   transform: translateY(-2px);
 }
 
-.form-section {
-  padding: 1.5rem;
-  border-radius: 8px;
-  background-color: #fff;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e9ecef;
+.budget-summary {
+  border: 2px solid #e9ecef;
+}
+
+.budget-distribution {
+  border: 1px solid #dee2e6;
 }
 
 .progress {
   height: 8px;
-  background-color: #e9ecef;
 }
 
 .progress-bar {
-  transition: width 0.6s ease;
+  transition: width 0.3s ease;
 }
 
-/* Estilos específicos para modo vista */
-:host-context(.modo-vista) .form-control:read-only {
+/* Estilos para formularios */
+.form-control:read-only {
   background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  color: #495057;
+  opacity: 0.8;
 }
 
-:host-context(.modo-vista) .form-select:disabled {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  color: #495057;
+.invalid-feedback {
+  display: block;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .section-title {
-    font-size: 1.1rem;
+  .form-section {
+    padding: 1rem;
   }
   
-  .budget-summary .row > div {
-    margin-bottom: 1rem;
-  }
-  
-  .partida-item .row > div {
-    margin-bottom: 1rem;
+  .partida-item .card-body {
+    padding: 1rem;
   }
 }
 
 /* Animaciones */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.card {
+  transition: box-shadow 0.3s ease;
 }
 
-.form-section {
-  animation: fadeIn 0.5s ease-out;
+.btn {
+  transition: all 0.2s ease;
+}
+
+/* Mejoras visuales */
+.input-group-text {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.alert {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+/* En proyecto-form.component.css */
+.estado-badge {
+font-size: 0.8rem;
+padding: 0.3rem 0.8rem;
+border-radius: 15px;
+}
+.estado-badge {
+font-size: 0.8rem;
+padding: 0.3rem 0.8rem;
+border-radius: 15px;
+font-weight: 500;
+}
+
+/* Estilos para los diferentes modos */
+.modo-vista .form-control:read-only,
+.modo-vista .form-select:disabled {
+background-color: #f8f9fa;
+border-color: #e9ecef;
+color: #6c757d;
+cursor: not-allowed;
+}
+
+.section-title {
+color: #495057;
+border-bottom: 2px solid #e9ecef;
+padding-bottom: 0.5rem;
+margin-bottom: 1.5rem;
+font-weight: 600;
+}
+
+.budget-distribution {
+border-left: 4px solid #007bff;
+background-color: #f8f9fa;
+}
+
+.budget-summary {
+background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+border: 1px solid #dee2e6;
+border-radius: 8px;
 }
 
 .partida-item {
-  animation: fadeIn 0.3s ease-out;
+border-left: 4px solid #28a745;
+transition: all 0.3s ease;
+}
+
+.partida-item:hover {
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+transform: translateY(-2px);
+}
+
+.form-section {
+padding: 1.5rem;
+border-radius: 8px;
+background-color: #fff;
+margin-bottom: 1.5rem;
+border: 1px solid #e9ecef;
+}
+
+.progress {
+height: 8px;
+background-color: #e9ecef;
+}
+
+.progress-bar {
+transition: width 0.6s ease;
+}
+
+/* Estilos específicos para modo vista */
+:host-context(.modo-vista) .form-control:read-only {
+background-color: #f8f9fa;
+border: 1px solid #e9ecef;
+color: #495057;
+}
+
+:host-context(.modo-vista) .form-select:disabled {
+background-color: #f8f9fa;
+border: 1px solid #e9ecef;
+color: #495057;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+.section-title {
+ font-size: 1.1rem;
+}
+
+.budget-summary .row > div {
+ margin-bottom: 1rem;
+}
+
+.partida-item .row > div {
+ margin-bottom: 1rem;
+}
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.form-section {
+animation: fadeIn 0.5s ease-out;
+}
+
+.partida-item {
+animation: fadeIn 0.3s ease-out;
 }
