@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Articulo } from '../../core/models/articulo.model';
-import { CreateSugerenciaRequest } from '../../core/models/articulo.model';
+import { Article } from '../../core/models/article.model';
+import { CreateSugerenciaRequest } from '../../core/models/article.model';
 import { ArticulosService } from '../../core/services/articulos.service';
 import { AuthService } from '../../auth/auth';
 
@@ -15,7 +15,7 @@ import { AuthService } from '../../auth/auth';
   styleUrls: ['./sugerencia-articulo-form.component.css']
 })
 export class SugerenciaArticuloFormComponent implements OnInit {
-  articulo: Partial<Articulo> = {
+  articulo: Partial<Article> = {
     nombre: '',
     precioReferencia: 0,
     partidaCodigo: ''
@@ -24,7 +24,7 @@ export class SugerenciaArticuloFormComponent implements OnInit {
   loading = false;
   error: string | null = null;
   success: string | null = null;
-  articulosExistentes: Articulo[] = [];
+  articulosExistentes: Article[] = [];
   partidas: {codigo: string, nombre: string}[] = [];
 
   constructor(

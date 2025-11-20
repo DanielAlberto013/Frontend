@@ -1,4 +1,4 @@
-export interface Articulo {
+export interface Article {
   id: string;
   nombre: string;
   precioReferencia: number;

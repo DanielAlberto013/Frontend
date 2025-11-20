@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { SugerenciaArticulo, ReviewSugerenciaRequest } from '../../core/models/articulo.model';
+import { SugerenciaArticulo, ReviewSugerenciaRequest } from '../../core/models/article.model';
 import { ArticulosService } from '../../core/services/articulos.service';
 import { AuthService } from '../../auth/auth';
 

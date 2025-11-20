@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
-import { Articulo } from '../../core/models/articulo.model';
+import { Article} from '../../core/models/article.model';
 import { ArticulosService } from '../../core/services/articulos.service';
 import { AuthService } from '../../auth/auth';
 
@@ -42,9 +42,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   templateUrl: './catalogo.component.html',
   styleUrls: ['./catalogo.component.css']
 })
-export class CatalogoComponent implements OnInit {
-  articulos: Articulo[] = [];
-  articulosFiltrados: Articulo[] = [];
+export class catalog implements OnInit {
+  articulos: Article[] = [];
+  articulosFiltrados: Article[] = [];
   partidas: string[] = [];
   partidasConNombre: {codigo: string, nombre: string}[] = [];
   loading = true;
@@ -165,7 +165,7 @@ export class CatalogoComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  desactivarArticulo(articulo: Articulo): void {
+  desactivarArticulo(articulo: Article): void {
     if (confirm(`¿Estás seguro de desactivar "${articulo.nombre}"?`)) {
       this.articulosService.desactivarArticulo(articulo.id).subscribe({
         next: () => {
@@ -194,11 +194,11 @@ export class CatalogoComponent implements OnInit {
     this.router.navigate(['/articulo/nuevo']);
   }
 
-  editarArticulo(articulo: Articulo): void {
+  editarArticulo(articulo: Article): void {
     this.router.navigate(['/articulo/editar', articulo.id]);
   }
 
-  agregarACotizacion(articulo: Articulo): void {
+  agregarACotizacion(articulo: Article): void {
     alert(`Artículo "${articulo.nombre}" agregado a cotización (funcionalidad en desarrollo)`);
   }
 }

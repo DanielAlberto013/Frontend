@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Articulo, CreateArticuloRequest, UpdateArticuloRequest } from '../../core/models/articulo.model';
+import { Article, CreateArticuloRequest, UpdateArticuloRequest } from '../../core/models/article.model';
 import { ArticulosService } from '../../core/services/articulos.service';
 import { AuthService } from '../../auth/auth';
 
@@ -14,7 +14,7 @@ import { AuthService } from '../../auth/auth';
   styleUrls: ['./articulo-form.component.css']
 })
 export class ArticuloFormComponent implements OnInit {
-  articulo: Articulo = {
+  articulo: Article = {
     id: '',
     nombre: '',
     precioReferencia: 0,
@@ -25,7 +25,7 @@ export class ArticuloFormComponent implements OnInit {
   isEditMode = false;
   loading = false;
   error: string | null = null;
-  articulosExistentes: Articulo[] = [];
+  articulosExistentes: Article[] = [];
 
   // Partidas dinámicas desde el servicio
   partidas: {codigo: string, nombre: string}[] = [];

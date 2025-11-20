@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, delay } from 'rxjs';
-import { Articulo, CreateArticuloRequest, UpdateArticuloRequest, SugerenciaArticulo, CreateSugerenciaRequest, ReviewSugerenciaRequest } from '../models/articulo.model';
+import { Article, CreateArticuloRequest, UpdateArticuloRequest, SugerenciaArticulo, CreateSugerenciaRequest, ReviewSugerenciaRequest } from '../models/article.model';
 import { ApiResponse } from '../models/user.model';
 
 @Injectable({
@@ -14,12 +14,12 @@ export class ArticulosService {
   constructor(private http: HttpClient) {}
 
   // 🔥 SIMULACIÓN - Obtener artículos del localStorage
-  private getArticulosFromStorage(): Articulo[] {
+  private getArticulosFromStorage(): Article[] {
     const data = localStorage.getItem(this.storageKey);
     return data ? JSON.parse(data) : this.articulosPredefinidos;
   }
 
-  private saveArticulosToStorage(articulos: Articulo[]): void {
+  private saveArticulosToStorage(articulos: Article[]): void {
     localStorage.setItem(this.storageKey, JSON.stringify(articulos));
   }
 
@@ -61,7 +61,7 @@ export class ArticulosService {
   }
 
   // 🔥 TODOS LOS ARTÍCULOS DEL EXCEL
-  private articulosPredefinidos: Articulo[] = [
+  private articulosPredefinidos: Article[] = [
     // PARTIDA 21101 - Papelería y Útiles
     { id: 'art_1', partidaCodigo: '21101', nombre: 'Charola artículada tamaño carta, 3 niveles, gris humo', precioReferencia: 450.00, activo: true, createdAt: new Date(), updatedAt: new Date() },
     { id: 'art_2', partidaCodigo: '21101', nombre: 'Sobres coin con solapa engomada kraft amarillo (paq. 50 piezas)', precioReferencia: 120.00, activo: true, createdAt: new Date(), updatedAt: new Date() },
@@ -70,7 +70,7 @@ export class ArticulosService {
   ];
 
   // Obtener todos los artículos activos
-  getArticulos(): Observable<ApiResponse<Articulo[]>> {
+  getArticulos(): Observable<ApiResponse<Article[]>> {
     const articulos = this.getArticulosFromStorage();
     const articulosActivos = articulos.filter(a => a.activo);
     
@@ -82,7 +82,7 @@ export class ArticulosService {
   }
 
   // Obtener artículos por partida
-  getArticulosPorPartida(partidaCodigo: string): Observable<ApiResponse<Articulo[]>> {
+  getArticulosPorPartida(partidaCodigo: string): Observable<ApiResponse<Article[]>> {
     const articulos = this.getArticulosFromStorage();
     const articulosFiltrados = articulos.filter(a => a.partidaCodigo === partidaCodigo && a.activo);
     
@@ -94,7 +94,7 @@ export class ArticulosService {
   }
 
   // Buscar artículos por nombre
-  buscarArticulos(termino: string): Observable<ApiResponse<Articulo[]>> {
+  buscarArticulos(termino: string): Observable<ApiResponse<Article[]>> {
     const articulos = this.getArticulosFromStorage();
     const articulosFiltrados = articulos.filter(a => 
       a.nombre.toLowerCase().includes(termino.toLowerCase()) && a.activo
@@ -108,12 +108,12 @@ export class ArticulosService {
   }
 
   // Crear nuevo artículo (solo admin/revisor)
-  createArticulo(articuloData: CreateArticuloRequest): Observable<ApiResponse<Articulo>> {
+  createArticulo(articuloData: CreateArticuloRequest): Observable<ApiResponse<Article>> {
     return new Observable(observer => {
       try {
         const articulos = this.getArticulosFromStorage();
         
-        const nuevoArticulo: Articulo = {
+        const nuevoArticulo: Article = {
           id: this.generateId(),
           ...articuloData,
           activo: true,
@@ -144,7 +144,7 @@ export class ArticulosService {
   }
 
   // Actualizar artículo (solo admin/revisor)
-  updateArticulo(id: string, articulo: UpdateArticuloRequest): Observable<ApiResponse<Articulo>> {
+  updateArticulo(id: string, articulo: UpdateArticuloRequest): Observable<ApiResponse<Article>> {
     const articulos = this.getArticulosFromStorage();
     const index = articulos.findIndex(a => a.id === id);
     
@@ -170,7 +170,7 @@ export class ArticulosService {
   }
 
   // Desactivar artículo (solo admin/revisor)
-  desactivarArticulo(id: string): Observable<ApiResponse<Articulo>> {
+  desactivarArticulo(id: string): Observable<ApiResponse<Article>> {
     const articulos = this.getArticulosFromStorage();
     const index = articulos.findIndex(a => a.id === id);
     
@@ -292,7 +292,7 @@ export class ArticulosService {
         
         // Si se aprueba, crear el artículo automáticamente
         if (reviewData.estado === 'APROBADA') {
-          const nuevoArticulo: Articulo = {
+          const nuevoArticulo: Article = {
             id: this.generateId(),
             nombre: sugerencia.nombre,
             precioReferencia: sugerencia.precioReferencia,

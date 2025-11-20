@@ -1,5 +1,5 @@
 // src/app/core/models/cotizacion.model.ts
-import { Articulo } from './articulo.model';
+import { Article } from './article.model';
 import { PartidaPresupuestal } from './partida.model';
 import { Proyecto } from './proyecto.model'; // ✅ AGREGAR
 
@@ -24,7 +24,7 @@ export interface Cotizacion {
 export interface CotizacionItem {
   id: string;
   articuloId: string;
-  articulo: Articulo;
+  articulo: Article;
   cantidad: number;
   precioUnitario: number;
   subtotal: number;

@@ -6,7 +6,7 @@ import { Cotizacion, CreateCotizacionRequest, UpdateCotizacionRequest, Cotizacio
 import { ApiResponse } from '../models/user.model';
 import { PartidasService } from './partidas.service';
 import { ArticulosService } from './articulos.service';
-import { Articulo } from '../models/articulo.model';
+import { Article } from '../models/article.model';
 
 @Injectable({
   providedIn: 'root'
@@ -140,7 +140,7 @@ export class CotizacionesService {
   }
 
   // ✅ MÉTODO AUXILIAR: Crear artículo por defecto si no se encuentra
-  private crearArticuloDefault(articuloId: string): Articulo {
+  private crearArticuloDefault(articuloId: string): Article {
     return {
       id: articuloId,
       nombre: 'Artículo no encontrado',

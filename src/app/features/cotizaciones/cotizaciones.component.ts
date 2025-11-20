@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
-import { Articulo } from '../../core/models/articulo.model';
+import { Article } from '../../core/models/article.model';
 import { Proyecto } from '../../core/models/proyecto.model';
 import { PartidaPresupuestal } from '../../core/models/partida.model';
 import { CotizacionItem, Cotizacion } from '../../core/models/cotizacion.model';
@@ -21,7 +21,7 @@ import { AuthService } from '../../auth/auth';
 })
 export class CotizacionesComponent implements OnInit {
   // Datos del sistema
-  articulos: Articulo[] = [];
+  articulos: Article[] = [];
   proyectos: Proyecto[] = [];
   partidas: PartidaPresupuestal[] = [];
   cotizacionesExistentes: Cotizacion[] = [];
@@ -247,7 +247,7 @@ export class CotizacionesComponent implements OnInit {
     return this.totalCarrito > this.calcularSubtotalMaximo();
   }
 
-  puedeAgregarArticulo(articulo: Articulo): boolean {
+  puedeAgregarArticulo(articulo: Article): boolean {
     if (!this.partidaSeleccionada) return false;
     
     if (articulo.partidaCodigo !== this.partidaSeleccionada.codigo) {
@@ -269,7 +269,7 @@ export class CotizacionesComponent implements OnInit {
     return presupuestoValido && subtotalValido;
   }
 
-  agregarAlCarrito(articulo: Articulo): void {
+  agregarAlCarrito(articulo: Article): void {
     if (!this.partidaSeleccionada) {
       alert('Primero selecciona una partida presupuestal');
       return;
@@ -442,7 +442,7 @@ export class CotizacionesComponent implements OnInit {
     return this.saldoRestante < 0;
   }
 
-  get articulosFiltrados(): Articulo[] {
+  get articulosFiltrados(): Article[] {
     let articulosFiltrados = this.articulos;
     
     if (this.partidaSeleccionada) {

@@ -17,7 +17,7 @@ import { AuthService } from '../../auth/auth';
   templateUrl: './proyecto-form.component.html',
   styleUrls: ['./proyecto-form.component.css']
 })
-export class ProyectoFormComponent implements OnInit {
+export class projectsform implements OnInit {
   proyectoForm: FormGroup;
   loading = false;
   error: string | null = null;

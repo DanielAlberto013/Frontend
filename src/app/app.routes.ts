@@ -25,7 +25,7 @@ export const appRoutes: Routes = [
   },
   { 
     path: 'catalogo', 
-    loadComponent: () => import('./features/catalogo/catalogo.component').then(m => m.CatalogoComponent),
+    loadComponent: () => import('./features/catalog/catalogo.component').then(m => m.catalog),
     canActivate: [AuthGuard] // ✅ PROTEGER CATÁLOGO
   },
   { 
@@ -45,17 +45,17 @@ export const appRoutes: Routes = [
   },
   { 
     path: 'proyectos/nuevo', 
-    loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.ProyectoFormComponent),
+    loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.projectsform),
     canActivate: [AuthGuard]
   },
   { 
     path: 'proyectos/editar/:id', 
-    loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.ProyectoFormComponent),
+    loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.projectsform),
     canActivate: [AuthGuard]
   },
   { 
     path: 'proyectos/:id', 
-    loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.ProyectoFormComponent),
+    loadComponent: () => import('./features/proyecto-form/proyecto-form.component').then(m => m.projectsform),
     canActivate: [AuthGuard]
   },
   { 
