@@ -196,12 +196,23 @@ export class ReportesComponent implements OnInit {
     }
   }
 
-  // ✅ MÉTODO: Generar todos los documentos finales en Excel
-  generarDocumentosFinalesExcel(): void {
-    if (this.documentosFinales.length > 0) {
-      this.documentoFinalService.generarExcelMultiplesDocumentos(this.documentosFinales);
-    } else {
-      alert('No hay documentos finales para exportar');
+  // ✅ MÉTODO MODIFICADO: Generar todos los documentos finales en Excel
+  async generarDocumentosFinalesExcel(): Promise<void> {
+    if (this.authService.isAdmin() || this.authService.isRevisor()) {
+      // Para admin/revisor: generar reporte consolidado por partidas
+      try {
+        await this.reportesService.generarExcelConsolidadoPorPartidas();
+      } catch (error) {
+        console.error('Error al generar reporte consolidado:', error);
+        alert('Error al generar el reporte consolidado');
+      }
+    } else if (this.authService.isDocente()) {
+      // Para docente: comportamiento original
+      if (this.documentosFinales.length > 0) {
+        this.documentoFinalService.generarExcelMultiplesDocumentos(this.documentosFinales);
+      } else {
+        alert('No hay documentos finales para exportar');
+      }
     }
   }
 

@@ -56,12 +56,25 @@ export class CotizacionesService {
     );
   }
 
-  // ✅ CORREGIDO: Crear cotización con items correctos
   createCotizacion(cotizacionData: CreateCotizacionRequest): Observable<ApiResponse<Cotizacion>> {
     return new Observable(observer => {
       try {
         const cotizaciones = this.getCotizacionesFromStorage();
         
+        // ✅ VERIFICAR SI YA EXISTE CUALQUIER COTIZACIÓN PARA ESTA PARTIDA EN EL MISMO PROYECTO
+        const cotizacionExistente = cotizaciones.find(c => 
+          c.proyectoId === cotizacionData.proyectoId &&
+          c.partidaCodigo === cotizacionData.partidaCodigo
+        );
+        
+        if (cotizacionExistente) {
+          observer.error({
+            success: false,
+            message: `Ya existe una cotización para la partida ${cotizacionData.partidaCodigo} en este proyecto. No puedes crear cotizaciones adicionales para esta partida.`
+          });
+          return;
+        }
+
         // Obtener artículos para enriquecer los items
         this.articulosService.getArticulos().subscribe({
           next: (articulosResponse) => {
@@ -83,7 +96,17 @@ export class CotizacionesService {
                 };
               });
 
-              const total = itemsEnriquecidos.reduce((sum, item) => sum + item.subtotal, 0);
+              // ✅ CALCULAR CON IVA EXACTO
+              const subtotal = itemsEnriquecidos.reduce((sum, item) => sum + item.subtotal, 0);
+              const iva = subtotal * 0.16; // IVA exacto 16%
+              const total = subtotal + iva;
+
+              console.log('🧮 Cálculos de cotización:', {
+                subtotal: subtotal,
+                iva: iva,
+                total: total,
+                ivaPorcentaje: '16%'
+              });
 
               const nuevaCotizacion: Cotizacion = {
                 id: this.generateId(),
@@ -91,6 +114,8 @@ export class CotizacionesService {
                 partidaCodigo: cotizacionData.partidaCodigo,
                 fuente: cotizacionData.fuente,
                 items: itemsEnriquecidos,
+                subtotal: subtotal,
+                iva: iva,
                 total: total,
                 estado: 'BORRADOR',
                 createdAt: new Date(),
@@ -100,7 +125,14 @@ export class CotizacionesService {
               cotizaciones.push(nuevaCotizacion);
               this.saveCotizacionesToStorage(cotizaciones);
 
-              console.log('✅ Cotización creada:', nuevaCotizacion);
+              console.log('✅ Cotización creada:', {
+                proyectoId: nuevaCotizacion.proyectoId,
+                partida: nuevaCotizacion.partidaCodigo,
+                fuente: nuevaCotizacion.fuente,
+                subtotal: nuevaCotizacion.subtotal,
+                iva: nuevaCotizacion.iva,
+                total: nuevaCotizacion.total
+              });
 
               // Enriquecer con datos de partida antes de retornar
               this.enriquecerCotizacionConPartida(nuevaCotizacion).subscribe(cotizacionEnriquecida => {
@@ -139,7 +171,6 @@ export class CotizacionesService {
     });
   }
 
-  // ✅ MÉTODO AUXILIAR: Crear artículo por defecto si no se encuentra
   private crearArticuloDefault(articuloId: string): Article {
     return {
       id: articuloId,
@@ -152,11 +183,19 @@ export class CotizacionesService {
     };
   }
 
-  // Los demás métodos permanecen igual...
   getCotizaciones(): Observable<ApiResponse<Cotizacion[]>> {
     const cotizaciones = this.getCotizacionesFromStorage();
     
-    console.log('📊 Cotizaciones en localStorage:', cotizaciones);
+    console.log('📊 Todas las cotizaciones en sistema:', cotizaciones.map(c => ({
+      id: c.id,
+      proyecto: c.proyectoId,
+      partida: c.partidaCodigo,
+      fuente: c.fuente,
+      estado: c.estado,
+      subtotal: c.subtotal,
+      iva: c.iva,
+      total: c.total
+    })));
 
     if (cotizaciones.length === 0) {
       return of({
@@ -192,7 +231,14 @@ export class CotizacionesService {
       misProyectosIds.includes(c.proyectoId)
     );
 
-    console.log('👤 Cotizaciones del docente:', misCotizaciones);
+    console.log('👤 Cotizaciones del docente:', misCotizaciones.map(c => ({
+      proyecto: c.proyectoId,
+      partida: c.partidaCodigo,
+      fuente: c.fuente,
+      subtotal: c.subtotal,
+      iva: c.iva,
+      total: c.total
+    })));
 
     if (misCotizaciones.length === 0) {
       return of({
@@ -219,7 +265,14 @@ export class CotizacionesService {
     const cotizaciones = this.getCotizacionesFromStorage();
     const cotizacionesProyecto = cotizaciones.filter(c => c.proyectoId === proyectoId);
 
-    console.log('📋 Cotizaciones del proyecto:', cotizacionesProyecto);
+    console.log('📋 Cotizaciones del proyecto', proyectoId + ':', cotizacionesProyecto.map(c => ({
+      partida: c.partidaCodigo,
+      fuente: c.fuente,
+      estado: c.estado,
+      subtotal: c.subtotal,
+      iva: c.iva,
+      total: c.total
+    })));
 
     if (cotizacionesProyecto.length === 0) {
       return of({
@@ -238,6 +291,42 @@ export class CotizacionesService {
         success: true,
         data: cotizacionesEnriquecidas,
         message: 'Cotizaciones del proyecto obtenidas exitosamente'
+      }))
+    );
+  }
+
+  // ✅ NUEVO: Obtener cotizaciones por partida en un proyecto específico
+  getCotizacionesByPartida(proyectoId: string, partidaCodigo: string): Observable<ApiResponse<Cotizacion[]>> {
+    const cotizaciones = this.getCotizacionesFromStorage();
+    const cotizacionesFiltradas = cotizaciones.filter(c => 
+      c.proyectoId === proyectoId && 
+      c.partidaCodigo === partidaCodigo
+    );
+
+    console.log('🔍 Buscando cotizaciones para:', { 
+      proyectoId, 
+      partidaCodigo, 
+      encontradas: cotizacionesFiltradas.length,
+      detalles: cotizacionesFiltradas.map(c => ({ fuente: c.fuente, estado: c.estado }))
+    });
+
+    if (cotizacionesFiltradas.length === 0) {
+      return of({
+        success: true,
+        data: [],
+        message: 'No hay cotizaciones para esta partida en este proyecto'
+      });
+    }
+
+    const cotizacionesEnriquecidas$ = cotizacionesFiltradas.map(cotizacion => 
+      this.enriquecerCotizacionConPartida(cotizacion)
+    );
+
+    return forkJoin(cotizacionesEnriquecidas$).pipe(
+      map(cotizacionesEnriquecidas => ({
+        success: true,
+        data: cotizacionesEnriquecidas,
+        message: 'Cotizaciones obtenidas exitosamente'
       }))
     );
   }
@@ -289,6 +378,80 @@ export class CotizacionesService {
       success: false,
       message: 'Cotización no encontrada'
     });
+  }
+
+  // ✅ MANTENIDO: Obtener cotizaciones por partida y fuente (para otros usos)
+  getCotizacionesByPartidaYFuente(proyectoId: string, partidaCodigo: string, fuente: 'FEDERAL' | 'ESTATAL'): Observable<ApiResponse<Cotizacion[]>> {
+    const cotizaciones = this.getCotizacionesFromStorage();
+    const cotizacionesFiltradas = cotizaciones.filter(c => 
+      c.proyectoId === proyectoId && 
+      c.partidaCodigo === partidaCodigo &&
+      c.fuente === fuente
+    );
+
+    console.log('🔍 Buscando cotizaciones específicas:', { 
+      proyectoId, 
+      partidaCodigo, 
+      fuente,
+      encontradas: cotizacionesFiltradas.length 
+    });
+
+    if (cotizacionesFiltradas.length === 0) {
+      return of({
+        success: true,
+        data: [],
+        message: 'No hay cotizaciones para esta combinación'
+      });
+    }
+
+    const cotizacionesEnriquecidas$ = cotizacionesFiltradas.map(cotizacion => 
+      this.enriquecerCotizacionConPartida(cotizacion)
+    );
+
+    return forkJoin(cotizacionesEnriquecidas$).pipe(
+      map(cotizacionesEnriquecidas => ({
+        success: true,
+        data: cotizacionesEnriquecidas,
+        message: 'Cotizaciones obtenidas exitosamente'
+      }))
+    );
+  }
+
+  // ✅ NUEVO: Calcular total utilizado por partida en proyecto específico
+  calcularTotalUtilizadoPorPartida(proyectoId: string, partidaCodigo: string): Observable<number> {
+    const cotizaciones = this.getCotizacionesFromStorage();
+    const cotizacionesFiltradas = cotizaciones.filter(c => 
+      c.proyectoId === proyectoId && 
+      c.partidaCodigo === partidaCodigo
+    );
+
+    const total = cotizacionesFiltradas.reduce((sum, cotizacion) => sum + cotizacion.total, 0);
+    console.log('💰 Total utilizado por partida en proyecto:', { 
+      proyectoId, 
+      partidaCodigo, 
+      total,
+      cotizaciones: cotizacionesFiltradas.length 
+    });
+    return of(total);
+  }
+
+  // ✅ MANTENIDO: Calcular total utilizado por fuente
+  calcularTotalUtilizadoPorFuente(proyectoId: string, partidaCodigo: string, fuente: 'FEDERAL' | 'ESTATAL'): Observable<number> {
+    const cotizaciones = this.getCotizacionesFromStorage();
+    const cotizacionesFiltradas = cotizaciones.filter(c => 
+      c.proyectoId === proyectoId && 
+      c.partidaCodigo === partidaCodigo &&
+      c.fuente === fuente
+    );
+
+    const total = cotizacionesFiltradas.reduce((sum, cotizacion) => sum + cotizacion.total, 0);
+    return of(total);
+  }
+
+  // ✅ NUEVO: Método para limpiar datos de prueba (solo desarrollo)
+  limpiarDatosPrueba(): void {
+    localStorage.removeItem(this.storageKey);
+    console.log('🧹 Datos de cotizaciones limpiados');
   }
 
   generarPdf(id: string): Observable<Blob> {

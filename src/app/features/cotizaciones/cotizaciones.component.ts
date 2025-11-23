@@ -1,9 +1,10 @@
+// src/app/cotizaciones/cotizaciones.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { Article } from '../../core/models/article.model';
-import { Proyecto } from '../../core/models/proyecto.model';
+import { project } from '../../core/models/proyecto.model';
 import { PartidaPresupuestal } from '../../core/models/partida.model';
 import { CotizacionItem, Cotizacion } from '../../core/models/cotizacion.model';
 import { ArticulosService } from '../../core/services/articulos.service';
@@ -22,12 +23,12 @@ import { AuthService } from '../../auth/auth';
 export class CotizacionesComponent implements OnInit {
   // Datos del sistema
   articulos: Article[] = [];
-  proyectos: Proyecto[] = [];
+  proyectos: project[] = [];
   partidas: PartidaPresupuestal[] = [];
   cotizacionesExistentes: Cotizacion[] = [];
   
   // Selecciones del usuario
-  proyectoSeleccionado: Proyecto | null = null;
+  proyectoSeleccionado: project | null = null;
   partidaSeleccionada: PartidaPresupuestal | null = null;
   fuenteSeleccionada: 'FEDERAL' | 'ESTATAL' = 'FEDERAL';
   
@@ -38,6 +39,10 @@ export class CotizacionesComponent implements OnInit {
   loading = true;
   error: string | null = null;
   searchTerm: string = '';
+
+  // PROPIEDADES PARA CONTROL DE FUENTE (SALDOS DEL PROYECTO)
+  saldoFederalDisponible: number = 0;
+  saldoEstatalDisponible: number = 0;
 
   constructor(
     private articulosService: ArticulosService,
@@ -119,32 +124,123 @@ export class CotizacionesComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO MÉTODO: Verificar si ya existe cotización para la partida seleccionada
+  // ✅ VERIFICAR SI YA EXISTE CUALQUIER COTIZACIÓN PARA ESTA PARTIDA
   get partidaTieneCotizacion(): boolean {
     if (!this.proyectoSeleccionado || !this.partidaSeleccionada) {
       return false;
     }
     
+    // ✅ VERIFICAR SOLO EN EL PROYECTO SELECCIONADO
     return this.cotizacionesExistentes.some(cotizacion => 
       cotizacion.proyectoId === this.proyectoSeleccionado!.id && 
       cotizacion.partidaCodigo === this.partidaSeleccionada!.codigo
     );
   }
 
-  // ✅ NUEVO MÉTODO: Obtener información de la cotización existente
+  // ✅ OBTENER INFORMACIÓN DE LA COTIZACIÓN EXISTENTE
   get infoCotizacionExistente(): string {
     if (!this.partidaTieneCotizacion) return '';
     
-    const cotizacion = this.cotizacionesExistentes.find(c => 
+    const cotizacionesPartida = this.cotizacionesExistentes.filter(c => 
       c.proyectoId === this.proyectoSeleccionado!.id && 
       c.partidaCodigo === this.partidaSeleccionada!.codigo
     );
     
-    if (cotizacion) {
-      return `Ya existe una cotización para esta partida (Estado: ${cotizacion.estado})`;
+    if (cotizacionesPartida.length > 0) {
+      const primeraCotizacion = cotizacionesPartida[0];
+      return `Ya existe una cotización para esta partida (${primeraCotizacion.fuente} - Estado: ${primeraCotizacion.estado})`;
     }
     
     return 'Ya existe una cotización para esta partida';
+  }
+
+  // ✅ CALCULAR SALDOS DEL PROYECTO
+  calcularSaldosPorFuente(): void {
+    if (!this.proyectoSeleccionado || !this.partidaSeleccionada) {
+      this.saldoFederalDisponible = 0;
+      this.saldoEstatalDisponible = 0;
+      return;
+    }
+
+    // OBTENER SALDOS DEL PROYECTO
+    const presupuestoFederalProyecto = this.proyectoSeleccionado.presupuestoFederal;
+    const presupuestoEstatalProyecto = this.proyectoSeleccionado.presupuestoEstatal;
+
+    // Obtener TODAS las cotizaciones del proyecto
+    const cotizacionesProyecto = this.cotizacionesExistentes.filter(
+      c => c.proyectoId === this.proyectoSeleccionado!.id
+    );
+
+    // Calcular total utilizado por cada fuente en TODO el proyecto
+    const totalFederalUtilizado = cotizacionesProyecto
+      .filter(c => c.fuente === 'FEDERAL')
+      .reduce((sum, c) => sum + c.total, 0);
+
+    const totalEstatalUtilizado = cotizacionesProyecto
+      .filter(c => c.fuente === 'ESTATAL')
+      .reduce((sum, c) => sum + c.total, 0);
+
+    // CALCULAR SALDOS DISPONIBLES DEL PROYECTO
+    this.saldoFederalDisponible = Math.max(0, presupuestoFederalProyecto - totalFederalUtilizado);
+    this.saldoEstatalDisponible = Math.max(0, presupuestoEstatalProyecto - totalEstatalUtilizado);
+  }
+
+  // ✅ OBTENER SALDO DISPONIBLE SEGÚN LA FUENTE SELECCIONADA
+  get saldoDisponiblePorFuente(): number {
+    return this.fuenteSeleccionada === 'FEDERAL' 
+      ? this.saldoFederalDisponible 
+      : this.saldoEstatalDisponible;
+  }
+
+  // ✅ CALCULAR EL LÍMITE REAL (MÍNIMO ENTRE PARTIDA Y FUENTE)
+  calcularLimiteReal(): number {
+    if (!this.partidaSeleccionada) return 0;
+    
+    const limitePartida = this.partidaSeleccionada.saldoDisponible;
+    const limiteFuente = this.saldoDisponiblePorFuente;
+    
+    // Retornar el menor de los dos límites
+    return Math.min(limitePartida, limiteFuente);
+  }
+
+  // ✅ CALCULAR IVA EXACTO (16% sobre el subtotal)
+  calcularIVAExacto(subtotal: number = this.totalCarrito): number {
+    return subtotal * 0.16;
+  }
+
+  // ✅ CALCULAR TOTAL CON IVA EXACTO
+  calcularTotalConIVA(subtotal: number = this.totalCarrito): number {
+    return subtotal + this.calcularIVAExacto(subtotal);
+  }
+
+  // ✅ CALCULAR SUBTOTAL MÁXIMO BASADO EN EL LÍMITE REAL
+  calcularSubtotalMaximoExacto(): number {
+    const limiteReal = this.calcularLimiteReal();
+    // Para que el total con IVA no exceda el límite: subtotal + (subtotal * 0.16) = límite
+    // subtotal * 1.16 = límite
+    // subtotal = límite / 1.16
+    const subtotalMaximo = limiteReal / 1.16;
+    return subtotalMaximo;
+  }
+
+  // ✅ CALCULAR IVA MÁXIMO BASADO EN EL LÍMITE REAL
+  calcularIVAMaximo(): number {
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
+    return this.calcularIVAExacto(subtotalMaximo);
+  }
+
+  // ✅ CAMBIAR FUENTE DE PRESUPUESTO
+  onFuenteChange(fuente: 'FEDERAL' | 'ESTATAL'): void {
+    this.fuenteSeleccionada = fuente;
+    this.carrito = []; // Limpiar carrito al cambiar fuente
+    this.calcularSaldosPorFuente();
+    
+    // MOSTRAR ALERTA SI LA PARTIDA YA TIENE COTIZACIÓN
+    if (this.partidaTieneCotizacion) {
+      setTimeout(() => {
+        alert(`⚠️ ATENCIÓN\n\nYa existe una cotización para la partida ${this.partidaSeleccionada?.codigo}.\n\nNo puedes crear ninguna cotización adicional para esta partida.`);
+      }, 100);
+    }
   }
 
   onProyectoChangeSeleccionado(event: any): void {
@@ -163,12 +259,13 @@ export class CotizacionesComponent implements OnInit {
     }
   }
 
-  onProyectoChange(proyecto: Proyecto): void {
+  onProyectoChange(proyecto: project): void {
     this.proyectoSeleccionado = proyecto;
     this.partidaSeleccionada = null;
     this.carrito = [];
+    this.fuenteSeleccionada = 'FEDERAL'; // Resetear a federal por defecto
     this.cargarPartidasProyecto(proyecto.id);
-    this.cargarCotizacionesProyecto(proyecto.id); // ✅ Cargar cotizaciones del proyecto
+    this.cargarCotizacionesProyecto(proyecto.id);
   }
 
   private cargarPartidasProyecto(proyectoId: string): void {
@@ -188,20 +285,29 @@ export class CotizacionesComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO MÉTODO: Cargar cotizaciones del proyecto
   private cargarCotizacionesProyecto(proyectoId: string): void {
     this.cotizacionesService.getCotizacionesByProyecto(proyectoId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.cotizacionesExistentes = response.data;
-          console.log('Cotizaciones existentes cargadas:', this.cotizacionesExistentes);
+          this.calcularSaldosPorFuente();
+          console.log('📋 Cotizaciones cargadas para proyecto:', {
+            proyectoId,
+            cotizaciones: this.cotizacionesExistentes.map(c => ({
+              partida: c.partidaCodigo,
+              fuente: c.fuente,
+              estado: c.estado
+            }))
+          });
         } else {
           this.cotizacionesExistentes = [];
+          this.calcularSaldosPorFuente();
         }
       },
       error: (error) => {
         console.error('Error al cargar cotizaciones:', error);
         this.cotizacionesExistentes = [];
+        this.calcularSaldosPorFuente();
       }
     });
   }
@@ -209,11 +315,13 @@ export class CotizacionesComponent implements OnInit {
   onPartidaChange(partida: PartidaPresupuestal): void {
     this.partidaSeleccionada = partida;
     this.carrito = [];
+    this.fuenteSeleccionada = 'FEDERAL'; // Resetear a federal por defecto
+    this.calcularSaldosPorFuente();
     
-    // ✅ Mostrar alerta si ya existe cotización para esta partida
+    // MOSTRAR ALERTA SI LA PARTIDA YA TIENE COTIZACIÓN
     if (this.partidaTieneCotizacion) {
       setTimeout(() => {
-        alert(`⚠️ ATENCIÓN\n\nYa existe una cotización para la partida ${partida.codigo}.\n\nNo puedes crear una nueva cotización para esta partida.`);
+        alert(`⚠️ ATENCIÓN\n\nYa existe una cotización para la partida ${partida.codigo}.\n\nNo puedes crear ninguna cotización adicional para esta partida.`);
       }, 100);
     }
   }
@@ -222,31 +330,12 @@ export class CotizacionesComponent implements OnInit {
     return this.articulosService.getNombrePartida(codigo);
   }
 
-  // Calcular el IVA incluido en el presupuesto
-  calcularIVAIncluido(): number {
-    if (!this.partidaSeleccionada) return 0;
-    
-    // Fórmula: IVA = Total * (0.16 / 1.16)
-    const total = this.saldoDisponible;
-    const iva = total * (0.16 / 1.16);
-    return iva;
-  }
-
-  // Calcular el subtotal máximo permitido (sin IVA)
-  calcularSubtotalMaximo(): number {
-    if (!this.partidaSeleccionada) return 0;
-    
-    // Fórmula: Subtotal = Total / 1.16
-    const total = this.saldoDisponible;
-    const subtotal = total / 1.16;
-    return subtotal;
-  }
-
-  // Verificar si el carrito excede el subtotal máximo
+  // ✅ VERIFICAR SI EL CARRITO EXCEDE EL SUBTOTAL MÁXIMO
   get haExcedidoSubtotalMaximo(): boolean {
-    return this.totalCarrito > this.calcularSubtotalMaximo();
+    return this.totalCarrito > this.calcularSubtotalMaximoExacto();
   }
 
+  // ✅ VERIFICAR SI PUEDE AGREGAR ARTÍCULO
   puedeAgregarArticulo(articulo: Article): boolean {
     if (!this.partidaSeleccionada) return false;
     
@@ -261,12 +350,16 @@ export class CotizacionesComponent implements OnInit {
       costoAdicional = itemExistente.precioUnitario;
     }
     
-    // ✅ VERIFICAR TANTO EL PRESUPUESTO TOTAL COMO EL SUBTOTAL MÁXIMO
-    const nuevoTotal = this.totalCarrito + costoAdicional;
-    const presupuestoValido = nuevoTotal <= this.saldoDisponible;
-    const subtotalValido = nuevoTotal <= this.calcularSubtotalMaximo();
+    const nuevoSubtotal = this.totalCarrito + costoAdicional;
+    const limiteReal = this.calcularLimiteReal();
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
     
-    return presupuestoValido && subtotalValido;
+    // ✅ USAR MÉTODOS CONSISTENTES PARA CÁLCULOS
+    const totalConIVANuevo = this.calcularTotalConIVA(nuevoSubtotal);
+    const dentroLimiteReal = totalConIVANuevo <= limiteReal;
+    const dentroSubtotalMaximo = nuevoSubtotal <= subtotalMaximo;
+    
+    return dentroLimiteReal && dentroSubtotalMaximo && !this.partidaTieneCotizacion;
   }
 
   agregarAlCarrito(articulo: Article): void {
@@ -275,7 +368,7 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
-    // ✅ VERIFICAR SI YA EXISTE COTIZACIÓN PARA ESTA PARTIDA
+    // VERIFICAR SI LA PARTIDA YA TIENE COTIZACIÓN
     if (this.partidaTieneCotizacion) {
       alert(`❌ NO PUEDES AGREGAR ARTÍCULOS\n\nYa existe una cotización para la partida ${this.partidaSeleccionada.codigo}.\n\nNo puedes modificar o crear una nueva cotización para esta partida.`);
       return;
@@ -287,27 +380,30 @@ export class CotizacionesComponent implements OnInit {
     }
 
     const subtotalItem = articulo.precioReferencia;
-    let nuevoTotal = this.totalCarrito;
+    let nuevoSubtotal = this.totalCarrito;
     const itemExistente = this.carrito.find(item => item.articuloId === articulo.id);
     
     if (itemExistente) {
-      nuevoTotal = this.totalCarrito - itemExistente.subtotal + (itemExistente.cantidad + 1) * itemExistente.precioUnitario;
+      nuevoSubtotal = this.totalCarrito - itemExistente.subtotal + (itemExistente.cantidad + 1) * itemExistente.precioUnitario;
     } else {
-      nuevoTotal = this.totalCarrito + subtotalItem;
+      nuevoSubtotal = this.totalCarrito + subtotalItem;
     }
 
-    // ✅ VERIFICAR PRESUPUESTO TOTAL
-    if (nuevoTotal > this.saldoDisponible) {
-      const saldoRestante = this.saldoDisponible - this.totalCarrito;
-      alert(`🚫 PRESUPUESTO INSUFICIENTE\n\nNo puedes agregar "${articulo.nombre}"\n\n💰 Saldo disponible en ${this.partidaSeleccionada.codigo}: $${this.saldoDisponible}\n🛒 Total actual del carrito: $${this.totalCarrito}\n💵 Saldo restante: $${saldoRestante}\n\nEste artículo costaría: $${subtotalItem}\n\n⚠️ Ajusta tu carrito o selecciona artículos más económicos.`);
+    // ✅ USAR MÉTODOS CONSISTENTES PARA CÁLCULOS
+    const limiteReal = this.calcularLimiteReal();
+    const totalConIVANuevo = this.calcularTotalConIVA(nuevoSubtotal);
+    
+    if (totalConIVANuevo > limiteReal) {
+      const saldoRestante = limiteReal - this.calcularTotalConIVA();
+      alert(`🚫 PRESUPUESTO INSUFICIENTE\n\nNo puedes agregar "${articulo.nombre}"\n\n💰 Límite disponible: $${limiteReal.toFixed(2)}\n🛒 Total actual con IVA: $${this.calcularTotalConIVA().toFixed(2)}\n💵 Saldo restante: $${saldoRestante.toFixed(2)}\n\nEste artículo costaría con IVA: $${this.calcularTotalConIVA(subtotalItem).toFixed(2)}\n\n⚠️ Ajusta tu carrito o selecciona artículos más económicos.`);
       return;
     }
 
-    // ✅ VERIFICAR SUBTOTAL MÁXIMO (IVA INCLUIDO)
-    const subtotalMaximo = this.calcularSubtotalMaximo();
-    if (nuevoTotal > subtotalMaximo) {
+    // ✅ VERIFICAR SUBTOTAL MÁXIMO EXACTO
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
+    if (nuevoSubtotal > subtotalMaximo) {
       const espacioDisponible = subtotalMaximo - this.totalCarrito;
-      alert(`🚫 EXCEDE EL SUBTOTAL MÁXIMO\n\nNo puedes agregar "${articulo.nombre}"\n\n📊 Subtotal máximo permitido (sin IVA): $${subtotalMaximo.toFixed(2)}\n🛒 Subtotal actual del carrito: $${this.totalCarrito}\n💵 Espacio disponible: $${espacioDisponible.toFixed(2)}\n\nEste artículo costaría: $${subtotalItem}\n\n💡 Recuerda: El IVA (16%) está incluido en tu presupuesto total de $${this.saldoDisponible}`);
+      alert(`🚫 EXCEDE EL SUBTOTAL MÁXIMO\n\nNo puedes agregar "${articulo.nombre}"\n\n📊 Subtotal máximo permitido (sin IVA): $${subtotalMaximo.toFixed(2)}\n🛒 Subtotal actual del carrito: $${this.totalCarrito.toFixed(2)}\n💵 Espacio disponible: $${espacioDisponible.toFixed(2)}\n\nEste artículo costaría: $${subtotalItem.toFixed(2)}\n\n💡 Recuerda: El IVA (16%) se agrega al subtotal.`);
       return;
     }
 
@@ -329,21 +425,21 @@ export class CotizacionesComponent implements OnInit {
     this.actualizarCarrito();
   }
 
-  // ✅ NUEVO MÉTODO: Disminuir cantidad en 1
+  // DISMINUIR CANTIDAD EN 1
   disminuirCantidad(item: CotizacionItem): void {
     if (item.cantidad > 1) {
       this.actualizarCantidad(item, item.cantidad - 1);
     }
   }
 
-  // ✅ NUEVO MÉTODO: Aumentar cantidad en 1
+  // AUMENTAR CANTIDAD EN 1
   aumentarCantidad(item: CotizacionItem): void {
     if (this.puedeAumentarCantidad(item)) {
       this.actualizarCantidad(item, item.cantidad + 1);
     }
   }
 
-  // ✅ NUEVO MÉTODO: Verificar si se puede aumentar la cantidad
+  // VERIFICAR SI SE PUEDE AUMENTAR LA CANTIDAD
   puedeAumentarCantidad(item: CotizacionItem): boolean {
     if (!this.partidaSeleccionada) return false;
     
@@ -351,11 +447,15 @@ export class CotizacionesComponent implements OnInit {
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
     
-    // ✅ VERIFICAR TANTO EL PRESUPUESTO TOTAL COMO EL SUBTOTAL MÁXIMO
-    const presupuestoValido = nuevoTotal <= this.saldoDisponible;
-    const subtotalValido = nuevoTotal <= this.calcularSubtotalMaximo();
+    const limiteReal = this.calcularLimiteReal();
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
     
-    return presupuestoValido && subtotalValido;
+    // ✅ USAR MÉTODOS CONSISTENTES PARA CÁLCULOS
+    const totalConIVANuevo = this.calcularTotalConIVA(nuevoTotal);
+    const presupuestoValido = totalConIVANuevo <= limiteReal;
+    const subtotalValido = nuevoTotal <= subtotalMaximo;
+    
+    return presupuestoValido && subtotalValido && !this.partidaTieneCotizacion;
   }
 
   eliminarDelCarrito(item: CotizacionItem): void {
@@ -373,17 +473,20 @@ export class CotizacionesComponent implements OnInit {
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
 
-    // ✅ VERIFICAR PRESUPUESTO TOTAL
-    if (nuevoTotal > this.saldoDisponible) {
-      const saldoRestante = this.saldoDisponible - totalSinEsteItem;
-      const maximoPermitido = Math.floor(saldoRestante / item.precioUnitario);
+    // ✅ USAR MÉTODOS CONSISTENTES PARA CÁLCULOS
+    const limiteReal = this.calcularLimiteReal();
+    const totalConIVANuevo = this.calcularTotalConIVA(nuevoTotal);
+    
+    if (totalConIVANuevo > limiteReal) {
+      const saldoRestante = limiteReal - this.calcularTotalConIVA(totalSinEsteItem);
+      const maximoPermitido = Math.floor(saldoRestante / this.calcularTotalConIVA(item.precioUnitario));
       
-      alert(`❌ No puedes aumentar la cantidad. Excederías el presupuesto disponible.\n\nSaldo disponible: $${this.saldoDisponible}\nMáximo permitido: ${maximoPermitido} unidades\nNuevo total: $${nuevoTotal}`);
+      alert(`❌ No puedes aumentar la cantidad. Excederías el límite disponible.\n\nLímite disponible: $${limiteReal.toFixed(2)}\nMáximo permitido: ${maximoPermitido} unidades\nNuevo total con IVA: $${totalConIVANuevo.toFixed(2)}`);
       return;
     }
 
-    // ✅ VERIFICAR SUBTOTAL MÁXIMO
-    const subtotalMaximo = this.calcularSubtotalMaximo();
+    // ✅ VERIFICAR SUBTOTAL MÁXIMO EXACTO
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
     if (nuevoTotal > subtotalMaximo) {
       const espacioDisponible = subtotalMaximo - totalSinEsteItem;
       const maximoPermitido = Math.floor(espacioDisponible / item.precioUnitario);
@@ -404,14 +507,17 @@ export class CotizacionesComponent implements OnInit {
     const totalSinEsteItem = this.totalCarrito - item.subtotal;
     const nuevoTotal = totalSinEsteItem + nuevoSubtotal;
 
-    // ✅ VERIFICAR PRESUPUESTO TOTAL
-    if (nuevoTotal > this.saldoDisponible) {
-      alert(`❌ No puedes aumentar el precio. Excederías el presupuesto disponible.\n\nSaldo disponible: $${this.saldoDisponible}\nNuevo total: $${nuevoTotal}`);
+    // ✅ USAR MÉTODOS CONSISTENTES PARA CÁLCULOS
+    const limiteReal = this.calcularLimiteReal();
+    const totalConIVANuevo = this.calcularTotalConIVA(nuevoTotal);
+    
+    if (totalConIVANuevo > limiteReal) {
+      alert(`❌ No puedes aumentar el precio. Excederías el límite disponible.\n\nLímite disponible: $${limiteReal.toFixed(2)}\nNuevo total con IVA: $${totalConIVANuevo.toFixed(2)}`);
       return;
     }
 
-    // ✅ VERIFICAR SUBTOTAL MÁXIMO
-    const subtotalMaximo = this.calcularSubtotalMaximo();
+    // ✅ VERIFICAR SUBTOTAL MÁXIMO EXACTO
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
     if (nuevoTotal > subtotalMaximo) {
       alert(`❌ No puedes aumentar el precio. Excederías el subtotal máximo permitido.\n\nSubtotal máximo: $${subtotalMaximo.toFixed(2)}\nNuevo subtotal: $${nuevoTotal.toFixed(2)}`);
       return;
@@ -430,12 +536,11 @@ export class CotizacionesComponent implements OnInit {
     return this.carrito.reduce((total, item) => total + item.subtotal, 0);
   }
 
-  get saldoDisponible(): number {
-    return this.partidaSeleccionada ? this.partidaSeleccionada.saldoDisponible : 0;
-  }
-
+  // ✅ CALCULAR SALDO RESTANTE CONSIDERANDO IVA
   get saldoRestante(): number {
-    return this.saldoDisponible - this.totalCarrito;
+    const limiteReal = this.calcularLimiteReal();
+    const totalConIVA = this.calcularTotalConIVA();
+    return limiteReal - totalConIVA;
   }
 
   get haExcedidoPresupuesto(): boolean {
@@ -472,9 +577,9 @@ export class CotizacionesComponent implements OnInit {
       return;
     }
 
-    // ✅ VERIFICAR SI YA EXISTE COTIZACIÓN PARA ESTA PARTIDA
+    // VERIFICAR SI LA PARTIDA YA TIENE COTIZACIÓN
     if (this.partidaTieneCotizacion) {
-      alert(`❌ NO PUEDES GENERAR COTIZACIÓN\n\nYa existe una cotización para la partida ${this.partidaSeleccionada.codigo}.\n\nNo puedes crear una nueva cotización para esta partida.`);
+      alert(`❌ NO PUEDES GENERAR COTIZACIÓN\n\nYa existe una cotización para la partida ${this.partidaSeleccionada.codigo}.\n\nNo puedes crear ninguna cotización adicional para esta partida.`);
       return;
     }
 
@@ -484,18 +589,18 @@ export class CotizacionesComponent implements OnInit {
     }
 
     if (this.haExcedidoPresupuesto) {
-      alert('Has excedido el presupuesto disponible. Ajusta tu cotización.');
+      alert('Has excedido el límite disponible. Ajusta tu cotización.');
       return;
     }
 
-    // ✅ VERIFICAR SUBTOTAL MÁXIMO
-    const subtotalMaximo = this.calcularSubtotalMaximo();
+    // VERIFICAR SUBTOTAL MÁXIMO EXACTO
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
     if (this.totalCarrito > subtotalMaximo) {
-      alert(`🚫 EXCEDE EL SUBTOTAL MÁXIMO\n\nTu carrito excede el subtotal máximo permitido.\n\n📊 Subtotal máximo permitido (sin IVA): $${subtotalMaximo.toFixed(2)}\n🛒 Subtotal actual del carrito: $${this.totalCarrito.toFixed(2)}\n\n💡 Recuerda: El IVA (16%) está incluido en tu presupuesto total de $${this.saldoDisponible}\n\nAjusta tu carrito para no exceder el límite.`);
+      alert(`🚫 EXCEDE EL SUBTOTAL MÁXIMO\n\nTu carrito excede el subtotal máximo permitido.\n\n📊 Subtotal máximo permitido (sin IVA): $${subtotalMaximo.toFixed(2)}\n🛒 Subtotal actual del carrito: $${this.totalCarrito.toFixed(2)}\n\n💡 Recuerda: El IVA (16%) se agrega al subtotal.\n\nAjusta tu carrito para no exceder el límite.`);
       return;
     }
 
-    const confirmacion = confirm(`¿Estás seguro de crear la cotización?\n\n📋 Resumen:\n• Proyecto: ${this.proyectoSeleccionado.nombre}\n• Partida: ${this.partidaSeleccionada.codigo}\n• Subtotal: $${this.totalCarrito.toFixed(2)}\n• IVA (16%): $${(this.totalCarrito * 0.16).toFixed(2)}\n• Total: $${(this.totalCarrito * 1.16).toFixed(2)}\n• Artículos: ${this.carrito.length}\n\n⚠️ ATENCIÓN: Una vez generada, NO podrás crear otra cotización para esta partida.\n\n¿Continuar?`);
+    const confirmacion = confirm(`¿Estás seguro de crear la cotización?\n\n📋 Resumen:\n• Proyecto: ${this.proyectoSeleccionado.nombre}\n• Partida: ${this.partidaSeleccionada.codigo}\n• Fuente: ${this.fuenteSeleccionada}\n• Subtotal: $${this.totalCarrito.toFixed(2)}\n• IVA (16%): $${this.calcularIVAExacto().toFixed(2)}\n• Total: $${this.calcularTotalConIVA().toFixed(2)}\n• Artículos: ${this.carrito.length}\n\n⚠️ ATENCIÓN: Una vez generada, NO podrás crear ninguna cotización adicional para esta partida.\n\n¿Continuar?`);
     
     if (!confirmacion) {
       return;
@@ -517,20 +622,18 @@ export class CotizacionesComponent implements OnInit {
     this.cotizacionesService.createCotizacion(cotizacionData).subscribe({
       next: (response) => {
         if (response.success) {
+          // ✅ ACTUALIZAR SALDO DE LA PARTIDA CON TOTAL CON IVA
           this.partidasService.actualizarSaldoPartida(
             this.partidaSeleccionada!.id, 
-            this.totalCarrito
+            this.calcularTotalConIVA() // Usar total con IVA para actualizar saldo
           ).subscribe({
             next: (saldoResponse) => {
               this.loading = false;
               if (saldoResponse.success) {
-                alert('✅ Cotización creada exitosamente y enviada a revisión\n\n💰 Saldo actualizado: $' + 
-                      (saldoResponse.data?.saldoDisponible || 0).toFixed(2) +
-                      '\n\n⚠️ IMPORTANTE: Ya no podrás crear otra cotización para la partida ' + 
-                      this.partidaSeleccionada!.codigo);
+                alert(`✅ Cotización ${this.fuenteSeleccionada.toLowerCase()} creada exitosamente y enviada a revisión\n\n💰 Saldo de partida actualizado: $${(saldoResponse.data?.saldoDisponible || 0).toFixed(2)}\n\n⚠️ IMPORTANTE: Ya no podrás crear ninguna cotización adicional para la partida ${this.partidaSeleccionada!.codigo}`);
                 this.carrito = [];
                 this.cargarPartidasProyecto(this.proyectoSeleccionado!.id);
-                this.cargarCotizacionesProyecto(this.proyectoSeleccionado!.id); // ✅ Recargar cotizaciones
+                this.cargarCotizacionesProyecto(this.proyectoSeleccionado!.id);
               } else {
                 alert('⚠️ Cotización creada, pero no se pudo actualizar el saldo: ' + saldoResponse.message);
                 this.carrito = [];
@@ -550,7 +653,7 @@ export class CotizacionesComponent implements OnInit {
       },
       error: (error) => {
         this.loading = false;
-        alert('❌ Error al crear la cotización');
+        alert('❌ Error al crear la cotización: ' + (error.message || 'Error desconocido'));
         console.error('Error:', error);
       }
     });
@@ -574,5 +677,33 @@ export class CotizacionesComponent implements OnInit {
         'Selecciona un proyecto aprobado para gestionar cotizaciones' : 
         'No hay proyectos aprobados en el sistema.';
     }
+  }
+
+  // ✅ MÉTODO PARA VERIFICAR CÁLCULOS (DEPURACIÓN)
+  verificarCalculos(): void {
+    if (!this.partidaSeleccionada) return;
+    
+    const limiteReal = this.calcularLimiteReal();
+    const subtotalMaximo = this.calcularSubtotalMaximoExacto();
+    const ivaMaximo = this.calcularIVAMaximo();
+    const totalCalculado = subtotalMaximo + ivaMaximo;
+    
+    console.log('🔍 VERIFICACIÓN DE CÁLCULOS:');
+    console.log('Límite real:', limiteReal);
+    console.log('Subtotal máximo:', subtotalMaximo);
+    console.log('IVA máximo (16%):', ivaMaximo);
+    console.log('Total calculado:', totalCalculado);
+    console.log('¿Coinciden?', Math.abs(totalCalculado - limiteReal) < 0.01);
+    
+    // Ejemplo con $30,000
+    const ejemploLimite = 30000;
+    const ejemploSubtotal = ejemploLimite / 1.16;
+    const ejemploIva = ejemploSubtotal * 0.16;
+    const ejemploTotal = ejemploSubtotal + ejemploIva;
+    
+    console.log('📐 EJEMPLO CON $30,000:');
+    console.log('Subtotal:', ejemploSubtotal);
+    console.log('IVA (16%):', ejemploIva);
+    console.log('Total:', ejemploTotal);
   }
 }

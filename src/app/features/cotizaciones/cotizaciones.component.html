@@ -1,3 +1,4 @@
+<!-- src/app/cotizaciones/cotizaciones.component.html -->
 <div class="container-fluid">
   <!-- Header -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -8,6 +9,8 @@
       </a>
       <div class="d-flex align-items-center">
         <span class="text-light me-3">🛒 Sistema de PreCotizaciones</span>
+        <!-- Botón temporal para depuración -->
+        <button (click)="verificarCalculos()" class="btn btn-warning btn-sm ms-2">🧮 Verificar Cálculos</button>
       </div>
     </div>
   </nav>
@@ -17,7 +20,7 @@
     <div class="row mb-4">
       <div class="col-md-12">
         <h1>🛒 PreCotizaciones</h1>
-        <p class="text-muted">Crea y gestiona tus precotizaciones por partida presupuestal</p>
+        <p class="text-muted">Crea y gestiona tus precotizaciones por partida presupuestal y fuente de financiamiento</p>
       </div>
     </div>
 
@@ -38,7 +41,7 @@
     <!-- Contenido Principal -->
     <div *ngIf="!loading && !error" class="row">
       
-      <!-- ✅ PANEL IZQUIERDO: Selección y Catálogo -->
+      <!-- PANEL IZQUIERDO: Selección y Catálogo -->
       <div class="col-md-8">
         
         <!-- Selección de Proyecto y Partida -->
@@ -74,7 +77,7 @@
                 >
                   <option value="">Selecciona una partida</option>
                   <option *ngFor="let partida of partidas" [value]="partida.id">
-                    {{ partida.codigo }} - {{ getNombrePartida(partida.codigo) }} (${{ partida.saldoDisponible | number:'1.2-2' }})
+                    {{ partida.codigo }} - {{ getNombrePartida(partida.codigo) }} (${{ partida.importeAsignado | number:'1.2-2' }})
                   </option>
                 </select>
               </div>
@@ -106,40 +109,127 @@
                 <div class="budget-info p-3 bg-light rounded">
                   <h6>💰 Información de Presupuesto - {{ partidaSeleccionada.codigo }}</h6>
                   
-                  <!-- ✅ NUEVA SECCIÓN: Advertencia de cotización existente -->
+                  <!-- SECCIÓN: Información de la Partida -->
+                  <div class="partida-info mb-3 p-3 bg-white rounded border">
+                    <h6 class="text-primary mb-2">📋 Partida Seleccionada</h6>
+                    <div class="row text-center">
+                      <div class="col-md-6">
+                        <strong>Importe de Partida:</strong><br>
+                        <span class="h5 text-info">${{ partidaSeleccionada.importeAsignado | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="col-md-6">
+                        <strong>Saldo de Partida:</strong><br>
+                        <span class="h5 text-success">${{ partidaSeleccionada.saldoDisponible | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- SECCIÓN: Selector de Fuente -->
+                  <div class="fuente-selector mb-3">
+                    <label class="form-label"><strong>Selecciona Fuente de Presupuesto:</strong></label>
+                    <div class="btn-group w-100" role="group">
+                      <button 
+                        type="button" 
+                        class="btn"
+                        [class]="fuenteSeleccionada === 'FEDERAL' ? 'btn-primary' : 'btn-outline-primary'"
+                        (click)="onFuenteChange('FEDERAL')"
+                        [disabled]="saldoFederalDisponible <= 0 || partidaTieneCotizacion"
+                      >
+                        🏛️ Federal 
+                        <span class="badge bg-light text-dark ms-1">
+                          ${{ saldoFederalDisponible | number:'1.2-2' }}
+                        </span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn"
+                        [class]="fuenteSeleccionada === 'ESTATAL' ? 'btn-success' : 'btn-outline-success'"
+                        (click)="onFuenteChange('ESTATAL')"
+                        [disabled]="saldoEstatalDisponible <= 0 || partidaTieneCotizacion"
+                      >
+                        🏠 Estatal
+                        <span class="badge bg-light text-dark ms-1">
+                          ${{ saldoEstatalDisponible | number:'1.2-2' }}
+                        </span>
+                      </button>
+                    </div>
+                    
+                    <!-- Información de saldos del PROYECTO -->
+                    <div class="row mt-2 text-center">
+                      <div class="col-md-6">
+                        <small class="text-muted">
+                          🏛️ Federal Disponible (Proyecto): 
+                          <strong [class]="saldoFederalDisponible > 0 ? 'text-primary' : 'text-danger'">
+                            ${{ saldoFederalDisponible | number:'1.2-2' }}
+                          </strong>
+                        </small>
+                      </div>
+                      <div class="col-md-6">
+                        <small class="text-muted">
+                          🏠 Estatal Disponible (Proyecto): 
+                          <strong [class]="saldoEstatalDisponible > 0 ? 'text-success' : 'text-danger'">
+                            ${{ saldoEstatalDisponible | number:'1.2-2' }}
+                          </strong>
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Advertencia de cotización existente -->
                   <div *ngIf="partidaTieneCotizacion" class="alert alert-warning mb-3">
                     <strong>⚠️ COTIZACIÓN EXISTENTE</strong><br>
                     <small>{{ infoCotizacionExistente }}</small>
+                    <br>
+                    <small class="text-danger"><strong>No puedes crear cotizaciones adicionales para esta partida.</strong></small>
                   </div>
 
-                  <!-- ✅ SECCIÓN: Cálculo de IVA incluido -->
+                  <!-- SECCIÓN: Cálculo de Límites -->
                   <div class="iva-calculation mb-3 p-3 bg-white rounded border">
-                    <h6 class="text-primary mb-3">📊 Presupuesto con IVA Incluido</h6>
+                    <h6 class="text-primary mb-3">
+                      📊 Límites para esta Cotización
+                    </h6>
                     <div class="row text-center">
                       <div class="col-md-4">
-                        <strong>Total Permitido:</strong><br>
-                        <span class="h6 text-success">${{ saldoDisponible | number:'1.2-2' }}</span>
+                        <strong>Límite Partida:</strong><br>
+                        <span class="h6 text-info">${{ partidaSeleccionada.saldoDisponible | number:'1.2-2' }}</span>
                       </div>
                       <div class="col-md-4">
-                        <strong>IVA (16%):</strong><br>
-                        <span class="h6 text-info">${{ calcularIVAIncluido() | number:'1.2-2' }}</span>
+                        <strong>Límite {{ fuenteSeleccionada }}:</strong><br>
+                        <span class="h6 text-warning">${{ saldoDisponiblePorFuente | number:'1.2-2' }}</span>
                       </div>
+                      <div class="col-md-4">
+                        <strong>Límite Real:</strong><br>
+                        <span class="h6 text-success">${{ calcularLimiteReal() | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+                    <div class="row text-center mt-2">
                       <div class="col-md-4">
                         <strong>Subtotal Máximo:</strong><br>
-                        <span class="h6 text-warning">${{ calcularSubtotalMaximo() | number:'1.2-2' }}</span>
+                        <span class="h6 text-warning">${{ calcularSubtotalMaximoExacto() | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="col-md-4">
+                        <strong>IVA Máximo (16%):</strong><br>
+                        <span class="h6 text-info">${{ calcularIVAMaximo() | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="col-md-4">
+                        <strong>Total Máximo:</strong><br>
+                        <span class="h6 text-success">${{ calcularLimiteReal() | number:'1.2-2' }}</span>
                       </div>
                     </div>
                     <div class="mt-2">
                       <small class="text-muted">
-                        💡 El presupuesto incluye IVA. Tu subtotal no debe exceder ${{ calcularSubtotalMaximo() | number:'1.2-2' }}
+                        💡 Desglose máximo: 
+                        <strong>${{ calcularSubtotalMaximoExacto() | number:'1.2-2' }}</strong> (subtotal) 
+                        + <strong>${{ calcularIVAMaximo() | number:'1.2-2' }}</strong> (IVA 16%) 
+                        = <strong>${{ calcularLimiteReal() | number:'1.2-2' }}</strong> (total)
                       </small>
                     </div>
                   </div>
 
                   <div class="row">
                     <div class="col-md-4">
-                      <strong>Saldo Disponible:</strong><br>
-                      <span class="text-success">${{ saldoDisponible | number:'1.2-2' }}</span>
+                      <strong>Saldo Disponible ({{ fuenteSeleccionada }}):</strong><br>
+                      <span class="text-success">${{ saldoDisponiblePorFuente | number:'1.2-2' }}</span>
                     </div>
                     <div class="col-md-4">
                       <strong>Total Carrito:</strong><br>
@@ -156,7 +246,7 @@
                   </div>
                   
                   <!-- Indicador de estado de presupuesto -->
-                  <div *ngIf="partidaSeleccionada" class="alert mt-3 mb-0" [class]="haExcedidoPresupuesto ? 'alert-danger' : (saldoRestante < 1000 ? 'alert-warning' : 'alert-success')">
+                  <div class="alert mt-3 mb-0" [class]="haExcedidoPresupuesto ? 'alert-danger' : (saldoRestante < 1000 ? 'alert-warning' : 'alert-success')">
                     <div class="d-flex justify-content-between align-items-center">
                       <div>
                         <strong *ngIf="!haExcedidoPresupuesto && saldoRestante >= 1000">✅ Presupuesto disponible</strong>
@@ -164,23 +254,23 @@
                         <strong *ngIf="haExcedidoPresupuesto">🚫 Presupuesto excedido</strong>
                         <br>
                         <small>
-                          Límite: ${{ saldoDisponible | number:'1.2-2' }} | 
-                          Usado: ${{ totalCarrito | number:'1.2-2' }} | 
+                          Límite Real: ${{ calcularLimiteReal() | number:'1.2-2' }} | 
+                          Usado: ${{ calcularTotalConIVA() | number:'1.2-2' }} | 
                           Restante: <span [class]="saldoRestante >= 0 ? 'text-success' : 'text-danger'">${{ saldoRestante | number:'1.2-2' }}</span>
                         </small>
                       </div>
                       <div *ngIf="saldoRestante === 0" class="text-danger">
-                        <small>💰 Presupuesto agotado</small>
+                        <small>💰 Límite agotado</small>
                       </div>
                     </div>
                   </div>
 
-                  <!-- ✅ Indicador de subtotal máximo -->
+                  <!-- Indicador de subtotal máximo -->
                   <div *ngIf="haExcedidoSubtotalMaximo" class="alert alert-danger mt-2">
                     <strong>🚫 EXCEDE SUBTOTAL MÁXIMO</strong><br>
                     <small>
-                      Tu carrito excede el subtotal máximo permitido de ${{ calcularSubtotalMaximo() | number:'1.2-2' }}<br>
-                      Ajusta tu carrito para incluir el IVA dentro del presupuesto.
+                      Tu carrito excede el subtotal máximo permitido de ${{ calcularSubtotalMaximoExacto() | number:'1.2-2' }}<br>
+                      Ajusta tu carrito para incluir el IVA dentro del límite.
                     </small>
                   </div>
                 </div>
@@ -211,10 +301,10 @@
             </small>
           </div>
 
-          <!-- ✅ Advertencia de cotización existente en catálogo -->
+          <!-- Advertencia de cotización existente en catálogo -->
           <div *ngIf="partidaTieneCotizacion" class="alert alert-warning mx-3 mt-3">
-            <strong>⚠️ COTIZACIÓN BLOQUEADA</strong><br>
-            <small>No puedes agregar artículos porque ya existe una cotización para esta partida.</small>
+            <strong>⚠️ PARTIDA BLOQUEADA</strong><br>
+            <small>Ya existe una cotización para esta partida. No puedes agregar artículos ni crear cotizaciones adicionales.</small>
           </div>
 
           <div class="card-body">
@@ -235,9 +325,9 @@
                       class="btn w-100 mt-2"
                       [class]="puedeAgregarArticulo(articulo) && !partidaTieneCotizacion ? 'btn-success' : 'btn-secondary'"
                       [disabled]="!puedeAgregarArticulo(articulo) || partidaTieneCotizacion"
-                      title="{{ partidaTieneCotizacion ? 'Cotización bloqueada para esta partida' : (!puedeAgregarArticulo(articulo) ? 'No hay suficiente presupuesto para este artículo' : 'Agregar al carrito') }}"
+                      title="{{ partidaTieneCotizacion ? 'Partida bloqueada - Ya existe cotización' : (!puedeAgregarArticulo(articulo) ? 'No hay suficiente presupuesto para este artículo' : 'Agregar al carrito') }}"
                     >
-                      {{ partidaTieneCotizacion ? '🔒 Bloqueado' : (puedeAgregarArticulo(articulo) ? '🛒 Agregar' : '🚫 Sin presupuesto') }}
+                      {{ partidaTieneCotizacion ? '🔒 Partida Bloqueada' : (puedeAgregarArticulo(articulo) ? '🛒 Agregar' : '🚫 Sin presupuesto') }}
                     </button>
 
                     <!-- Mensaje de sin presupuesto -->
@@ -247,10 +337,10 @@
                       </small>
                     </div>
 
-                    <!-- Mensaje de cotización bloqueada -->
+                    <!-- Mensaje de partida bloqueada -->
                     <div *ngIf="partidaTieneCotizacion" class="mt-1">
                       <small class="text-warning">
-                        🔒 Cotización existente
+                        🔒 Partida con cotización existente
                       </small>
                     </div>
                   </div>
@@ -286,11 +376,16 @@
 
       </div> <!-- Fin col-md-8 -->
 
-      <!-- ✅ PANEL DERECHO: Carrito de Compras -->
+      <!-- PANEL DERECHO: Carrito de Compras -->
       <div class="col-md-4">
         <div class="card sticky-top" style="top: 20px;">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">🛒 Carrito de Compras</h5>
+            <h5 class="mb-0">
+              🛒 Carrito de Compras 
+              <span class="badge" [class]="fuenteSeleccionada === 'FEDERAL' ? 'bg-primary' : 'bg-success'">
+                {{ fuenteSeleccionada }}
+              </span>
+            </h5>
             <button 
               *ngIf="carrito.length > 0 && !partidaTieneCotizacion"
               (click)="limpiarCarrito()"
@@ -306,10 +401,10 @@
               <small class="text-muted">Selecciona artículos del catálogo para agregarlos</small>
             </div>
 
-            <!-- ✅ Advertencia de cotización existente en carrito -->
+            <!-- Advertencia de cotización existente en carrito -->
             <div *ngIf="partidaTieneCotizacion && carrito.length > 0" class="alert alert-warning mb-3">
-              <strong>⚠️ COTIZACIÓN EXISTENTE</strong><br>
-              <small>No puedes modificar el carrito porque ya existe una cotización para esta partida.</small>
+              <strong>⚠️ PARTIDA BLOQUEADA</strong><br>
+              <small>Ya existe una cotización para esta partida. No puedes modificar el carrito ni generar cotizaciones adicionales.</small>
             </div>
 
             <!-- Items del Carrito -->
@@ -335,7 +430,7 @@
                       (click)="disminuirCantidad(item)"
                       class="btn btn-outline-warning btn-sm w-100"
                       [disabled]="item.cantidad <= 1 || partidaTieneCotizacion"
-                      title="{{ partidaTieneCotizacion ? 'Cotización bloqueada' : 'Disminuir cantidad' }}"
+                      title="{{ partidaTieneCotizacion ? 'Partida bloqueada' : 'Disminuir cantidad' }}"
                     >
                       ➖
                     </button>
@@ -360,7 +455,7 @@
                       (click)="aumentarCantidad(item)"
                       class="btn btn-outline-success btn-sm w-100"
                       [disabled]="!puedeAumentarCantidad(item) || partidaTieneCotizacion"
-                      title="{{ partidaTieneCotizacion ? 'Cotización bloqueada' : 'Aumentar cantidad' }}"
+                      title="{{ partidaTieneCotizacion ? 'Partida bloqueada' : 'Aumentar cantidad' }}"
                     >
                       ➕
                     </button>
@@ -390,20 +485,20 @@
 
               <!-- Resumen del Carrito -->
               <div class="carrito-total p-3 bg-light rounded">
-                <!-- ✅ Resumen con IVA -->
+                <!-- Resumen con IVA -->
                 <div class="iva-summary mb-3 p-2 bg-white rounded border">
-                  <h6 class="mb-2">📊 Resumen con IVA</h6>
+                  <h6 class="mb-2">📊 Resumen con IVA - {{ fuenteSeleccionada }}</h6>
                   <div class="d-flex justify-content-between small">
                     <span>Subtotal:</span>
                     <span>${{ totalCarrito | number:'1.2-2' }}</span>
                   </div>
                   <div class="d-flex justify-content-between small">
                     <span>IVA (16%):</span>
-                    <span>${{ (totalCarrito * 0.16) | number:'1.2-2' }}</span>
+                    <span>${{ calcularIVAExacto() | number:'1.2-2' }}</span>
                   </div>
                   <div class="d-flex justify-content-between">
                     <strong>Total con IVA:</strong>
-                    <strong>${{ (totalCarrito * 1.16) | number:'1.2-2' }}</strong>
+                    <strong>${{ calcularTotalConIVA() | number:'1.2-2' }}</strong>
                   </div>
                 </div>
 
@@ -415,8 +510,8 @@
                 </div>
                 
                 <div class="d-flex justify-content-between mb-2">
-                  <span>Saldo Disponible:</span>
-                  <span>${{ saldoDisponible | number:'1.2-2' }}</span>
+                  <span>Límite Real:</span>
+                  <span>${{ calcularLimiteReal() | number:'1.2-2' }}</span>
                 </div>
                 
                 <div class="d-flex justify-content-between">
@@ -426,17 +521,17 @@
                   </span>
                 </div>
 
-                <!-- ✅ Indicador de subtotal máximo -->
+                <!-- Indicador de subtotal máximo -->
                 <div class="d-flex justify-content-between mt-2">
                   <span>Subtotal Máximo:</span>
                   <span [class]="haExcedidoSubtotalMaximo ? 'text-danger' : 'text-success'">
-                    ${{ calcularSubtotalMaximo() | number:'1.2-2' }}
+                    ${{ calcularSubtotalMaximoExacto() | number:'1.2-2' }}
                   </span>
                 </div>
 
                 <!-- Advertencia de presupuesto -->
                 <div *ngIf="haExcedidoPresupuesto" class="alert alert-warning mt-2 mb-0">
-                  ⚠️ Ajusta tu carrito para no exceder el presupuesto
+                  ⚠️ Ajusta tu carrito para no exceder el límite
                 </div>
 
                 <!-- Advertencia de subtotal máximo -->
@@ -446,12 +541,12 @@
 
                 <!-- Indicador de presupuesto agotado -->
                 <div *ngIf="saldoRestante === 0 && !haExcedidoPresupuesto" class="alert alert-info mt-2 mb-0">
-                  ✅ Presupuesto completamente utilizado
+                  ✅ Límite completamente utilizado
                 </div>
 
-                <!-- ✅ Advertencia de cotización existente -->
+                <!-- Advertencia de cotización existente -->
                 <div *ngIf="partidaTieneCotizacion" class="alert alert-warning mt-2 mb-0">
-                  🔒 No puedes generar cotización - Ya existe una para esta partida
+                  🔒 No puedes generar cotización - Ya existe una cotización para esta partida
                 </div>
 
                 <!-- Botón Generar Cotización -->
@@ -461,16 +556,16 @@
                   class="btn w-100 mt-3"
                   [class]="(!proyectoSeleccionado || !partidaSeleccionada || carrito.length === 0 || haExcedidoPresupuesto || haExcedidoSubtotalMaximo || partidaTieneCotizacion) ? 'btn-secondary' : 'btn-primary'"
                 >
-                  {{ partidaTieneCotizacion ? '🔒 Cotización Bloqueada' : 
+                  {{ partidaTieneCotizacion ? '🔒 Partida Bloqueada' : 
                      (haExcedidoPresupuesto || haExcedidoSubtotalMaximo) ? '⚠️ Ajusta Presupuesto' : 
-                     '📄 Generar PreCotizaciones' }}
+                     '📄 Generar PreCotización ' + fuenteSeleccionada }}
                 </button>
 
-                <!-- ✅ Mensaje informativo sobre restricción -->
+                <!-- Mensaje informativo sobre restricción -->
                 <div *ngIf="!partidaTieneCotizacion" class="alert alert-info mt-2 mb-0">
                   <small>
                     ⚠️ <strong>IMPORTANTE:</strong> Solo puedes generar UNA cotización por partida.<br>
-                    Una vez generada, no podrás crear otra para esta partida.
+                    Una vez generada, no podrás crear ninguna cotización adicional para esta partida.
                   </small>
                 </div>
               </div>

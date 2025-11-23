@@ -250,252 +250,270 @@ export class DocumentoFinalService {
     return proyecto.presupuestoFederal >= proyecto.presupuestoEstatal ? 'FEDERAL' : 'ESTATAL';
   }
 
-  // ✅ GENERAR DOCUMENTO FINAL EN PDF CON FORMATO CHECKLIST SIMPLE Y SOBRANTE
-  generarPDFDocumentoFinal(documento: DocumentoFinal): void {
-    const doc = new jsPDF();
-    
-    // Configuración inicial
-    doc.setFont('helvetica');
-    let yPosition = 20;
+  // ✅ MÉTODO CORREGIDO: Generar PDF con mejor distribución de espacio
+generarPDFDocumentoFinal(documento: DocumentoFinal): void {
+  const doc = new jsPDF();
+  
+  // Configuración inicial
+  doc.setFont('helvetica');
+  let yPosition = 20;
 
-    // ========== ENCABEZADO INSTITUCIONAL ==========
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(47, 84, 150); // Azul ITESCAM
-    doc.text('INSTITUTO TECNOLÓGICO SUPERIOR DE CALKINÍ', 105, yPosition, { align: 'center' });
-    yPosition += 7;
-    doc.text('EN EL ESTADO DE CAMPECHE', 105, yPosition, { align: 'center' });
-    yPosition += 15;
+  // ========== ENCABEZADO INSTITUCIONAL ==========
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(47, 84, 150); // Azul ITESCAM
+  doc.text('INSTITUTO TECNOLÓGICO SUPERIOR DE CALKINÍ', 105, yPosition, { align: 'center' });
+  yPosition += 7;
 
-    // ========== TÍTULO DEL DOCUMENTO ==========
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text('DOCUMENTO FINAL DE PROYECTO APROBADO', 105, yPosition, { align: 'center' });
-    yPosition += 20;
 
-    // ========== INFORMACIÓN BÁSICA ==========
-    doc.setFontSize(10);
-    
-    // Docente
-    doc.setFont('helvetica', 'bold');
-    doc.text('DOCENTE:', 20, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(documento.docenteNombre, 50, yPosition);
-    yPosition += 8;
+  // ========== TÍTULO DEL DOCUMENTO ==========
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text('DOCUMENTO FINAL DE PROYECTO APROBADO', 105, yPosition, { align: 'center' });
+  yPosition += 20;
 
-    // Nombre del Proyecto
-    doc.setFont('helvetica', 'bold');
-    doc.text('PROYECTO:', 20, yPosition);
-    doc.setFont('helvetica', 'normal');
-    const proyectoLines = doc.splitTextToSize(documento.nombreProyecto, 140);
-    doc.text(proyectoLines, 50, yPosition);
-    yPosition += (proyectoLines.length * 5) + 5;
+  // ========== INFORMACIÓN BÁSICA ==========
+  doc.setFontSize(10);
+  
+  // Docente
+  doc.setFont('helvetica', 'bold');
+  doc.text('DOCENTE:', 20, yPosition);
+  doc.setFont('helvetica', 'normal');
+  doc.text(documento.docenteNombre, 50, yPosition);
+  yPosition += 8;
 
-    // Clave y Presupuesto
-    doc.setFont('helvetica', 'bold');
-    doc.text('CLAVE:', 20, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(documento.claveProyecto, 50, yPosition);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('PRESUPUESTO:', 100, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`$${documento.montoAprobado.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 135, yPosition);
-    yPosition += 15;
+  // Nombre del Proyecto
+  doc.setFont('helvetica', 'bold');
+  doc.text('PROYECTO:', 20, yPosition);
+  doc.setFont('helvetica', 'normal');
+  const proyectoLines = doc.splitTextToSize(documento.nombreProyecto, 140);
+  doc.text(proyectoLines, 50, yPosition);
+  yPosition += (proyectoLines.length * 5) + 5;
 
-    // Línea separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, yPosition, 190, yPosition);
-    yPosition += 10;
+  // Clave y Presupuesto
+  doc.setFont('helvetica', 'bold');
+  doc.text('CLAVE:', 20, yPosition);
+  doc.setFont('helvetica', 'normal');
+  doc.text(documento.claveProyecto, 50, yPosition);
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('PRESUPUESTO:', 100, yPosition);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`$${documento.montoAprobado.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 135, yPosition);
+  yPosition += 15;
 
-    // ========== LISTA DE ARTÍCULOS - FORMATO CHECKLIST ==========
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(47, 84, 150);
-    doc.text('LISTA DE ARTÍCULOS Y PRODUCTOS', 20, yPosition);
-    yPosition += 10;
+  // Línea separadora
+  doc.setDrawColor(200, 200, 200);
+  doc.line(20, yPosition, 190, yPosition);
+  yPosition += 10;
 
-    let itemNumber = 1;
+  // ========== LISTA DE ARTÍCULOS - FORMATO CHECKLIST ==========
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(47, 84, 150);
+  doc.text('LISTA DE ARTÍCULOS Y PRODUCTOS', 20, yPosition);
+  yPosition += 10;
 
-    // Recorrer todas las partidas y productos
-    documento.partidas.forEach(partida => {
-      // Título de la partida
-      if (yPosition > 250) {
-        doc.addPage();
-        yPosition = 20;
-      }
+  let itemNumber = 1;
 
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(80, 80, 80);
-      doc.text(`› ${partida.partidaCodigo} - ${partida.partidaNombre}`, 20, yPosition);
-      yPosition += 6;
-
-      // Productos de la partida
-      partida.productos.forEach(producto => {
-        if (yPosition > 270) {
-          doc.addPage();
-          yPosition = 20;
-        }
-
-        // Número de item
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 100);
-        doc.text(`${itemNumber}.`, 20, yPosition);
-
-        // Cantidad
-        doc.text(`${producto.cantidad}`, 30, yPosition);
-
-        // Descripción del producto
-        doc.setTextColor(0, 0, 0);
-        const descLines = doc.splitTextToSize(producto.descripcion, 90);
-        doc.text(descLines, 45, yPosition);
-
-        // Precio unitario
-        doc.setTextColor(80, 80, 80);
-        doc.text(`$${producto.precioUnitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 140, yPosition);
-
-        // Total del producto
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(`$${producto.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-
-        yPosition += (descLines.length * 4) + 4;
-        itemNumber++;
-      });
-
-      yPosition += 5;
-    });
-
-    // ========== TOTALES ==========
+  // Recorrer todas las partidas y productos
+  documento.partidas.forEach(partida => {
+    // Título de la partida
     if (yPosition > 250) {
       doc.addPage();
       yPosition = 20;
     }
 
-    // Línea separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, yPosition, 190, yPosition);
-    yPosition += 10;
-
-    // Subtotal
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SUBTOTAL:', 120, yPosition);
-    doc.text(`$${documento.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-    yPosition += 7;
-
-    // IVA
-    doc.text('IVA (16%):', 120, yPosition);
-    doc.text(`$${documento.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-    yPosition += 7;
-
-    // Total General
-    doc.setFontSize(11);
-    doc.setTextColor(47, 84, 150);
-    doc.text('TOTAL GENERAL:', 120, yPosition);
-    doc.text(`$${documento.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-    yPosition += 15;
-
-    // ========== ✅ NUEVA SECCIÓN: SOBRANTE O DINERO RESTANTE ==========
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, yPosition, 190, yPosition);
-    yPosition += 10;
-
-    // Calcular sobrante
-    const sobrante = documento.montoAprobado - documento.total;
-    const porcentajeUtilizado = (documento.total / documento.montoAprobado) * 100;
-    const porcentajeSobrante = 100 - porcentajeUtilizado;
-
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('RESUMEN FINANCIERO DEL PROYECTO', 20, yPosition);
-    yPosition += 10;
-
-    // Monto Aprobado
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('MONTO APROBADO TOTAL:', 20, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`$${documento.montoAprobado.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-    yPosition += 7;
-
-    // Total Utilizado
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL UTILIZADO:', 20, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`$${documento.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-    yPosition += 7;
-
-    // Porcentaje Utilizado
-    doc.setFont('helvetica', 'bold');
-    doc.text('PORCENTAJE UTILIZADO:', 20, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${porcentajeUtilizado.toFixed(1)}%`, 170, yPosition);
-    yPosition += 7;
-
-    // ✅ SOBRANTE / DINERO RESTANTE
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    if (sobrante > 0) {
-      doc.setTextColor(0, 128, 0); // Verde para sobrante positivo
-      doc.text('SOBRANTE DISPONIBLE:', 20, yPosition);
-      doc.text(`$${sobrante.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-      yPosition += 7;
-      
-      doc.setFontSize(10);
-      doc.setTextColor(0, 100, 0);
-      doc.text(`(${porcentajeSobrante.toFixed(1)}% del presupuesto disponible)`, 20, yPosition);
-    } else if (sobrante === 0) {
-      doc.setTextColor(47, 84, 150); // Azul para presupuesto exacto
-      doc.text('PRESUPUESTO COMPLETAMENTE UTILIZADO:', 20, yPosition);
-      doc.text(`$${sobrante.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-      yPosition += 7;
-      
-      doc.setFontSize(10);
-      doc.setTextColor(47, 84, 150);
-      doc.text('(No hay sobrante - Presupuesto agotado)', 20, yPosition);
-    } else {
-      doc.setTextColor(255, 0, 0); // Rojo para déficit
-      doc.text('DÉFICIT / EXCEDENTE:', 20, yPosition);
-      doc.text(`-$${Math.abs(sobrante).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
-      yPosition += 7;
-      
-      doc.setFontSize(10);
-      doc.setTextColor(255, 0, 0);
-      doc.text('(El proyecto excedió el presupuesto aprobado)', 20, yPosition);
-    }
-    yPosition += 15;
-
-    // ========== FIRMAS ==========
     doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-
-    // Firma del docente
-    doc.text('_________________________', 40, yPosition);
-    doc.text(documento.docenteNombre, 40, yPosition + 6);
-    doc.setFont('helvetica', 'normal');
-    doc.text('LÍDER DEL PROYECTO', 40, yPosition + 12);
-
-    // Firma del subdirector
-    doc.text('_________________________', 120, yPosition);
     doc.setFont('helvetica', 'bold');
-    doc.text('SUBDIRECTOR ACADÉMICO', 120, yPosition + 6);
-    doc.setFont('helvetica', 'normal');
-    doc.text('ITESCAM', 120, yPosition + 12);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`› ${partida.partidaCodigo} - ${partida.partidaNombre}`, 20, yPosition);
+    yPosition += 6;
 
-    // ========== PIE DE PÁGINA ==========
-    yPosition = 280;
+    // Productos de la partida
+    partida.productos.forEach(producto => {
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      // Número de item
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text(`${itemNumber}.`, 20, yPosition);
+
+      // Cantidad
+      doc.text(`${producto.cantidad}`, 30, yPosition);
+
+      // Descripción del producto
+      doc.setTextColor(0, 0, 0);
+      const descLines = doc.splitTextToSize(producto.descripcion, 90);
+      doc.text(descLines, 45, yPosition);
+
+      // Precio unitario
+      doc.setTextColor(80, 80, 80);
+      doc.text(`$${producto.precioUnitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 140, yPosition);
+
+      // Total del producto
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(`$${producto.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+
+      yPosition += (descLines.length * 4) + 4;
+      itemNumber++;
+    });
+
+    yPosition += 5;
+  });
+
+  // ========== TOTALES ==========
+  if (yPosition > 250) {
+    doc.addPage();
+    yPosition = 20;
+  }
+
+  // Línea separadora
+  doc.setDrawColor(200, 200, 200);
+  doc.line(20, yPosition, 190, yPosition);
+  yPosition += 10;
+
+  // Subtotal
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SUBTOTAL:', 120, yPosition);
+  doc.text(`$${documento.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+  yPosition += 7;
+
+  // IVA
+  doc.text('IVA (16%):', 120, yPosition);
+  doc.text(`$${documento.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+  yPosition += 7;
+
+  // Total General
+  doc.setFontSize(11);
+  doc.setTextColor(47, 84, 150);
+  doc.text('TOTAL GENERAL:', 120, yPosition);
+  doc.text(`$${documento.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+  yPosition += 15;
+
+  // ========== ✅ NUEVA SECCIÓN: SOBRANTE O DINERO RESTANTE ==========
+  doc.setDrawColor(200, 200, 200);
+  doc.line(20, yPosition, 190, yPosition);
+  yPosition += 10;
+
+  // Calcular sobrante
+  const sobrante = documento.montoAprobado - documento.total;
+  const porcentajeUtilizado = (documento.total / documento.montoAprobado) * 100;
+  const porcentajeSobrante = 100 - porcentajeUtilizado;
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('RESUMEN FINANCIERO DEL PROYECTO', 20, yPosition);
+  yPosition += 10;
+
+  // Monto Aprobado
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MONTO APROBADO TOTAL:', 20, yPosition);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`$${documento.montoAprobado.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+  yPosition += 7;
+
+  // Total Utilizado
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL UTILIZADO:', 20, yPosition);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`$${documento.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+  yPosition += 7;
+
+  // Porcentaje Utilizado
+  doc.setFont('helvetica', 'bold');
+  doc.text('PORCENTAJE UTILIZADO:', 20, yPosition);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${porcentajeUtilizado.toFixed(1)}%`, 170, yPosition);
+  yPosition += 7;
+
+  // ✅ SOBRANTE / DINERO RESTANTE
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  if (sobrante > 0) {
+    doc.setTextColor(0, 128, 0); // Verde para sobrante positivo
+    doc.text('SOBRANTE DISPONIBLE:', 20, yPosition);
+    doc.text(`$${sobrante.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+    yPosition += 7;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(0, 100, 0);
+    doc.text(`(${porcentajeSobrante.toFixed(1)}% del presupuesto disponible)`, 20, yPosition);
+  } else if (sobrante === 0) {
+    doc.setTextColor(47, 84, 150); // Azul para presupuesto exacto
+    doc.text('PRESUPUESTO COMPLETAMENTE UTILIZADO:', 20, yPosition);
+    doc.text(`$${sobrante.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+    yPosition += 7;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(47, 84, 150);
+    doc.text('(No hay sobrante - Presupuesto agotado)', 20, yPosition);
+  } else {
+    doc.setTextColor(255, 0, 0); // Rojo para déficit
+    doc.text('DÉFICIT / EXCEDENTE:', 20, yPosition);
+    doc.text(`-$${Math.abs(sobrante).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 170, yPosition);
+    yPosition += 7;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(255, 0, 0);
+    doc.text('(El proyecto excedió el presupuesto aprobado)', 20, yPosition);
+  }
+  yPosition += 20;
+
+  // ========== FIRMAS ==========
+  // ✅ CORRECCIÓN: Verificar si hay espacio suficiente para las firmas
+  if (yPosition > 220) {
+    doc.addPage();
+    yPosition = 20;
+  }
+
+  doc.setFontSize(9);
+  doc.setTextColor(0, 0, 0);
+
+  // Firma del docente
+  doc.text('_________________________', 40, yPosition);
+  doc.text(documento.docenteNombre, 40, yPosition + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.text('LÍDER DEL PROYECTO', 40, yPosition + 12);
+
+  // Firma del subdirector
+  doc.text('_________________________', 120, yPosition);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SUBDIRECTOR ACADÉMICO', 120, yPosition + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.text('ITESCAM', 120, yPosition + 12);
+
+  // ========== PIE DE PÁGINA ==========
+  // ✅ CORRECCIÓN: Ajustar posición del pie de página para que no choque
+  const piePaginaY = 280;
+  
+  // Verificar que el pie de página no choque con las firmas
+  if (yPosition + 30 > piePaginaY) {
+    // Si las firmas están muy abajo, mover el pie de página a una nueva página
+    doc.addPage();
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text('Documento generado electrónicamente - Sistema de Gestión de Proyectos ITESCAM', 105, yPosition, { align: 'center' });
-    doc.text(`Generado el: ${new Date().toLocaleDateString('es-MX')}`, 105, yPosition + 5, { align: 'center' });
-
-    // Guardar el PDF
-    doc.save(`DocumentoFinal-${documento.claveProyecto}.pdf`);
+    doc.text('Documento generado electrónicamente - Sistema de Gestión de Proyectos ITESCAM', 105, 20, { align: 'center' });
+    doc.text(`Generado el: ${new Date().toLocaleDateString('es-MX')}`, 105, 27, { align: 'center' });
+  } else {
+    // Si hay espacio suficiente, poner el pie de página en su posición normal
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Documento generado electrónicamente - Sistema de Gestión de Proyectos ITESCAM', 105, piePaginaY, { align: 'center' });
+    doc.text(`Generado el: ${new Date().toLocaleDateString('es-MX')}`, 105, piePaginaY + 5, { align: 'center' });
   }
+
+  // Guardar el PDF
+  doc.save(`DocumentoFinal-${documento.claveProyecto}.pdf`);
+}
 
   // ✅ GENERAR DOCUMENTO FINAL EN EXCEL CON DISEÑO FORMAL Y PROFESIONAL
   async generarExcelDocumentoFinal(documento: DocumentoFinal): Promise<void> {

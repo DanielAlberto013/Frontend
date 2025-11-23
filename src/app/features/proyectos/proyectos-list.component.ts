@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { Proyecto } from '../../core/models/proyecto.model';
+import { project } from '../../core/models/proyecto.model';
 import { ProyectosService } from '../../core/services/proyectos.service';
 import { AuthService } from '../../auth/auth';
 
@@ -40,8 +40,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   styleUrls: ['./proyectos-list.component.css']
 })
 export class ProyectosListComponent implements OnInit, OnDestroy {
-  proyectos: Proyecto[] = [];
-  proyectosFiltrados: Proyecto[] = [];
+  proyectos: project[] = [];
+  proyectosFiltrados: project[] = [];
   loading = true;
   error: string | null = null;
 
@@ -169,7 +169,7 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/proyectos/nuevo']);
   }
 
-  verDetalle(proyecto: Proyecto): void {
+  verDetalle(proyecto: project): void {
     // ✅ CORREGIDO: Solo verificación básica de autenticación
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/auth/login']);
@@ -180,7 +180,7 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/proyectos', proyecto.id]);
   }
 
-  editarProyecto(proyecto: Proyecto): void {
+  editarProyecto(proyecto: project): void {
     // ✅ VERIFICAR que el usuario esté autenticado y pueda editar
     console.log('🔍 Intentando editar proyecto:', proyecto);
     console.log('🔍 Usuario autenticado:', this.authService.isLoggedIn());
@@ -206,7 +206,7 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Enviar proyecto a revisión (docente)
-  enviarARevision(proyecto: Proyecto): void {
+  enviarARevision(proyecto: project): void {
     const confirmacion = confirm(`¿Estás seguro de enviar el proyecto "${proyecto.nombre}" a revisión?\n\nUna vez enviado, no podrás editarlo hasta que sea revisado.`);
     
     if (confirmacion) {
@@ -230,7 +230,7 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Eliminar proyecto
-  eliminarProyecto(proyecto: Proyecto): void {
+  eliminarProyecto(proyecto: project): void {
     const confirmacion = confirm(`¿Estás seguro de que quieres eliminar el proyecto "${proyecto.nombre}"?\n\nEsta acción no se puede deshacer.`);
     
     if (confirmacion) {
@@ -254,7 +254,7 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Aprobar proyecto (admin/revisor)
-  aprobarProyecto(proyecto: Proyecto): void {
+  aprobarProyecto(proyecto: project): void {
     const confirmacion = confirm(`¿Estás seguro de aprobar el proyecto "${proyecto.nombre}"?\n\nUna vez aprobado, el docente podrá realizar cotizaciones.`);
     
     if (confirmacion) {
@@ -278,7 +278,7 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Rechazar proyecto (admin/revisor)
-  rechazarProyecto(proyecto: Proyecto): void {
+  rechazarProyecto(proyecto: project): void {
     const confirmacion = confirm(`¿Estás seguro de rechazar el proyecto "${proyecto.nombre}"?\n\nEl docente deberá contactarte para más información.`);
     
     if (confirmacion) {
@@ -302,22 +302,22 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Verificar si se puede editar (solo borradores)
-  puedeEditar(proyecto: Proyecto): boolean {
+  puedeEditar(proyecto: project): boolean {
     return this.authService.isDocente() && proyecto.estado === 'BORRADOR';
   }
 
   // ✅ Verificar si se puede enviar a revisión (solo borradores)
-  puedeEnviarARevision(proyecto: Proyecto): boolean {
+  puedeEnviarARevision(proyecto: project): boolean {
     return this.authService.isDocente() && proyecto.estado === 'BORRADOR';
   }
 
   // ✅ Verificar si se puede usar en cotizaciones (solo aprobados)
-  puedeUsarEnCotizaciones(proyecto: Proyecto): boolean {
+  puedeUsarEnCotizaciones(proyecto: project): boolean {
     return proyecto.estado === 'APROBADO';
   }
 
   // ✅ Obtener mensaje informativo según el estado
-  getMensajeEstado(proyecto: Proyecto): string {
+  getMensajeEstado(proyecto: project): string {
     switch (proyecto.estado) {
       case 'BORRADOR':
         return 'Puedes editar y enviar a revisión';
@@ -333,7 +333,7 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Obtener clase CSS para el mensaje de estado
-  getMensajeEstadoClass(proyecto: Proyecto): string {
+  getMensajeEstadoClass(proyecto: project): string {
     switch (proyecto.estado) {
       case 'BORRADOR': return 'mensaje-borrador';
       case 'EN_REVISION': return 'mensaje-revision';
@@ -382,11 +382,11 @@ export class ProyectosListComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Método para obtener información del docente de forma segura
-  getNombreDocente(proyecto: Proyecto): string {
+  getNombreDocente(proyecto: project): string {
     return proyecto.docente?.nombre || 'N/A';
   }
 
-  getEmailDocente(proyecto: Proyecto): string {
+  getEmailDocente(proyecto: project): string {
     return proyecto.docente?.email || 'N/A';
   }
 }

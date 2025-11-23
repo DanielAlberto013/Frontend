@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { Proyecto, CreateProyectoRequest } from '../../core/models/proyecto.model';
+import { project, CreateProyectoRequest } from '../../core/models/proyecto.model';
 import { PartidaPresupuestal } from '../../core/models/partida.model';
 import { ProyectosService } from '../../core/services/proyectos.service';
 import { PartidasService } from '../../core/services/partidas.service';
@@ -26,7 +26,7 @@ export class projectsform implements OnInit {
   esEdicion = false;
   esVista = false;
   proyectoId: string | null = null;
-  proyecto: Proyecto | null = null;
+  proyecto: project | null = null;
 
   partidasReales: {codigo: string, nombre: string, descripcion: string}[] = [];
 
@@ -236,7 +236,7 @@ export class projectsform implements OnInit {
     return true;
   }
 
-  cargarDatosEnFormulario(proyecto: Proyecto): void {
+  cargarDatosEnFormulario(proyecto: project): void {
     this.proyectoForm.patchValue({
       nombre: proyecto.nombre,
       descripcion: proyecto.descripcion,

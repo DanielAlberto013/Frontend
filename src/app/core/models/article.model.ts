@@ -21,7 +21,7 @@ export interface UpdateArticuloRequest {
   activo?: boolean;
 }
 
-// 🔥 NUEVOS MODELOS PARA SUGERENCIAS
+// 🔥 NUEVOS MODELOS PARA SUGERENCIAS - ACTUALIZADOS
 export interface SugerenciaArticulo {
   id: string;
   nombre: string;
@@ -35,6 +35,11 @@ export interface SugerenciaArticulo {
   adminRevisorId?: string;
   comentarios?: string;
   articuloId?: string;
+  // 🔥 NUEVO: Propiedades para tracking de cambios
+  nombreFinal?: string;
+  precioFinal?: number;
+  partidaFinal?: string;
+  datosEditados?: boolean;
 }
 
 export interface CreateSugerenciaRequest {
@@ -49,4 +54,8 @@ export interface ReviewSugerenciaRequest {
   estado: 'APROBADA' | 'RECHAZADA';
   adminRevisorId: string;
   comentarios?: string;
+  // 🔥 NUEVO: Propiedades para edición
+  nombreEditado?: string;
+  precioEditado?: number;
+  partidaEditada?: string;
 }

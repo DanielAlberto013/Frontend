@@ -60,7 +60,7 @@ export class PartidasService {
         const nuevaPartida: PartidaPresupuestal = {
           id: this.generateId(),
           ...partida,
-          saldoDisponible: partida.importeAsignado, // ✅ Saldo inicial igual al importe asignado
+          saldoDisponible: partida.importeAsignado,
           createdAt: new Date(),
           updatedAt: new Date()
         };
@@ -137,7 +137,49 @@ export class PartidasService {
     });
   }
 
-  // ✅ MÉTODO: Actualizar saldo después de crear cotización
+  // ✅ NUEVO: Validar saldo por fuente específica
+  validarSaldoPorFuente(partidaId: string, fuente: 'FEDERAL' | 'ESTATAL', montoRequerido: number): Observable<ApiResponse<{ suficiente: boolean; saldoActual: number }>> {
+    const partidas = this.getPartidasFromStorage();
+    const partida = partidas.find(p => p.id === partidaId);
+    
+    if (partida) {
+      // Calcular saldo disponible para la fuente específica
+      const cotizaciones = JSON.parse(localStorage.getItem('cotizaciones_data') || '[]');
+      const cotizacionesPartida = cotizaciones.filter((c: any) => 
+        c.partidaCodigo === partida.codigo && c.proyectoId === partida.proyectoId
+      );
+      
+      const totalFederalUtilizado = cotizacionesPartida
+        .filter((c: any) => c.fuente === 'FEDERAL')
+        .reduce((sum: number, c: any) => sum + c.total, 0);
+
+      const totalEstatalUtilizado = cotizacionesPartida
+        .filter((c: any) => c.fuente === 'ESTATAL')
+        .reduce((sum: number, c: any) => sum + c.total, 0);
+
+      const saldoPorFuente = fuente === 'FEDERAL' 
+        ? (partida.importeAsignado * 0.5) - totalFederalUtilizado
+        : (partida.importeAsignado * 0.5) - totalEstatalUtilizado;
+
+      const suficiente = saldoPorFuente >= montoRequerido;
+      
+      return of({
+        success: true,
+        data: {
+          suficiente: suficiente,
+          saldoActual: saldoPorFuente
+        },
+        message: suficiente ? 'Saldo suficiente' : 'Saldo insuficiente'
+      });
+    }
+    
+    return of({
+      success: false,
+      message: 'Partida no encontrada'
+    });
+  }
+
+  // Actualizar saldo después de crear cotización
   actualizarSaldoPartida(partidaId: string, montoUtilizado: number): Observable<ApiResponse<PartidaPresupuestal>> {
     const partidas = this.getPartidasFromStorage();
     const index = partidas.findIndex(p => p.id === partidaId);
@@ -169,7 +211,7 @@ export class PartidasService {
     });
   }
 
-  // ✅ MÉTODO: Obtener partida por código y proyecto
+  // Obtener partida por código y proyecto
   getPartidaByCodigo(proyectoId: string, codigo: string): Observable<ApiResponse<PartidaPresupuestal>> {
     const partidas = this.getPartidasFromStorage();
     const partida = partidas.find(p => p.proyectoId === proyectoId && p.codigo === codigo);
@@ -181,7 +223,7 @@ export class PartidasService {
     });
   }
 
-  // ✅ MÉTODO: Eliminar partidas de un proyecto (para cuando se elimine el proyecto)
+  // Eliminar partidas de un proyecto
   eliminarPartidasDeProyecto(proyectoId: string): Observable<ApiResponse<void>> {
     const partidas = this.getPartidasFromStorage();
     const partidasFiltradas = partidas.filter(p => p.proyectoId !== proyectoId);
@@ -200,13 +242,12 @@ export class PartidasService {
     });
   }
 
-  // ✅ MÉTODO CORREGIDO: Eliminar partidas por proyecto (para actualización)
+  // Eliminar partidas por proyecto (para actualización)
   deletePartidasByProyecto(proyectoId: string): Observable<ApiResponse<void>> {
     try {
       const partidas = this.getPartidasFromStorage();
       const partidasFiltradas = partidas.filter(p => p.proyectoId !== proyectoId);
       
-      // Si se eliminaron partidas, guardar los cambios
       if (partidasFiltradas.length < partidas.length) {
         this.savePartidasToStorage(partidasFiltradas);
         return of({
@@ -214,7 +255,6 @@ export class PartidasService {
           message: 'Partidas eliminadas exitosamente'
         }).pipe(delay(500));
       } else {
-        // No había partidas para eliminar, pero se considera éxito
         return of({
           success: true,
           message: 'No se encontraron partidas para eliminar'
@@ -228,7 +268,7 @@ export class PartidasService {
     }
   }
 
-  // ✅ MÉTODO NUEVO: Eliminar partida específica
+  // Eliminar partida específica
   deletePartida(id: string): Observable<ApiResponse<void>> {
     const partidas = this.getPartidasFromStorage();
     const partidasFiltradas = partidas.filter(p => p.id !== id);
@@ -247,7 +287,7 @@ export class PartidasService {
     });
   }
 
-  // ✅ MÉTODO NUEVO: Obtener todas las partidas (para admin)
+  // Obtener todas las partidas (para admin)
   getAllPartidas(): Observable<ApiResponse<PartidaPresupuestal[]>> {
     const partidas = this.getPartidasFromStorage();
     return of({
@@ -257,7 +297,7 @@ export class PartidasService {
     });
   }
 
-  // ✅ MÉTODO NUEVO: Obtener resumen de partidas por proyecto
+  // Obtener resumen de partidas por proyecto
   getResumenPartidasByProyecto(proyectoId: string): Observable<ApiResponse<{
     totalAsignado: number;
     totalUtilizado: number;
@@ -281,5 +321,33 @@ export class PartidasService {
       },
       message: 'Resumen de partidas obtenido exitosamente'
     });
+  }
+
+  // ✅ NUEVO: Calcular saldos por fuente para una partida
+  calcularSaldosPorFuente(proyectoId: string, partidaCodigo: string): Observable<{ federal: number; estatal: number }> {
+    const partidas = this.getPartidasFromStorage();
+    const partida = partidas.find(p => p.proyectoId === proyectoId && p.codigo === partidaCodigo);
+    
+    if (!partida) {
+      return of({ federal: 0, estatal: 0 });
+    }
+
+    const cotizaciones = JSON.parse(localStorage.getItem('cotizaciones_data') || '[]');
+    const cotizacionesPartida = cotizaciones.filter((c: any) => 
+      c.proyectoId === proyectoId && c.partidaCodigo === partidaCodigo
+    );
+
+    const totalFederalUtilizado = cotizacionesPartida
+      .filter((c: any) => c.fuente === 'FEDERAL')
+      .reduce((sum: number, c: any) => sum + c.total, 0);
+
+    const totalEstatalUtilizado = cotizacionesPartida
+      .filter((c: any) => c.fuente === 'ESTATAL')
+      .reduce((sum: number, c: any) => sum + c.total, 0);
+
+    const saldoFederal = Math.max(0, (partida.importeAsignado * 0.5) - totalFederalUtilizado);
+    const saldoEstatal = Math.max(0, (partida.importeAsignado * 0.5) - totalEstatalUtilizado);
+
+    return of({ federal: saldoFederal, estatal: saldoEstatal });
   }
 }

@@ -1,9 +1,24 @@
 <div class="container-fluid py-4">
   <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-      <div class="card">
-        <div class="card-header bg-info">
-          <h4 class="mb-0 text-white">💡 Sugerir Nuevo Artículo</h4>
+    <div class="col-md-12 col-lg-10">
+      
+      <!-- 🔥 FORMULARIO DE SUGERENCIAS -->
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-lightbulb me-2"></i>
+            <h4 class="mb-0">💡 Sugerir Nuevo Artículo</h4>
+          </div>
+          <!-- 🔥 NOTIFICACIÓN DE MENSAJES NUEVOS -->
+          <div class="d-flex align-items-center">
+            <span *ngIf="tieneSugerenciasPendientes()" class="badge bg-warning me-2">
+              ⏳ {{ getContadorPorEstado('PENDIENTE') }} pendiente(s)
+            </span>
+            <span *ngIf="mensajesNuevos > 0" class="badge bg-danger badge-notification" 
+                  (click)="marcarComoLeido()" style="cursor: pointer;" title="Haz click para marcar como leído">
+              🔔 {{ mensajesNuevos }} nuevo(s)
+            </span>
+          </div>
         </div>
         
         <div class="card-body">
@@ -44,7 +59,7 @@
                 (input)="verificarArticulosExistentes()"
                 required
                 minlength="3"
-                class="form-control form-control-lg"
+                class="form-control"
                 placeholder="Ingresa el nombre del artículo que deseas sugerir"
                 [class.is-invalid]="articulosExistentes.length > 0"
               >
@@ -108,7 +123,7 @@
             <div class="d-flex gap-2 flex-wrap pt-3 border-top">
               <button
                 type="submit"
-                class="btn btn-success btn-lg"
+                class="btn btn-success"
                 [disabled]="sugerenciaForm.invalid || loading"
               >
                 <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
@@ -117,14 +132,194 @@
 
               <button
                 type="button"
-                class="btn btn-secondary btn-lg"
+                class="btn btn-outline-secondary"
+                (click)="cargarMisSugerencias()"
+                [disabled]="loadingSugerencias"
+              >
+                <span *ngIf="loadingSugerencias" class="spinner-border spinner-border-sm me-2"></span>
+                🔄 Actualizar
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-secondary ms-auto"
                 (click)="cancelar()"
                 [disabled]="loading"
               >
-                ↩️ Cancelar
+                ↩️ Volver al Catálogo
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- 🔥 HISTORIAL DE SUGERENCIAS -->
+      <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-history me-2"></i>
+            <h5 class="mb-0">📋 Estado de Mis Sugerencias</h5>
+          </div>
+          <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-success" title="Sugerencias aprobadas">
+              ✅ {{ getContadorPorEstado('APROBADA') }}
+            </span>
+            <span class="badge bg-warning" title="Sugerencias pendientes">
+              ⏳ {{ getContadorPorEstado('PENDIENTE') }}
+            </span>
+            <span class="badge bg-danger" title="Sugerencias rechazadas">
+              ❌ {{ getContadorPorEstado('RECHAZADA') }}
+            </span>
+            <small class="text-light">Total: {{ sugerencias.length }}</small>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <!-- 🔥 BOTONES DE LIMPIEZA -->
+          <div *ngIf="sugerencias.length > 0" class="d-flex gap-2 mb-3 p-3 bg-light rounded">
+            <button
+              type="button"
+              class="btn btn-outline-danger btn-sm"
+              (click)="vaciarSugerenciasProcesadas()"
+              [disabled]="vaciandoHistorial || !tieneSugerenciasProcesadas()"
+              title="Eliminar PERMANENTEMENTE solo sugerencias aprobadas y rechazadas"
+            >
+              <span *ngIf="vaciandoHistorial" class="spinner-border spinner-border-sm me-2"></span>
+              🗑️ Eliminar Procesadas ({{ getTotalSugerenciasProcesadas() }})
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="vaciarHistorial()"
+              [disabled]="vaciandoHistorial"
+              title="Eliminar PERMANENTEMENTE todo el historial de sugerencias"
+            >
+              <span *ngIf="vaciandoHistorial" class="spinner-border spinner-border-sm me-2"></span>
+              🗑️ Eliminar Todo el Historial
+            </button>
+
+            <div class="ms-auto">
+              <small class="text-muted">
+                <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+                <strong>Advertencia:</strong> Esta acción es permanente
+              </small>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div *ngIf="loadingSugerencias" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando tus sugerencias...</p>
+          </div>
+
+          <!-- Sin sugerencias -->
+          <div *ngIf="!loadingSugerencias && sugerencias.length === 0" class="text-center py-5">
+            <div class="text-muted">
+              <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+              <h5>No has enviado sugerencias aún</h5>
+              <p class="mb-0">Las sugerencias que envíes aparecerán aquí con su estado de revisión</p>
+              <small class="text-muted">El administrador revisará cada sugerencia y te notificará el resultado</small>
+            </div>
+          </div>
+
+          <!-- Lista de sugerencias -->
+          <div *ngIf="!loadingSugerencias && sugerencias.length > 0" class="table-responsive">
+            <table class="table table-hover table-sm">
+              <thead class="table-light">
+                <tr>
+                  <th width="25%">Artículo Sugerido</th>
+                  <th width="15%">Partida</th>
+                  <th width="10%">Precio</th>
+                  <th width="12%">Fecha Envío</th>
+                  <th width="10%">Estado</th>
+                  <th width="28%">Comentarios del Administrador</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sug of sugerencias" 
+                    [class.table-success]="sug.estado === 'APROBADA'"
+                    [class.table-danger]="sug.estado === 'RECHAZADA'"
+                    [class.table-warning]="sug.estado === 'PENDIENTE'"
+                    [class.nueva-sugerencia]="sug.comentarios && esReciente(sug.fechaRevision)">
+                  
+                  <td>
+                    <div class="d-flex align-items-start">
+                      <div>
+                        <strong class="d-block">{{ sug.nombre }}</strong>
+                        <span *ngIf="sug.comentarios && esReciente(sug.fechaRevision)" 
+                              class="badge bg-danger mt-1" title="Nuevo mensaje del administrador">
+                          <i class="fas fa-bell me-1"></i>Nuevo
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <small class="text-muted d-block">{{ sug.partidaCodigo }}</small>
+                    <small class="text-dark fw-semibold">{{ articulosService.getNombrePartida(sug.partidaCodigo) }}</small>
+                  </td>
+
+                  <td>
+                    <span class="fw-bold text-primary">{{ formatearPrecio(sug.precioReferencia) }}</span>
+                  </td>
+
+                  <td>
+                    <small class="text-muted d-block">{{ sug.fechaCreacion | date:'dd/MM/yyyy' }}</small>
+                    <small class="text-muted">{{ sug.fechaCreacion | date:'HH:mm' }}</small>
+                  </td>
+
+                  <td>
+                    <span [class]="'badge ' + getClaseEstado(sug.estado)">
+                      {{ getTextoEstado(sug.estado) }}
+                    </span>
+                    <div *ngIf="sug.fechaRevision" class="mt-1">
+                      <small class="text-muted d-block">
+                        <em>{{ sug.fechaRevision | date:'dd/MM/yyyy' }}</em>
+                      </small>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div *ngIf="sug.comentarios" class="comentario-admin">
+                      <div class="d-flex align-items-start mb-1">
+                        <i class="fas fa-comment-dots text-primary mt-1 me-2"></i>
+                        <div>
+                          <small class="text-muted fw-bold d-block">📝 Respuesta del administrador:</small>
+                          <small class="text-dark">{{ sug.comentarios }}</small>
+                        </div>
+                      </div>
+                      <div *ngIf="sug.fechaRevision" class="mt-2">
+                        <small class="text-muted">
+                          <i class="fas fa-clock me-1"></i>
+                          <em>Revisado: {{ sug.fechaRevision | date:'dd/MM/yyyy HH:mm' }}</em>
+                        </small>
+                      </div>
+                    </div>
+                    
+                    <div *ngIf="!sug.comentarios" class="text-center py-2">
+                      <small class="text-muted">
+                        <i class="fas fa-hourglass-half me-1"></i>
+                        Esperando revisión...
+                      </small>
+                    </div>
+
+                    <div *ngIf="sug.articuloId" class="mt-2">
+                      <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Artículo creado en catálogo
+                      </span>
+                      <small class="text-muted d-block mt-1">
+                        ID: {{ sug.articuloId }}
+                      </small>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

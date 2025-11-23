@@ -1,7 +1,7 @@
 // src/app/core/models/proyecto.model.ts
 import { User } from './user.model';
 
-export interface Proyecto {
+export interface project {
   id: string;
   nombre: string;
   descripcion: string;

@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, delay } from 'rxjs';
-import { Proyecto, CreateProyectoRequest, UpdateProyectoRequest } from '../models/proyecto.model';
+import { project, CreateProyectoRequest, UpdateProyectoRequest } from '../models/proyecto.model';
 import { ApiResponse } from '../models/user.model';
 
 @Injectable({
@@ -15,12 +15,12 @@ export class ProyectosService {
   constructor(private http: HttpClient) {}
 
   // 🔥 SIMULACIÓN - Obtener proyectos del localStorage
-  private getProyectosFromStorage(): Proyecto[] {
+  private getProyectosFromStorage(): project[] {
     const data = localStorage.getItem(this.storageKey);
     return data ? JSON.parse(data) : [];
   }
 
-  private saveProyectosToStorage(proyectos: Proyecto[]): void {
+  private saveProyectosToStorage(proyectos: project[]): void {
     localStorage.setItem(this.storageKey, JSON.stringify(proyectos));
   }
 
@@ -29,7 +29,7 @@ export class ProyectosService {
   }
 
   // Obtener todos los proyectos (para admin)
-  getProyectos(): Observable<ApiResponse<Proyecto[]>> {
+  getProyectos(): Observable<ApiResponse<project[]>> {
     const proyectos = this.getProyectosFromStorage();
     return of({
       success: true,
@@ -39,7 +39,7 @@ export class ProyectosService {
   }
 
   // Obtener proyectos del docente actual
-  getMisProyectos(): Observable<ApiResponse<Proyecto[]>> {
+  getMisProyectos(): Observable<ApiResponse<project[]>> {
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     const proyectos = this.getProyectosFromStorage();
     const misProyectos = proyectos.filter(p => p.docenteId === currentUser.id);
@@ -51,13 +51,13 @@ export class ProyectosService {
     }).pipe(delay(500));
   }
 
-  createProyecto(proyectoData: CreateProyectoRequest): Observable<ApiResponse<Proyecto>> {
+  createProyecto(proyectoData: CreateProyectoRequest): Observable<ApiResponse<project>> {
     return new Observable(observer => {
       try {
         const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
         const proyectos = this.getProyectosFromStorage();
         
-        const nuevoProyecto: Proyecto = {
+        const nuevoProyecto: project = {
           id: this.generateId(),
           ...proyectoData,
           docenteId: currentUser.id,
@@ -97,7 +97,7 @@ export class ProyectosService {
   }
 
   // Métodos adicionales
-  getProyectoById(id: string): Observable<ApiResponse<Proyecto>> {
+  getProyectoById(id: string): Observable<ApiResponse<project>> {
     const proyectos = this.getProyectosFromStorage();
     const proyecto = proyectos.find(p => p.id === id);
     return of({
@@ -107,7 +107,7 @@ export class ProyectosService {
     });
   }
 
-  updateProyecto(id: string, proyecto: UpdateProyectoRequest): Observable<ApiResponse<Proyecto>> {
+  updateProyecto(id: string, proyecto: UpdateProyectoRequest): Observable<ApiResponse<project>> {
     const proyectos = this.getProyectosFromStorage();
     const index = proyectos.findIndex(p => p.id === id);
     
@@ -151,7 +151,7 @@ export class ProyectosService {
   }
 
   // ✅ NUEVO: Enviar proyecto a revisión (docente)
-  enviarARevision(proyectoId: string): Observable<ApiResponse<Proyecto>> {
+  enviarARevision(proyectoId: string): Observable<ApiResponse<project>> {
     const proyectos = this.getProyectosFromStorage();
     const proyectoIndex = proyectos.findIndex(p => p.id === proyectoId);
     
@@ -177,7 +177,7 @@ export class ProyectosService {
   }
 
   // ✅ NUEVO: Aprobar proyecto (admin)
-  aprobarProyecto(proyectoId: string): Observable<ApiResponse<Proyecto>> {
+  aprobarProyecto(proyectoId: string): Observable<ApiResponse<project>> {
     const proyectos = this.getProyectosFromStorage();
     const proyectoIndex = proyectos.findIndex(p => p.id === proyectoId);
     
@@ -203,7 +203,7 @@ export class ProyectosService {
   }
 
   // ✅ NUEVO: Rechazar proyecto (admin)
-  rechazarProyecto(proyectoId: string): Observable<ApiResponse<Proyecto>> {
+  rechazarProyecto(proyectoId: string): Observable<ApiResponse<project>> {
     const proyectos = this.getProyectosFromStorage();
     const proyectoIndex = proyectos.findIndex(p => p.id === proyectoId);
     
@@ -229,7 +229,7 @@ export class ProyectosService {
   }
 
   // ✅ NUEVO: Obtener proyectos por estado
-  getProyectosPorEstado(estado: string): Observable<ApiResponse<Proyecto[]>> {
+  getProyectosPorEstado(estado: string): Observable<ApiResponse<project[]>> {
     const proyectos = this.getProyectosFromStorage();
     const proyectosFiltrados = estado ? 
       proyectos.filter(p => p.estado === estado) : 

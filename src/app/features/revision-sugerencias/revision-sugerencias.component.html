@@ -1,149 +1,265 @@
 <div class="container-fluid py-4">
-     <div class="row justify-content-center">
-       <div class="col-12">
-         <div class="card">
-           <div class="card-header bg-warning">
-             <div class="d-flex justify-content-between align-items-center">
-               <div>
-                 <h4 class="mb-0 text-white">📋 Revisión de Sugerencias</h4>
-                 <p class="mb-0 text-white-50">Sugerencias pendientes de revisión</p>
-               </div>
-               <button class="btn btn-light btn-sm" (click)="volverAlCatalogo()">
-                 <i class="fas fa-arrow-left"></i> Volver al Catálogo
-               </button>
-             </div>
-           </div>
-           
-           <div class="card-body">
-             <!-- Loading -->
-             <div *ngIf="loading" class="text-center py-4">
-               <div class="spinner-border text-warning" role="status">
-                 <span class="visually-hidden">Cargando...</span>
-               </div>
-               <p class="mt-2">Cargando sugerencias...</p>
-             </div>
-   
-             <!-- Error -->
-             <div *ngIf="error && !loading" class="alert alert-danger">
-               <i class="fas fa-exclamation-triangle"></i> {{ error }}
-             </div>
-   
-             <!-- Lista vacía -->
-             <div *ngIf="!loading && !error && sugerencias.length === 0" class="text-center py-5">
-               <div class="empty-state">
-                 <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                 <h4>No hay sugerencias pendientes</h4>
-                 <p class="text-muted">¡Excelente! No hay sugerencias pendientes de revisión.</p>
-               </div>
-             </div>
-   
-             <!-- Lista de sugerencias -->
-             <div *ngIf="!loading && !error && sugerencias.length > 0" class="sugerencias-list">
-               <div class="row">
-                 <div *ngFor="let sugerencia of sugerencias" class="col-md-6 col-lg-4 mb-4">
-                   <div class="card h-100 border-warning">
-                     <div class="card-header bg-warning text-white">
-                       <h6 class="mb-0">Sugerencia de {{ sugerencia.docenteNombre }}</h6>
-                     </div>
-                     <div class="card-body">
-                       <h6 class="card-title">{{ sugerencia.nombre }}</h6>
-                       <p class="card-text">
-                         <strong>Partida:</strong> {{ sugerencia.partidaCodigo }} - 
-                         {{ articulosService.getNombrePartida(sugerencia.partidaCodigo) }}<br>
-                         <strong>Precio sugerido:</strong> ${{ sugerencia.precioReferencia | number:'1.2-2' }}<br>
-                         <strong>Fecha:</strong> {{ sugerencia.fechaCreacion | date:'short' }}
-                       </p>
-                     </div>
-                     <div class="card-footer">
-                       <button 
-                         class="btn btn-outline-primary btn-sm w-100"
-                         (click)="verDetalles(sugerencia)"
-                       >
-                         <i class="fas fa-eye"></i> Ver Detalles
-                       </button>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
-     </div>
-   </div>
-   
-   <!-- Modal de Detalles -->
-   <div *ngIf="sugerenciaSeleccionada" class="modal-backdrop fade show"></div>
-   <div *ngIf="sugerenciaSeleccionada" class="modal fade show d-block" tabindex="-1">
-     <div class="modal-dialog modal-dialog-centered">
-       <div class="modal-content">
-         <div class="modal-header bg-primary text-white">
-           <h5 class="modal-title">📝 Detalles de Sugerencia</h5>
-           <button type="button" class="btn-close btn-close-white" (click)="cerrarModal()"></button>
-         </div>
-         <div class="modal-body">
-           <div class="mb-3">
-             <strong>Artículo sugerido:</strong><br>
-             {{ sugerenciaSeleccionada.nombre }}
-           </div>
-           <div class="mb-3">
-             <strong>Docente:</strong><br>
-             {{ sugerenciaSeleccionada.docenteNombre }}<br>
-             <small class="text-muted">ID: {{ sugerenciaSeleccionada.docenteId }}</small>
-           </div>
-           <div class="mb-3">
-             <strong>Partida presupuestal:</strong><br>
-             {{ sugerenciaSeleccionada.partidaCodigo }} - 
-             {{ articulosService.getNombrePartida(sugerenciaSeleccionada.partidaCodigo) }}
-           </div>
-           <div class="mb-3">
-             <strong>Precio de referencia:</strong><br>
-             ${{ sugerenciaSeleccionada.precioReferencia | number:'1.2-2' }}
-           </div>
-           <div class="mb-3">
-             <strong>Fecha de sugerencia:</strong><br>
-             {{ sugerenciaSeleccionada.fechaCreacion | date:'full' }}
-           </div>
-   
-           <div class="mb-3">
-             <label for="comentarios" class="form-label">
-               <strong>Comentarios (opcional):</strong>
-             </label>
-             <textarea 
-               id="comentarios" 
-               [(ngModel)]="comentarios" 
-               class="form-control" 
-               rows="3" 
-               placeholder="Agrega comentarios para el docente..."
-             ></textarea>
-             <div class="form-text">
-               Los comentarios serán visibles para el docente.
-             </div>
-           </div>
-         </div>
-         <div class="modal-footer">
-           <button type="button" class="btn btn-secondary" (click)="cerrarModal()" [disabled]="revisando">
-             Cancelar
-           </button>
-           <button 
-             type="button" 
-             class="btn btn-danger"
-             (click)="rechazarSugerencia()"
-             [disabled]="revisando"
-           >
-             <span *ngIf="revisando" class="spinner-border spinner-border-sm me-2"></span>
-             ❌ Rechazar
-           </button>
-           <button 
-             type="button" 
-             class="btn btn-success"
-             (click)="aprobarSugerencia()"
-             [disabled]="revisando"
-           >
-             <span *ngIf="revisando" class="spinner-border spinner-border-sm me-2"></span>
-             ✅ Aprobar
-           </button>
-         </div>
-       </div>
-     </div>
-   </div>
+  <div class="row justify-content-center">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-warning">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="mb-0 text-white">📋 Revisión de Sugerencias</h4>
+              <p class="mb-0 text-white-50">Sugerencias pendientes de revisión</p>
+            </div>
+            <button class="btn btn-light btn-sm" (click)="volverAlCatalogo()">
+              <i class="fas fa-arrow-left"></i> Volver al Catálogo
+            </button>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <!-- Loading -->
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-warning" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando sugerencias...</p>
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="error && !loading" class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+          </div>
+
+          <!-- Lista vacía -->
+          <div *ngIf="!loading && !error && sugerencias.length === 0" class="text-center py-5">
+            <div class="empty-state">
+              <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+              <h4>No hay sugerencias pendientes</h4>
+              <p class="text-muted">¡Excelente! No hay sugerencias pendientes de revisión.</p>
+            </div>
+          </div>
+
+          <!-- Lista de sugerencias -->
+          <div *ngIf="!loading && !error && sugerencias.length > 0" class="sugerencias-list">
+            <div class="row">
+              <div *ngFor="let sugerencia of sugerencias" class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 border-warning">
+                  <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0">Sugerencia de {{ sugerencia.docenteNombre }}</h6>
+                  </div>
+                  <div class="card-body">
+                    <h6 class="card-title">{{ sugerencia.nombre }}</h6>
+                    <p class="card-text">
+                      <strong>Partida:</strong> {{ sugerencia.partidaCodigo }} - 
+                      {{ articulosService.getNombrePartida(sugerencia.partidaCodigo) }}<br>
+                      <strong>Precio sugerido:</strong> {{ formatearPrecio(sugerencia.precioReferencia) }}<br>
+                      <strong>Fecha:</strong> {{ sugerencia.fechaCreacion | date:'short' }}
+                    </p>
+                  </div>
+                  <div class="card-footer">
+                    <button 
+                      class="btn btn-outline-primary btn-sm w-100"
+                      (click)="verDetalles(sugerencia)"
+                    >
+                      <i class="fas fa-edit"></i> Revisar y Editar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles -->
+<div *ngIf="sugerenciaSeleccionada" class="modal-backdrop fade show"></div>
+<div *ngIf="sugerenciaSeleccionada" class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-edit me-2"></i>
+          {{ editandoArticulo ? '✏️ Editando Artículo' : '📝 Detalles de Sugerencia' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- 🔥 NUEVO: Indicador de cambios pendientes -->
+        <div *ngIf="hayCambiosPendientes() && !editandoArticulo" class="alert alert-info mb-3">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Tienes cambios pendientes:</strong> Los datos del artículo han sido modificados. 
+          <button class="btn btn-sm btn-outline-info ms-2" (click)="activarEdicion()">
+            <i class="fas fa-edit me-1"></i>Ver cambios
+          </button>
+        </div>
+
+        <!-- 🔥 NUEVO: Modo Visualización -->
+        <div *ngIf="!editandoArticulo">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <strong>Artículo sugerido:</strong><br>
+              <span class="h6 text-primary">{{ sugerenciaSeleccionada.nombre }}</span>
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Docente:</strong><br>
+              {{ sugerenciaSeleccionada.docenteNombre }}<br>
+              <small class="text-muted">ID: {{ sugerenciaSeleccionada.docenteId }}</small>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <strong>Partida presupuestal:</strong><br>
+              {{ sugerenciaSeleccionada.partidaCodigo }} - 
+              {{ articulosService.getNombrePartida(sugerenciaSeleccionada.partidaCodigo) }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Precio de referencia:</strong><br>
+              {{ formatearPrecio(sugerenciaSeleccionada.precioReferencia) }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <strong>Fecha de sugerencia:</strong><br>
+            {{ sugerenciaSeleccionada.fechaCreacion | date:'full' }}
+          </div>
+
+          <!-- 🔥 NUEVO: Botón para editar -->
+          <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+            <div>
+              <i class="fas fa-edit text-primary me-2"></i>
+              <strong>¿Necesitas modificar algún dato del artículo?</strong>
+            </div>
+            <button 
+              type="button" 
+              class="btn btn-outline-primary btn-sm"
+              (click)="activarEdicion()"
+            >
+              <i class="fas fa-edit me-1"></i> Editar Artículo
+            </button>
+          </div>
+        </div>
+
+        <!-- 🔥 NUEVO: Modo Edición -->
+        <div *ngIf="editandoArticulo" class="edicion-articulo">
+          <div class="alert alert-warning mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Estás editando el artículo:</strong> Los cambios se aplicarán al crear el artículo en el catálogo.
+          </div>
+
+          <div class="mb-3">
+            <label for="nombreEditado" class="form-label">
+              <strong>Nombre del Artículo *</strong>
+            </label>
+            <input
+              type="text"
+              id="nombreEditado"
+              [(ngModel)]="articuloEditado.nombre"
+              class="form-control"
+              placeholder="Ingresa el nombre del artículo"
+              required
+            >
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="precioEditado" class="form-label">
+                <strong>Precio de Referencia *</strong>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  type="number"
+                  id="precioEditado"
+                  [(ngModel)]="articuloEditado.precioReferencia"
+                  class="form-control"
+                  min="0"
+                  step="0.01"
+                  required
+                >
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="partidaEditada" class="form-label">
+                <strong>Partida Presupuestal *</strong>
+              </label>
+              <select
+                id="partidaEditada"
+                [(ngModel)]="articuloEditado.partidaCodigo"
+                class="form-select"
+                required
+              >
+                <option value="">Selecciona una partida...</option>
+                <option *ngFor="let partida of partidas" [value]="partida.codigo">
+                  {{ partida.codigo }} - {{ partida.nombre }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 🔥 NUEVO: Botones de edición -->
+          <div class="d-flex gap-2 justify-content-end mb-3">
+            <button 
+              type="button" 
+              class="btn btn-secondary btn-sm"
+              (click)="cancelarEdicion()"
+            >
+              <i class="fas fa-times me-1"></i> Cancelar
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-success btn-sm"
+              (click)="guardarCambios()"
+            >
+              <i class="fas fa-check me-1"></i> Guardar Cambios
+            </button>
+          </div>
+        </div>
+
+        <!-- Comentarios (siempre visible) -->
+        <div class="mb-3">
+          <label for="comentarios" class="form-label">
+            <strong>Comentarios para el docente (opcional):</strong>
+          </label>
+          <textarea 
+            id="comentarios" 
+            [(ngModel)]="comentarios" 
+            class="form-control" 
+            rows="3" 
+            placeholder="Agrega comentarios para el docente..."
+          ></textarea>
+          <div class="form-text">
+            Los comentarios serán visibles para el docente. Explique los cambios realizados si es necesario.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()" [disabled]="revisando">
+          <i class="fas fa-times me-1"></i> Cancelar
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-danger"
+          (click)="rechazarSugerencia()"
+          [disabled]="revisando || editandoArticulo"
+        >
+          <span *ngIf="revisando" class="spinner-border spinner-border-sm me-2"></span>
+          <i class="fas fa-times me-1"></i> Rechazar
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-success"
+          (click)="aprobarSugerencia()"
+          [disabled]="revisando || editandoArticulo"
+        >
+          <span *ngIf="revisando" class="spinner-border spinner-border-sm me-2"></span>
+          <i class="fas fa-check me-1"></i> 
+          {{ hayCambiosPendientes() ? 'Aprobar con Cambios' : 'Aprobar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

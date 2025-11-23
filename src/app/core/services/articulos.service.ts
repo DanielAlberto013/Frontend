@@ -65,7 +65,6 @@ export class ArticulosService {
     // PARTIDA 21101 - Papelería y Útiles
     { id: 'art_1', partidaCodigo: '21101', nombre: 'Charola artículada tamaño carta, 3 niveles, gris humo', precioReferencia: 450.00, activo: true, createdAt: new Date(), updatedAt: new Date() },
     { id: 'art_2', partidaCodigo: '21101', nombre: 'Sobres coin con solapa engomada kraft amarillo (paq. 50 piezas)', precioReferencia: 120.00, activo: true, createdAt: new Date(), updatedAt: new Date() },
-    // ... (todos los demás artículos)
     { id: 'art_74', partidaCodigo: '35301', nombre: 'Mantenimiento Preventivo -Correctivo y Actualizacion de Software - Mantenimiento Laptop Dell', precioReferencia: 700.00, activo: true, createdAt: new Date(), updatedAt: new Date() }
   ];
 
@@ -272,64 +271,128 @@ export class ArticulosService {
     }).pipe(delay(300));
   }
 
-  // Revisar sugerencia (para admin)
-  reviewSugerencia(id: string, reviewData: ReviewSugerenciaRequest): Observable<ApiResponse<SugerenciaArticulo>> {
+  // Revisar sugerencia (para admin) - MÉTODO ACTUALIZADO
+reviewSugerencia(id: string, reviewData: ReviewSugerenciaRequest): Observable<ApiResponse<SugerenciaArticulo>> {
+  return new Observable(observer => {
+    try {
+      const sugerencias = this.getSugerenciasFromStorage();
+      const index = sugerencias.findIndex(s => s.id === id);
+      
+      if (index === -1) {
+        observer.next({
+          success: false,
+          message: 'Sugerencia no encontrada'
+        });
+        observer.complete();
+        return;
+      }
+
+      const sugerencia = sugerencias[index];
+      
+      // 🔥 NUEVO: Usar datos editados si están disponibles
+      const nombreFinal = reviewData.nombreEditado || sugerencia.nombre;
+      const precioFinal = reviewData.precioEditado || sugerencia.precioReferencia;
+      const partidaFinal = reviewData.partidaEditada || sugerencia.partidaCodigo;
+      const datosEditados = !!(reviewData.nombreEditado || reviewData.precioEditado || reviewData.partidaEditada);
+      
+      console.log('🔥 Creando artículo con datos:', {
+        original: {
+          nombre: sugerencia.nombre,
+          precio: sugerencia.precioReferencia,
+          partida: sugerencia.partidaCodigo
+        },
+        final: {
+          nombre: nombreFinal,
+          precio: precioFinal,
+          partida: partidaFinal
+        },
+        datosEditados: datosEditados
+      });
+      
+      // Si se aprueba, crear el artículo automáticamente
+      if (reviewData.estado === 'APROBADA') {
+        const nuevoArticulo: Article = {
+          id: this.generateId(),
+          nombre: nombreFinal, // ✅ Usa el nombre editado
+          precioReferencia: precioFinal, // ✅ Usa el precio editado
+          partidaCodigo: partidaFinal, // ✅ Usa la partida editada
+          activo: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        console.log('✅ Artículo creado en catálogo:', nuevoArticulo);
+
+        // Guardar el artículo
+        const articulos = this.getArticulosFromStorage();
+        articulos.push(nuevoArticulo);
+        this.saveArticulosToStorage(articulos);
+
+        // Actualizar la sugerencia con el ID del artículo creado
+        sugerencias[index] = {
+          ...sugerencia,
+          ...reviewData,
+          fechaRevision: new Date(),
+          articuloId: nuevoArticulo.id,
+          // 🔥 NUEVO: Guardar los datos finales usados
+          nombreFinal: nombreFinal,
+          precioFinal: precioFinal,
+          partidaFinal: partidaFinal,
+          datosEditados: datosEditados
+        };
+      } else {
+        // Solo actualizar estado si es rechazada
+        sugerencias[index] = {
+          ...sugerencia,
+          ...reviewData,
+          fechaRevision: new Date(),
+          // 🔥 NUEVO: También guardar datos editados para rechazadas (para historial)
+          nombreFinal: datosEditados ? nombreFinal : undefined,
+          precioFinal: datosEditados ? precioFinal : undefined,
+          partidaFinal: datosEditados ? partidaFinal : undefined,
+          datosEditados: datosEditados
+        };
+      }
+
+      this.saveSugerenciasToStorage(sugerencias);
+
+      setTimeout(() => {
+        observer.next({
+          success: true,
+          data: sugerencias[index],
+          message: datosEditados ? 
+            `Sugerencia ${reviewData.estado === 'APROBADA' ? 'aprobada' : 'rechazada'} con cambios exitosamente` :
+            `Sugerencia ${reviewData.estado === 'APROBADA' ? 'aprobada' : 'rechazada'} exitosamente`
+        });
+        observer.complete();
+      }, 1000);
+
+    } catch (error) {
+      observer.error({
+        success: false,
+        message: 'Error al revisar sugerencia',
+        error: error
+      });
+    }
+  });
+}
+
+  // 🔥 NUEVO: Eliminar sugerencias por docente
+  deleteSugerenciasByDocente(docenteId: string): Observable<ApiResponse<boolean>> {
     return new Observable(observer => {
       try {
         const sugerencias = this.getSugerenciasFromStorage();
-        const index = sugerencias.findIndex(s => s.id === id);
         
-        if (index === -1) {
-          observer.next({
-            success: false,
-            message: 'Sugerencia no encontrada'
-          });
-          observer.complete();
-          return;
-        }
-
-        const sugerencia = sugerencias[index];
+        // Filtrar las sugerencias que NO pertenecen a este docente
+        const sugerenciasFiltradas = sugerencias.filter(s => s.docenteId !== docenteId);
         
-        // Si se aprueba, crear el artículo automáticamente
-        if (reviewData.estado === 'APROBADA') {
-          const nuevoArticulo: Article = {
-            id: this.generateId(),
-            nombre: sugerencia.nombre,
-            precioReferencia: sugerencia.precioReferencia,
-            partidaCodigo: sugerencia.partidaCodigo,
-            activo: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-
-          // Guardar el artículo
-          const articulos = this.getArticulosFromStorage();
-          articulos.push(nuevoArticulo);
-          this.saveArticulosToStorage(articulos);
-
-          // Actualizar la sugerencia con el ID del artículo creado
-          sugerencias[index] = {
-            ...sugerencia,
-            ...reviewData,
-            fechaRevision: new Date(),
-            articuloId: nuevoArticulo.id
-          };
-        } else {
-          // Solo actualizar estado si es rechazada
-          sugerencias[index] = {
-            ...sugerencia,
-            ...reviewData,
-            fechaRevision: new Date()
-          };
-        }
-
-        this.saveSugerenciasToStorage(sugerencias);
+        this.saveSugerenciasToStorage(sugerenciasFiltradas);
 
         setTimeout(() => {
           observer.next({
             success: true,
-            data: sugerencias[index],
-            message: `Sugerencia ${reviewData.estado === 'APROBADA' ? 'aprobada' : 'rechazada'} exitosamente`
+            data: true,
+            message: 'Sugerencias eliminadas exitosamente'
           });
           observer.complete();
         }, 1000);
@@ -337,7 +400,39 @@ export class ArticulosService {
       } catch (error) {
         observer.error({
           success: false,
-          message: 'Error al revisar sugerencia',
+          message: 'Error al eliminar sugerencias',
+          error: error
+        });
+      }
+    });
+  }
+
+  // 🔥 NUEVO: Eliminar solo sugerencias procesadas (aprobadas/rechazadas)
+  deleteSugerenciasProcesadasByDocente(docenteId: string): Observable<ApiResponse<boolean>> {
+    return new Observable(observer => {
+      try {
+        const sugerencias = this.getSugerenciasFromStorage();
+        
+        // Mantener solo las sugerencias pendientes O las que no son del docente
+        const sugerenciasFiltradas = sugerencias.filter(s => 
+          s.docenteId !== docenteId || s.estado === 'PENDIENTE'
+        );
+        
+        this.saveSugerenciasToStorage(sugerenciasFiltradas);
+
+        setTimeout(() => {
+          observer.next({
+            success: true,
+            data: true,
+            message: 'Sugerencias procesadas eliminadas exitosamente'
+          });
+          observer.complete();
+        }, 1000);
+
+      } catch (error) {
+        observer.error({
+          success: false,
+          message: 'Error al eliminar sugerencias procesadas',
           error: error
         });
       }

@@ -1,24 +1,32 @@
 // src/app/core/models/cotizacion.model.ts
 import { Article } from './article.model';
 import { PartidaPresupuestal } from './partida.model';
-import { Proyecto } from './proyecto.model'; // ✅ AGREGAR
+import { project } from './proyecto.model';
 
 export interface Cotizacion {
   id: string;
   proyectoId: string;
-  proyecto?: Proyecto; // ✅ AGREGAR esta propiedad
+  proyecto?: project;
   partidaCodigo: string;
   fuente: 'FEDERAL' | 'ESTATAL';
   items: CotizacionItem[];
+  subtotal: number; // ✅ AGREGADO
+  iva: number; // ✅ AGREGADO
   total: number;
   estado: 'BORRADOR' | 'EN_REVISION' | 'APROBADO' | 'RECHAZADO';
   createdAt: Date;
   updatedAt: Date;
   
-  // ✅ PROPIEDADES PARA MOSTRAR INFORMACIÓN DE PARTIDA
+  // Propiedades para mostrar información de partida
   partidaPresupuestal?: PartidaPresupuestal;
   nombrePartida?: string;
   saldoPartida?: number;
+  
+  // Nueva propiedad: Información de presupuesto por fuente
+  presupuestoFederal?: number;
+  presupuestoEstatal?: number;
+  saldoFederal?: number;
+  saldoEstatal?: number;
 }
 
 export interface CotizacionItem {
@@ -47,9 +55,8 @@ export interface UpdateCotizacionRequest {
   estado?: 'BORRADOR' | 'EN_REVISION' | 'APROBADO' | 'RECHAZADO';
 }
 
-// ✅ INTERFAZ PARA COTIZACIONES ENRIQUECIDAS
 export interface CotizacionEnriquecida extends Cotizacion {
-  proyecto?: Proyecto;
+  proyecto?: project;
   partidaPresupuestal?: PartidaPresupuestal;
   nombrePartida?: string;
   saldoPartida?: number;
