@@ -56,6 +56,44 @@ export class CotizacionesService {
     );
   }
 
+  // ✅ NUEVO: Método para calcular saldos por fuente
+  calcularSaldosPorFuente(proyectoId: string): Observable<{federal: number, estatal: number}> {
+    const proyectos = JSON.parse(localStorage.getItem('proyectos_data') || '[]');
+    const proyecto = proyectos.find((p: any) => p.id === proyectoId);
+    
+    if (!proyecto) {
+      return of({ federal: 0, estatal: 0 });
+    }
+
+    const cotizaciones = this.getCotizacionesFromStorage();
+    const cotizacionesProyecto = cotizaciones.filter(c => c.proyectoId === proyectoId);
+
+    // Calcular total utilizado por cada fuente
+    const totalFederalUtilizado = cotizacionesProyecto
+      .filter(c => c.fuente === 'FEDERAL')
+      .reduce((sum, c) => sum + c.total, 0);
+
+    const totalEstatalUtilizado = cotizacionesProyecto
+      .filter(c => c.fuente === 'ESTATAL')
+      .reduce((sum, c) => sum + c.total, 0);
+
+    // Calcular saldos disponibles
+    const saldoFederal = Math.max(0, proyecto.presupuestoFederal - totalFederalUtilizado);
+    const saldoEstatal = Math.max(0, proyecto.presupuestoEstatal - totalEstatalUtilizado);
+
+    console.log('💰 Saldos calculados:', {
+      proyecto: proyectoId,
+      presupuestoFederal: proyecto.presupuestoFederal,
+      presupuestoEstatal: proyecto.presupuestoEstatal,
+      utilizadoFederal: totalFederalUtilizado,
+      utilizadoEstatal: totalEstatalUtilizado,
+      saldoFederal: saldoFederal,
+      saldoEstatal: saldoEstatal
+    });
+
+    return of({ federal: saldoFederal, estatal: saldoEstatal });
+  }
+
   createCotizacion(cotizacionData: CreateCotizacionRequest): Observable<ApiResponse<Cotizacion>> {
     return new Observable(observer => {
       try {

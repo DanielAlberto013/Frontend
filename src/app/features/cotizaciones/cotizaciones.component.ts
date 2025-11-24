@@ -183,6 +183,51 @@ export class CotizacionesComponent implements OnInit {
     // CALCULAR SALDOS DISPONIBLES DEL PROYECTO
     this.saldoFederalDisponible = Math.max(0, presupuestoFederalProyecto - totalFederalUtilizado);
     this.saldoEstatalDisponible = Math.max(0, presupuestoEstatalProyecto - totalEstatalUtilizado);
+
+    console.log('💰 Saldos actualizados:', {
+      proyecto: this.proyectoSeleccionado.nombre,
+      federal: {
+        presupuesto: presupuestoFederalProyecto,
+        utilizado: totalFederalUtilizado,
+        disponible: this.saldoFederalDisponible
+      },
+      estatal: {
+        presupuesto: presupuestoEstatalProyecto,
+        utilizado: totalEstatalUtilizado,
+        disponible: this.saldoEstatalDisponible
+      }
+    });
+  }
+
+  // ✅ NUEVO: Método para verificar si una partida puede usar una fuente específica
+  puedeUsarFuente(partida: PartidaPresupuestal, fuente: 'FEDERAL' | 'ESTATAL'): boolean {
+    if (!this.proyectoSeleccionado || !partida) return false;
+    
+    const saldoFuente = fuente === 'FEDERAL' ? this.saldoFederalDisponible : this.saldoEstatalDisponible;
+    const importePartida = partida.importeAsignado;
+    
+    // Verificar si el importe de la partida cabe en el saldo disponible de la fuente
+    const puedeUsar = importePartida <= saldoFuente;
+    
+    console.log('🔍 Validación fuente:', {
+      partida: partida.codigo,
+      fuente: fuente,
+      importePartida: importePartida,
+      saldoFuente: saldoFuente,
+      puedeUsar: puedeUsar
+    });
+    
+    return puedeUsar;
+  }
+
+  // ✅ NUEVO: Método para deshabilitar botones de fuente
+  getFuenteDisabled(fuente: 'FEDERAL' | 'ESTATAL'): boolean {
+    if (!this.partidaSeleccionada || this.partidaTieneCotizacion) return true;
+    
+    const saldoFuente = fuente === 'FEDERAL' ? this.saldoFederalDisponible : this.saldoEstatalDisponible;
+    
+    // Deshabilitar si no hay saldo o si el importe de partida excede el saldo
+    return saldoFuente <= 0 || !this.puedeUsarFuente(this.partidaSeleccionada, fuente);
   }
 
   // ✅ OBTENER SALDO DISPONIBLE SEGÚN LA FUENTE SELECCIONADA
@@ -229,8 +274,21 @@ export class CotizacionesComponent implements OnInit {
     return this.calcularIVAExacto(subtotalMaximo);
   }
 
-  // ✅ CAMBIAR FUENTE DE PRESUPUESTO
+  // ✅ CAMBIAR FUENTE DE PRESUPUESTO CON VALIDACIÓN
   onFuenteChange(fuente: 'FEDERAL' | 'ESTATAL'): void {
+    if (!this.partidaSeleccionada) {
+      alert('Primero selecciona una partida');
+      return;
+    }
+
+    // ✅ NUEVA VALIDACIÓN: Verificar si la partida puede usar esta fuente
+    if (!this.puedeUsarFuente(this.partidaSeleccionada, fuente)) {
+      const saldoFuente = fuente === 'FEDERAL' ? this.saldoFederalDisponible : this.saldoEstatalDisponible;
+      
+      alert(`🚫 NO PUEDES USAR PRESUPUESTO ${fuente}\n\nLa partida ${this.partidaSeleccionada.codigo} tiene un importe de $${this.partidaSeleccionada.importeAsignado.toFixed(2)}, pero solo quedan $${saldoFuente.toFixed(2)} disponibles en ${fuente.toLowerCase()}.\n\n💡 Selecciona la otra fuente o ajusta tu partida.`);
+      return;
+    }
+
     this.fuenteSeleccionada = fuente;
     this.carrito = []; // Limpiar carrito al cambiar fuente
     this.calcularSaldosPorFuente();
@@ -574,6 +632,14 @@ export class CotizacionesComponent implements OnInit {
   generarCotizacion(): void {
     if (!this.proyectoSeleccionado || !this.partidaSeleccionada) {
       alert('Selecciona un proyecto y una partida antes de generar la cotización');
+      return;
+    }
+
+    // ✅ NUEVA VALIDACIÓN: Verificar que la partida pueda usar la fuente seleccionada
+    if (!this.puedeUsarFuente(this.partidaSeleccionada, this.fuenteSeleccionada)) {
+      const saldoFuente = this.fuenteSeleccionada === 'FEDERAL' ? this.saldoFederalDisponible : this.saldoEstatalDisponible;
+      
+      alert(`🚫 NO PUEDES GENERAR COTIZACIÓN\n\nLa partida ${this.partidaSeleccionada.codigo} tiene un importe de $${this.partidaSeleccionada.importeAsignado.toFixed(2)}, pero solo quedan $${saldoFuente.toFixed(2)} disponibles en ${this.fuenteSeleccionada.toLowerCase()}.\n\n💡 Esto puede pasar si otra cotización usó parte del presupuesto mientras trabajabas.`);
       return;
     }
 

@@ -133,7 +133,12 @@
                         class="btn"
                         [class]="fuenteSeleccionada === 'FEDERAL' ? 'btn-primary' : 'btn-outline-primary'"
                         (click)="onFuenteChange('FEDERAL')"
-                        [disabled]="saldoFederalDisponible <= 0 || partidaTieneCotizacion"
+                        [disabled]="getFuenteDisabled('FEDERAL')"
+                        title="{{ getFuenteDisabled('FEDERAL') ? 
+                          (partidaTieneCotizacion ? 'Partida bloqueada' : 
+                          (saldoFederalDisponible <= 0 ? 'No hay saldo federal disponible' : 
+                          'El importe de la partida excede el saldo federal')) : 
+                          'Usar presupuesto federal' }}"
                       >
                         🏛️ Federal 
                         <span class="badge bg-light text-dark ms-1">
@@ -145,7 +150,12 @@
                         class="btn"
                         [class]="fuenteSeleccionada === 'ESTATAL' ? 'btn-success' : 'btn-outline-success'"
                         (click)="onFuenteChange('ESTATAL')"
-                        [disabled]="saldoEstatalDisponible <= 0 || partidaTieneCotizacion"
+                        [disabled]="getFuenteDisabled('ESTATAL')"
+                        title="{{ getFuenteDisabled('ESTATAL') ? 
+                          (partidaTieneCotizacion ? 'Partida bloqueada' : 
+                          (saldoEstatalDisponible <= 0 ? 'No hay saldo estatal disponible' : 
+                          'El importe de la partida excede el saldo estatal')) : 
+                          'Usar presupuesto estatal' }}"
                       >
                         🏠 Estatal
                         <span class="badge bg-light text-dark ms-1">
@@ -158,20 +168,39 @@
                     <div class="row mt-2 text-center">
                       <div class="col-md-6">
                         <small class="text-muted">
-                          🏛️ Federal Disponible (Proyecto): 
+                          🏛️ Federal Disponible: 
                           <strong [class]="saldoFederalDisponible > 0 ? 'text-primary' : 'text-danger'">
                             ${{ saldoFederalDisponible | number:'1.2-2' }}
                           </strong>
+                          <span *ngIf="partidaSeleccionada && !puedeUsarFuente(partidaSeleccionada, 'FEDERAL')" class="text-danger ms-1">
+                            ❌ (Partida muy grande)
+                          </span>
                         </small>
                       </div>
                       <div class="col-md-6">
                         <small class="text-muted">
-                          🏠 Estatal Disponible (Proyecto): 
+                          🏠 Estatal Disponible: 
                           <strong [class]="saldoEstatalDisponible > 0 ? 'text-success' : 'text-danger'">
                             ${{ saldoEstatalDisponible | number:'1.2-2' }}
                           </strong>
+                          <span *ngIf="partidaSeleccionada && !puedeUsarFuente(partidaSeleccionada, 'ESTATAL')" class="text-danger ms-1">
+                            ❌ (Partida muy grande)
+                          </span>
                         </small>
                       </div>
+                    </div>
+
+                    <!-- ✅ NUEVO: Alerta cuando ninguna fuente es usable -->
+                    <div *ngIf="partidaSeleccionada && !puedeUsarFuente(partidaSeleccionada, 'FEDERAL') && !puedeUsarFuente(partidaSeleccionada, 'ESTATAL')" 
+                         class="alert alert-danger mt-2">
+                      <strong>🚫 PARTIDA DEMASIADO GRANDE</strong><br>
+                      <small>
+                        La partida <strong>{{ partidaSeleccionada.codigo }}</strong> tiene un importe de 
+                        <strong>${{ partidaSeleccionada.importeAsignado | number:'1.2-2' }}</strong>, 
+                        pero no hay suficiente presupuesto disponible en ninguna fuente.<br>
+                        💡 <strong>Saldos disponibles:</strong> Federal: ${{ saldoFederalDisponible | number:'1.2-2' }} | 
+                        Estatal: ${{ saldoEstatalDisponible | number:'1.2-2' }}
+                      </small>
                     </div>
                   </div>
 
@@ -217,12 +246,7 @@
                       </div>
                     </div>
                     <div class="mt-2">
-                      <small class="text-muted">
-                        💡 Desglose máximo: 
-                        <strong>${{ calcularSubtotalMaximoExacto() | number:'1.2-2' }}</strong> (subtotal) 
-                        + <strong>${{ calcularIVAMaximo() | number:'1.2-2' }}</strong> (IVA 16%) 
-                        = <strong>${{ calcularLimiteReal() | number:'1.2-2' }}</strong> (total)
-                      </small>
+    
                     </div>
                   </div>
 

@@ -1,3 +1,4 @@
+// src/app/core/models/documento-final.model.ts
 export interface DocumentoFinal {
   tipoConvocatoria: string;
   nombreProyecto: string;
@@ -11,7 +12,7 @@ export interface DocumentoFinal {
   iva: number;
   total: number;
   montoAprobado: number;
-  proyecto?: any; // Proyecto relacionado
+  proyecto?: any;
 }
 
 export interface PartidaDocumento {
@@ -19,6 +20,7 @@ export interface PartidaDocumento {
   partidaNombre: string;
   partidaDescripcion: string;
   montoAutorizado: number;
+  fuentePresupuesto: 'FEDERAL' | 'ESTATAL'; // ✅ NUEVO
   productos: ProductoDocumento[];
   subtotal: number;
   iva: number;
